@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import us.freeandfair.corla.json.CVRToAuditResponse;
+import us.freeandfair.corla.json.CVRToAuditResponse.BallotOrderComparator;
 import us.freeandfair.corla.model.BallotManifestInfo;
 import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.query.BallotManifestInfoQueries;
@@ -66,6 +67,7 @@ public final class BallotSelection {
         throw new BallotSelection.MissingBallotManifestException(msg);
       }
     }
+    a_list.sort(new BallotOrderComparator());
     return a_list;
   }
 
