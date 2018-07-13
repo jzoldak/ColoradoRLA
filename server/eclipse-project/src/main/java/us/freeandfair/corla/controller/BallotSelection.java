@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.BiFunction;
 
 import us.freeandfair.corla.json.CVRToAuditResponse;
 import us.freeandfair.corla.json.CVRToAuditResponse.BallotOrderComparator;
@@ -20,6 +21,11 @@ public final class BallotSelection {
   private BallotSelection() {
   }
 
+  @FunctionalInterface
+  public interface CVRQ {
+    public List<CastVoteRecord> apply(List<Long> l, Long c);
+  }
+
   /**
    * Prepare a list of ballot information from random numbers. Asks the
    * ballot_manifest_info table for info and joins in some info from
@@ -28,8 +34,10 @@ public final class BallotSelection {
    * cast_vote_records info is merged in as a convenience to find discrepancies
    * as early as possible.
    **/
-  public static List<CVRToAuditResponse> selectBallots(final List<Long> rands) {
+  public static List<CVRToAuditResponse> selectBallots(final List<Long> rands,
+                                                       final Long countyID) {
     return selectBallots(rands,
+                         countyID,
                          BallotSelection::queryBallotManifestInfos,
                          BallotSelection::queryCastVoteRecords);
   }
@@ -39,12 +47,13 @@ public final class BallotSelection {
    **/
   public static List<CVRToAuditResponse>
       selectBallots(final List<Long> rands,
+                    final Long countyID,
                     final Function<Long,Optional<BallotManifestInfo>> queryBMI,
-                    final Function<List<Long>,List<CastVoteRecord>> queryCVR) {
+                    final CVRQ queryCVR) {
     final List<CVRToAuditResponse> a_list = new LinkedList<CVRToAuditResponse>();
     // here we rely on the id of the cvr to match the audit_sequence_number.
     // This is done by incrementing a counter during the file import.
-    final List<CastVoteRecord> cvrs = queryCVR.apply(rands);
+    final List<CastVoteRecord> cvrs = queryCVR.apply(rands, countyID);
 
     int i = 0;
     for (final Long rand: rands) {
@@ -56,7 +65,18 @@ public final class BallotSelection {
         cvr = cvrs.get(i - 1); // index is 0 based
       } catch (final IndexOutOfBoundsException e) {
         // TODO create a warning or a discrepancy of some kind
-        cvr = new CastVoteRecord();
+        cvr = new CastVoteRecord(CastVoteRecord.RecordType.PHANTOM_RECORD,
+                                 null,
+                                 0L,
+                                 0,
+                                 0,
+                                 0,
+                                 "",
+                                 0,
+                                 "",
+                                 "",
+                                 null);
+        cvr.setID(0L);
       }
 
       if (bmiMaybe.isPresent()) {
@@ -100,16 +120,18 @@ public final class BallotSelection {
   }
 
   /**
-   * query the database for cast_vote_records with ids that are in the given
+   * query the database for cast_vote_records with sequence_numbers that are in the given
    * list of random numbers
    **/
-  public static List<CastVoteRecord> queryCastVoteRecords(final List<Long> rands) {
-    return CastVoteRecordQueries.get(rands);
+  public static List<CastVoteRecord> queryCastVoteRecords(final List<Long> rands,
+                                                          final Long countyID) {
+    return CastVoteRecordQueries.get(countyID,
+                                     rands);
   }
 
   /**
    * this is bad, it could be one of two things:
-   * - a random number was generated outside of the number of ballots
+   * - a random number was generated outside of the number of (theoretical) ballots
    * - there is a gap in the sequence_start and sequence_end values of the
          ballot_manifest_infos
    **/

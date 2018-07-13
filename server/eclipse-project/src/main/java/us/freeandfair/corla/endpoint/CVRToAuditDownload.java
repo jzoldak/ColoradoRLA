@@ -19,7 +19,6 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.OptionalInt;
@@ -210,7 +209,7 @@ public class CVRToAuditDownload extends AbstractEndpoint {
       }
       // get other things we need
       final CountyDashboard cdb = Persistence.getByID(county.id(), CountyDashboard.class);
-      List<CVRToAuditResponse> response_list = new ArrayList<>();
+      List<CVRToAuditResponse> response_list;
 
 
       // compute the round, if any
@@ -225,11 +224,16 @@ public class CVRToAuditDownload extends AbstractEndpoint {
         }
       }
 
-
       // feature flag - for emergencies only - TODO: remove after confidence achieved
-      final boolean use_ballot_manifest_selection = true;
+      final boolean use_ballot_manifest_selection =
+          Main.getBooleanProperty("feature_flag.use_ballot_manifest_selection", true);
 
       if (use_ballot_manifest_selection) {
+        final Round the_round = cdb.rounds().get(round.getAsInt() - 1);
+        // replace the var
+        response_list = BallotSelection.selectBallots(the_round.generatedNumbers(),
+                                                      county.id());
+      } else {
         // replace the var
         response_list = CVRSelection.selectCVRs(cdb,
                                                 round,
@@ -237,10 +241,6 @@ public class CVRToAuditDownload extends AbstractEndpoint {
                                                 duplicates,
                                                 ballot_count,
                                                 index);
-      } else {
-        final Round the_round = cdb.rounds().get(round.getAsInt() - 1);
-        // replace the var
-        response_list = BallotSelection.selectBallots(the_round.generatedNumbers());
       }
 
 
@@ -310,4 +310,6 @@ public class CVRToAuditDownload extends AbstractEndpoint {
       }
     } 
   }
+
+
 }

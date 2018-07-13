@@ -22,6 +22,7 @@ import spark.Response;
 
 import us.freeandfair.corla.Main;
 import us.freeandfair.corla.controller.BallotSelection;
+import us.freeandfair.corla.controller.CVRSelection;
 import us.freeandfair.corla.controller.ComparisonAuditController;
 import us.freeandfair.corla.json.CVRToAuditResponse;
 import us.freeandfair.corla.json.CVRToAuditResponse.BallotOrderComparator;
@@ -205,37 +206,23 @@ public class CVRToAuditList extends AbstractEndpoint {
       }
 
       // feature flag - for emergencies only - TODO: remove after confidence achieved
-      final boolean use_ballot_manifest_selection = true;
+      final boolean use_ballot_manifest_selection =
+        Main.getBooleanProperty("feature_flag.use_ballot_manifest_selection", true);
 
       if (use_ballot_manifest_selection) {
-
-        if (round.isPresent()) {
-          cvr_to_audit_list =
-            ComparisonAuditController.ballotsToAudit(cdb, round.getAsInt(), audited);
-        } else {
-          cvr_to_audit_list =
-            ComparisonAuditController.computeBallotOrder(cdb, index, ballot_count,
-                                                         duplicates, audited);
-        }
-
-        for (int i = 0; i < cvr_to_audit_list.size(); i++) {
-          final CastVoteRecord cvr = cvr_to_audit_list.get(i);
-          final String location = BallotManifestInfoQueries.locationFor(cvr);
-          response_list.add(new CVRToAuditResponse(i, cvr.scannerID(),
-                                                   cvr.batchID(), cvr.recordID(),
-                                                   cvr.imprintedID(),
-                                                   cvr.cvrNumber(), cvr.id(),
-                                                   cvr.ballotType(), location,
-                                                   cvr.auditFlag()));
-        }
-        response_list.sort(new BallotOrderComparator());
-      } else {
         final Round the_round = cdb.rounds().get(round.getAsInt() - 1);
         // replace the var
-        response_list = BallotSelection.
-          selectBallots(the_round.generatedNumbers());
+        response_list = BallotSelection.selectBallots(the_round.generatedNumbers(),
+                                                      county.id());
+      } else {
+        // replace the var
+        response_list = CVRSelection.selectCVRs(cdb,
+                                                round,
+                                                audited,
+                                                duplicates,
+                                                ballot_count,
+                                                index);
       }
-
 
       okJSON(the_response, Main.GSON.toJson(response_list));
     } catch (final PersistenceException e) {

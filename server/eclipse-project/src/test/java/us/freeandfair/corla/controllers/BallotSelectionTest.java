@@ -22,6 +22,7 @@ public class BallotSelectionTest {
 
   private BallotSelectionTest (){};
 
+  private List<CastVoteRecord> fake_cvrs;
 
   @Test()
   public void testSelectBallotsReturnsListOfOnes(){
@@ -41,6 +42,19 @@ public class BallotSelectionTest {
     Assert.assertEquals(results.get(0).imprintedID(), "1-1-7");
   }
 
+  @Test()
+  public void testSelectBallotsReturnsPhantomRecord(){
+    Long rand = 47L;
+    Long sequence_start = 41L;
+    // overwrite var
+    fake_cvrs = new ArrayList<CastVoteRecord>();
+    List<CVRToAuditResponse> results = makeSelection(rand,sequence_start);
+    Assert.assertEquals(1, results.size());
+    Assert.assertEquals(results.get(0).imprintedID(), "1-1-7");
+    Assert.assertEquals(results.get(0).ballotType(), "");
+    Assert.assertEquals(results.get(0).cvrNumber(), 0);
+  }
+
   private List<CVRToAuditResponse> makeSelection(Long rand, Long sequence_start) {
     // setup
     Long sequence_end = rand - sequence_start + 1L;
@@ -50,17 +64,21 @@ public class BallotSelectionTest {
     BallotManifestInfo bmi = fakeBMI(sequence_start, sequence_end);
     List<CastVoteRecord> cvrs = fakeCVRs();
     Function<Long,Optional<BallotManifestInfo>> query = (Long r) -> Optional.of(bmi);
-    Function<List<Long>,List<CastVoteRecord>> queryCVRs = (List<Long> l) -> cvrs;
+    BallotSelection.CVRQ queryCVRs = (List<Long> l, Long c) -> cvrs;
 
     // subject under test
-    return BallotSelection.selectBallots(rands, query, queryCVRs);
+    return BallotSelection.selectBallots(rands, 0L, query, queryCVRs);
   }
 
   public List<CastVoteRecord> fakeCVRs(){
-    List<CastVoteRecord> cvrs = new LinkedList<CastVoteRecord>();
-    CastVoteRecord cvr1 = fakeCVR();
-    cvrs.add(cvr1);
-    return cvrs;
+    if (fake_cvrs != null) {
+      return fake_cvrs;
+    } else {
+      List<CastVoteRecord> cvrs = new LinkedList<CastVoteRecord>();
+      CastVoteRecord cvr1 = fakeCVR();
+      cvrs.add(cvr1);
+      return cvrs;
+    }
   }
 
   public CastVoteRecord fakeCVR() {
