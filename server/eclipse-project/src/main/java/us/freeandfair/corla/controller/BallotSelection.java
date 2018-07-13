@@ -102,7 +102,7 @@ public final class BallotSelection {
     return new CVRToAuditResponse(the_audit_sequence_number,
                                   bmi.scannerID(),
                                   bmi.batchID(),
-                                  cvr.recordID(),
+                                  bmi.ballotPosition(rand).intValue(),
                                   bmi.imprintedID(rand),
                                   cvr.cvrNumber(),
                                   cvr.id(),

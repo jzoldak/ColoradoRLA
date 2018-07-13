@@ -223,10 +223,19 @@ public class BallotManifestInfo implements PersistentEntity, Serializable {
    **/
   public String imprintedID(final Long rand) {
     // offset is the nth (1 based)
-    final Long offset = rand - sequenceStart() + 1L;
+    final Long offset = ballotPosition(rand);
     return scannerID() + "-" +
            batchID() + "-" +
            offset.toString();
+  }
+
+  /**
+   * computed value based on other values
+   **/
+  public Long ballotPosition(final Long rand) {
+    // offset is the nth (1 based)
+    final Long offset = rand - sequenceStart() + 1L;
+    return offset;
   }
 
   /**

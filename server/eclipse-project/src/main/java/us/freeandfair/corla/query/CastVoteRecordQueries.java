@@ -315,7 +315,12 @@ public final class CastVoteRecordQueries {
       final List<Predicate> conjuncts = new ArrayList<>();
       conjuncts.add(cb.equal(root.get(COUNTY_ID), the_county_id));
       conjuncts.add(cb.equal(root.get(RECORD_TYPE), RecordType.UPLOADED));
-      conjuncts.add(root.get("my_sequence_number").in(the_sequence_numbers));
+      // "my_cvr_number" column is is the value from the csv "CvrNumber" (which
+      // is 1 based) so we are counting on this to be sequential. The
+      // "sequence_number" column might also be an option. That is the
+      // my_record_count incremented counter in DominionCVRExportParser. That
+      // number, however, is 0 based and our generated numbers are 1 based
+      conjuncts.add(root.get("my_cvr_number").in(the_sequence_numbers));
       cq.select(root).where(cb.and(conjuncts.toArray(new Predicate[conjuncts.size()])));
       final TypedQuery<CastVoteRecord> query = s.createQuery(cq);
       result = query.getResultList();
