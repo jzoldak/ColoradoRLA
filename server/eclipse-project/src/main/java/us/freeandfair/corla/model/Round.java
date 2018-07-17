@@ -104,7 +104,7 @@ public class Round implements Serializable {
    */
   @Column(nullable = false, updatable = false)
   private Integer my_previous_ballots_audited;
-  
+
   /**
    * The sequence of CVR IDs for ballots to audit in this round, 
    * in the order they are to be presented.
@@ -113,7 +113,7 @@ public class Round implements Serializable {
           name = "ballot_sequence", columnDefinition = TEXT)
   @Convert(converter = LongListConverter.class)
   private List<Long> my_ballot_sequence;
-  
+
   /**
    * The CVR IDs for the audit subsequence to audit in this
    * round, in audit sequence order. 
@@ -271,7 +271,7 @@ public class Round implements Serializable {
   public void setActualAuditedPrefixLength(final int the_audited_prefix_length) {
     my_actual_audited_prefix_length = the_audited_prefix_length;
   }
-  
+
   /**
    * @return the ballot sequence for this round.
    */
