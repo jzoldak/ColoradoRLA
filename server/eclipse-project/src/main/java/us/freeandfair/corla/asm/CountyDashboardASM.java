@@ -1,6 +1,6 @@
 /*
  * Free & Fair Colorado RLA System
- * 
+ *
  * @title ColoradoRLA
  * @created Aug 8, 2017
  * @copyright 2017 Colorado Department of State
@@ -45,7 +45,7 @@ public class CountyDashboardASM extends AbstractStateMachine {
 
   /**
    * Create the County Dashboard ASM.
-   * 
+   *
    * @param the_county_id The county identifier.
    * @trace asm.county_dashboard_asm
    */

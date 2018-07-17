@@ -1,6 +1,6 @@
 /*
  * Free & Fair Colorado RLA System
- * 
+ *
  * @title ColoradoRLA
  * @created Aug 13, 2017
  * @copyright 2017 Colorado Department of State
@@ -25,7 +25,7 @@ import us.freeandfair.corla.Main;
 
 /**
  * Generate a SHA-256 hash of a given file.
- * 
+ *
  * @author Joseph R. Kiniry <kiniry@freeandfair.us>
  * @author Daniel M. Zimmerman <dmz@freeandfair.us>
  * @version 1.0.0
@@ -36,14 +36,14 @@ public final class HashChecker {
    * of a file.
    */
   public static final int BUFFER_SIZE = 8192;
-  
+
   /**
    * Private constructor to prevent instantiation.
    */
   private HashChecker() {
     // empty
   }
-  
+
   /**
    * @trace cryptography.sha256
    * @param a_filename The name of the file to read.
@@ -53,7 +53,7 @@ public final class HashChecker {
   public static String hashFile(final String a_filename) {
     return hashFile(new File(a_filename));
   }
-  
+
   /**
    * @trace cryptography.sha256
    * @param a_file the file to read.
@@ -81,13 +81,13 @@ public final class HashChecker {
       Main.LOGGER.error("No Java security framework installed.");
       Main.LOGGER.info("Unable to compute SHA-256 hashes.");
     } catch (final FileNotFoundException e) {
-      Main.LOGGER.warn("File to hash '" + a_file + 
+      Main.LOGGER.warn("File to hash '" + a_file +
                        "' disappeared before it could be hashed.");
     } catch (final IOException e) {
       Main.LOGGER.warn("Unable to close file '" + a_file +
                        "' after hashing it.");
     }
-    
+
     return result;
   }
 }

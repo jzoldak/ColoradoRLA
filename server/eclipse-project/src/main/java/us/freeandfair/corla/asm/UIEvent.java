@@ -1,6 +1,6 @@
 /*
  * Free & Fair Colorado RLA System
- * 
+ *
  * @title ColoradoRLA
  * @created Aug 11, 2017
  * @copyright 2017 Colorado Department of State
@@ -14,7 +14,7 @@ package us.freeandfair.corla.asm;
 /**
  * An enumeration of all user-triggered external inbound events in the
  * client UI.
- * 
+ *
  * @author Joseph R. Kiniry <kiniry@freeandfair.us>
  * @author Daniel M. Zimmerman <dmz@freeandfair.us>
  * @version 1.0.0

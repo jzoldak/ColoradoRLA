@@ -1,6 +1,6 @@
 /*
  * Free & Fair Colorado RLA System
- * 
+ *
  * @title ColoradoRLA
  * @created Aug 11, 2017
  * @copyright 2017 Colorado Department of State
@@ -28,7 +28,7 @@ import us.freeandfair.corla.persistence.PersistentEntity;
 /**
  * An abstract state machine state, and sufficient information to
  * reconstruct the state machine it belongs to.
- * 
+ *
  * @author Daniel M. Zimmerman <dmz@freeandfair.us>
  * @version 1.0.0
  */
@@ -42,7 +42,7 @@ public class PersistentASMState implements PersistentEntity, Serializable {
    * The serialVersionUID.
    */
   private static final long serialVersionUID = 1L;
-  
+
   /**
    * The ID number.
    */
@@ -50,44 +50,44 @@ public class PersistentASMState implements PersistentEntity, Serializable {
   @Column(updatable = false, nullable = false)
   @GeneratedValue(strategy = GenerationType.SEQUENCE)
   private Long my_id;
-  
+
   /**
    * The version (for optimistic locking).
    */
   @Version
   private Long my_version;
-  
+
   /**
    * The class of AbstractStateMachine to which this state belongs, as
    * a String.
    */
   @Column(updatable = false, nullable = false)
   private String my_asm_class;
-  
+
   /**
    * The identifying information for the state machine, if any, as a
    * String.
    */
   @Column(updatable = false)
   private String my_asm_identity;
-  
+
   /**
    * The ASMState class (enum) containing this state, as a String.
    */
   private String my_state_class;
-  
+
   /**
    * The state value, as a String.
    */
   private String my_state_value;
-  
+
   /**
    * Constructs an empty PersistentASMState, solely for persistence.
    */
   protected PersistentASMState() {
     super();
   }
-  
+
   /**
    * Constructs a PersistentASMState with the specified parameters.
    */
@@ -101,10 +101,10 @@ public class PersistentASMState implements PersistentEntity, Serializable {
     my_state_class = the_state_class;
     my_state_value = the_state_value;
   }
-  
+
   /**
    * Obtains a PersistentASMState from an abstract state machine.
-   * 
+   *
    * @param the_asm The ASM from which to obtain the state.
    * @return The state.
    */
@@ -121,10 +121,10 @@ public class PersistentASMState implements PersistentEntity, Serializable {
     }
     return new PersistentASMState(asm_class, the_asm.identity(), state_class, state_value);
   }
-  
+
   /**
    * Obtains an abstract state machine from a PersistentASMState.
-   * 
+   *
    * @param the_state The state.
    * @return the state machine.
    * @exception IllegalArgumentException if the state machine cannot
@@ -135,20 +135,20 @@ public class PersistentASMState implements PersistentEntity, Serializable {
   public static AbstractStateMachine asmFor(final PersistentASMState the_state) {
     try {
       // first, construct an ASM of the correct class
-      final AbstractStateMachine result = 
+      final AbstractStateMachine result =
           (AbstractStateMachine) Class.forName(the_state.asmClass()).newInstance();
       result.setIdentity(the_state.asmIdentity());
       the_state.applyTo(result);
       return result;
-    } catch (final ClassNotFoundException | IllegalAccessException | 
+    } catch (final ClassNotFoundException | IllegalAccessException |
                    InstantiationException e) {
       throw new IllegalArgumentException(e);
     }
   }
-  
+
   /**
    * Constructs a state value for the specified PersistentASMState.
-   * 
+   *
    * @param the_state The state, or null if no matching state could
    * be constructed.
    */
@@ -172,7 +172,7 @@ public class PersistentASMState implements PersistentEntity, Serializable {
     }
     return result;
   }
-  
+
   /**
    * {@inheritDoc}
    */
@@ -188,7 +188,7 @@ public class PersistentASMState implements PersistentEntity, Serializable {
   public void setID(final Long the_id) {
     my_id = the_id;
   }
-  
+
   /**
    * {@inheritDoc}
    */
@@ -196,11 +196,11 @@ public class PersistentASMState implements PersistentEntity, Serializable {
   public Long version() {
     return my_version;
   }
-  
+
   /**
    * Applies the state in this PersistentASMState to an existing state
    * machine.
-   * 
+   *
    * @param the_asm The ASM.
    * @exception IllegalArgumentException if the ASM is not the one
    * described in this persistent state, or if this persistent state
@@ -217,15 +217,15 @@ public class PersistentASMState implements PersistentEntity, Serializable {
         the_asm.setCurrentState(state);
       }
     } else {
-      throw new IllegalArgumentException("invalid ASM class " + 
-                                         the_asm.getClass().getName() + 
+      throw new IllegalArgumentException("invalid ASM class " +
+                                         the_asm.getClass().getName() +
                                          " for state " + this);
     }
   }
-  
+
   /**
    * Updates this PersistentASMState from an existing state machine.
-   * 
+   *
    * @param the_asm The ASM
    * @exception IllegalArgumentException if the specified state
    * machine is not the one described in this persistent state.
@@ -238,53 +238,53 @@ public class PersistentASMState implements PersistentEntity, Serializable {
       my_state_class = new_state.stateClass();
       my_state_value = new_state.stateValue();
     } else {
-      throw new IllegalArgumentException("invalid ASM " + the_asm + 
+      throw new IllegalArgumentException("invalid ASM " + the_asm +
                                          " for updating state " + this);
     }
   }
-  
+
   /**
    * @return the ASM class.
    */
   public String asmClass() {
     return my_asm_class;
   }
-  
+
   /**
    * @return the ASM identity.
    */
   public String asmIdentity() {
     return my_asm_identity;
   }
-  
+
   /**
    * @return the state class.
    */
   public String stateClass() {
     return my_state_class;
   }
-  
+
   /**
    * @return the state value.
    */
   public String stateValue() {
     return my_state_value;
   }
-  
+
   /**
    * @return a String representation of this ASM state.
    */
   @Override
   public String toString() {
-    return "PersistentASMState [asm_class=" + my_asm_class + 
-           ", asm_identity=" + my_asm_identity + 
-           ", state_class=" + my_state_class + 
+    return "PersistentASMState [asm_class=" + my_asm_class +
+           ", asm_identity=" + my_asm_identity +
+           ", state_class=" + my_state_class +
            ", state_value=" + my_state_value + "]";
   }
 
   /**
    * Compare this object with another for equivalence.
-   * 
+   *
    * @param the_other The other object.
    * @return true if the objects are equivalent, false otherwise.
    */
@@ -302,7 +302,7 @@ public class PersistentASMState implements PersistentEntity, Serializable {
     }
     return result;
   }
-  
+
   /**
    * @return a hash code for this object.
    */

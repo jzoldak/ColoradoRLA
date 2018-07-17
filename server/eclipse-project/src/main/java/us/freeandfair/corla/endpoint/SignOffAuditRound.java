@@ -1,6 +1,6 @@
 /*
  * Free & Fair Colorado RLA System
- * 
+ *
  * @title ColoradoRLA
  * @created Aug 12, 2017
  * @copyright 2017 Colorado Department of State
@@ -39,7 +39,7 @@ import us.freeandfair.corla.util.SuppressFBWarnings;
 
 /**
  * Signs off on the current audit round for a county.
- * 
+ *
  * @author Daniel M. Zimmerman <dmz@freeandfair.us>
  * @version 1.0.0
  */
@@ -51,7 +51,7 @@ public class SignOffAuditRound extends AbstractAuditBoardDashboardEndpoint {
    * The event to return for this endpoint.
    */
   private final ThreadLocal<ASMEvent> my_event = new ThreadLocal<ASMEvent>();
-  
+
   /**
    * {@inheritDoc}
    */
@@ -59,7 +59,7 @@ public class SignOffAuditRound extends AbstractAuditBoardDashboardEndpoint {
   public EndpointType endpointType() {
     return EndpointType.POST;
   }
-  
+
   /**
    * {@inheritDoc}
    */
@@ -74,7 +74,7 @@ public class SignOffAuditRound extends AbstractAuditBoardDashboardEndpoint {
   public AuthorizationType requiredAuthorization() {
     return AuthorizationType.COUNTY;
   }
-  
+
   /**
    * {@inheritDoc}
    */
@@ -90,11 +90,11 @@ public class SignOffAuditRound extends AbstractAuditBoardDashboardEndpoint {
   protected void reset() {
     my_event.set(null);
   }
-  
+
   /**
    * Signs off on the current audit round, regardless of its state of
    * completion.
-   * 
+   *
    * @param the_request The request.
    * @param the_response The response.
    */
@@ -106,10 +106,10 @@ public class SignOffAuditRound extends AbstractAuditBoardDashboardEndpoint {
                          final Response the_response) {
     try {
       final Type list_type = new TypeToken<List<Elector>>() { }.getType();
-      final List<Elector> parsed_signatories = 
+      final List<Elector> parsed_signatories =
           Main.GSON.fromJson(the_request.body(), list_type);
       if (parsed_signatories.size() >= CountyDashboard.MIN_ROUND_SIGN_OFF_MEMBERS) {
-        final County county = Main.authentication().authenticatedCounty(the_request); 
+        final County county = Main.authentication().authenticatedCounty(the_request);
         if (county == null) {
           Main.LOGGER.error("could not get authenticated county");
           unauthorized(the_response, "not authorized to set an audit board");
@@ -159,13 +159,13 @@ public class SignOffAuditRound extends AbstractAuditBoardDashboardEndpoint {
     ok(the_response, "audit round signed off");
     return my_endpoint_result.get();
   }
-  
+
   /**
    * Notifies the DoS dashboard that the round is over if all the counties
    * _except_ for the one identified in the parameter have completed their
    * audit round, or are not auditing (the excluded county is not counted
-   * because its transition will not happen until this endpoint returns). 
-   * 
+   * because its transition will not happen until this endpoint returns).
+   *
    * @param the_id The ID of the county to exclude.
    */
   private void notifyRoundComplete(final Long the_id) {
@@ -175,36 +175,36 @@ public class SignOffAuditRound extends AbstractAuditBoardDashboardEndpoint {
         finished &= cdb.currentRound() == null;
       }
     }
-    
+
     if (finished) {
-      ASMUtilities.step(DOS_ROUND_COMPLETE_EVENT, 
-                        DoSDashboardASM.class, 
+      ASMUtilities.step(DOS_ROUND_COMPLETE_EVENT,
+                        DoSDashboardASM.class,
                         DoSDashboardASM.IDENTITY);
     }
   }
-  
+
   /**
    * Notifies the county and DoS dashboards that the audit is complete.
-   * 
+   *
    * @param the_cdb The county dashboard for this county.
    */
   private void notifyAuditComplete(final CountyDashboard the_cdb) {
-    ASMUtilities.step(COUNTY_AUDIT_COMPLETE_EVENT, 
+    ASMUtilities.step(COUNTY_AUDIT_COMPLETE_EVENT,
                       CountyDashboardASM.class, my_asm.get().identity());
     // check to see if all counties are complete
     boolean all_complete = true;
     for (final County c : Persistence.getAll(County.class)) {
-      final CountyDashboardASM asm = 
+      final CountyDashboardASM asm =
           ASMUtilities.asmFor(CountyDashboardASM.class, String.valueOf(c.id()));
-      all_complete &= asm.isInFinalState();       
+      all_complete &= asm.isInFinalState();
     }
     if (all_complete) {
-      ASMUtilities.step(DOS_AUDIT_COMPLETE_EVENT, 
-                        DoSDashboardASM.class, 
+      ASMUtilities.step(DOS_AUDIT_COMPLETE_EVENT,
+                        DoSDashboardASM.class,
                         DoSDashboardASM.IDENTITY);
     } else {
       ASMUtilities.step(DOS_COUNTY_AUDIT_COMPLETE_EVENT,
-                        DoSDashboardASM.class, 
+                        DoSDashboardASM.class,
                         DoSDashboardASM.IDENTITY);
     }
     the_cdb.signOutAuditBoard();

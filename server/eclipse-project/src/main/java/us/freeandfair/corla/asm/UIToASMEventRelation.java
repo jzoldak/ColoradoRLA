@@ -1,6 +1,6 @@
 /*
  * Free & Fair Colorado RLA System
- * 
+ *
  * @title ColoradoRLA
  * @created Aug 8, 2017
  * @copyright 2017 Colorado Department of State
@@ -32,9 +32,9 @@ public class UIToASMEventRelation {
   /**
    * The relation encoded via a set of pairs.
    */
-  private final Set<Pair<UIEvent, ASMEvent>> my_relation = 
+  private final Set<Pair<UIEvent, ASMEvent>> my_relation =
       new HashSet<Pair<UIEvent, ASMEvent>>();
-  
+
   /**
    * Create an instance of this relation, which contains the full set
    * of public inbound UI and ASM events.
@@ -45,39 +45,39 @@ public class UIToASMEventRelation {
     addCountyDashboardPairs();
     addAuditBoardDashboardPairs();
   }
-  
+
   private void addDoSDashboardPairs() {
     // All Department of State Dashboard pairs.
-    my_relation.add(new Pair<UIEvent, ASMEvent>(UNDEFINED, 
+    my_relation.add(new Pair<UIEvent, ASMEvent>(UNDEFINED,
         PARTIAL_AUDIT_INFO_EVENT));
     my_relation.add(new Pair<UIEvent, ASMEvent>(UNDEFINED,
         DOS_START_ROUND_EVENT));
-    my_relation.add(new Pair<UIEvent, ASMEvent>(UNDEFINED, 
+    my_relation.add(new Pair<UIEvent, ASMEvent>(UNDEFINED,
         PUBLISH_AUDIT_REPORT_EVENT));
   }
-  
+
   private void addCountyDashboardPairs() {
     // All County Dashboard pairs.
-    my_relation.add(new Pair<UIEvent, ASMEvent>(UNDEFINED, 
+    my_relation.add(new Pair<UIEvent, ASMEvent>(UNDEFINED,
         IMPORT_BALLOT_MANIFEST_EVENT));
-    my_relation.add(new Pair<UIEvent, ASMEvent>(UNDEFINED, 
+    my_relation.add(new Pair<UIEvent, ASMEvent>(UNDEFINED,
         IMPORT_CVRS_EVENT));
-    my_relation.add(new Pair<UIEvent, ASMEvent>(UNDEFINED, 
+    my_relation.add(new Pair<UIEvent, ASMEvent>(UNDEFINED,
         COUNTY_START_AUDIT_EVENT));
   }
-  
+
   private void addAuditBoardDashboardPairs() {
     // All Audit Board Dashboard pairs.
-    my_relation.add(new Pair<UIEvent, ASMEvent>(UNDEFINED, 
+    my_relation.add(new Pair<UIEvent, ASMEvent>(UNDEFINED,
         REPORT_MARKINGS_EVENT));
-    my_relation.add(new Pair<UIEvent, ASMEvent>(UNDEFINED, 
+    my_relation.add(new Pair<UIEvent, ASMEvent>(UNDEFINED,
         REPORT_BALLOT_NOT_FOUND_EVENT));
-    my_relation.add(new Pair<UIEvent, ASMEvent>(UNDEFINED, 
+    my_relation.add(new Pair<UIEvent, ASMEvent>(UNDEFINED,
         SUBMIT_AUDIT_INVESTIGATION_REPORT_EVENT));
-    my_relation.add(new Pair<UIEvent, ASMEvent>(UNDEFINED, 
+    my_relation.add(new Pair<UIEvent, ASMEvent>(UNDEFINED,
         SUBMIT_INTERMEDIATE_AUDIT_REPORT_EVENT));
   }
-  
+
   /**
    * Is a_pair a member of this relation?
    * @param a_pair the UIEvent/ASMEvent pair to check.
@@ -104,7 +104,7 @@ public class UIToASMEventRelation {
     }
     return result;
   }
-  
+
   /**
    * Follow the relation from right to left.
    * @param a_ae the ASM event to lookup.

@@ -1,6 +1,6 @@
 /*
  * Free & Fair Colorado RLA System
- * 
+ *
  * @title ColoradoRLA
  * @created Aug 9, 2017
  * @copyright 2017 Colorado Department of State
@@ -29,7 +29,7 @@ import us.freeandfair.corla.persistence.Persistence;
 
 /**
  * The endpoint for selecting the contests to audit.
- * 
+ *
  * @author Daniel M Zimmerman
  * @version 1.0.0
  */
@@ -47,7 +47,7 @@ public class SelectContestsForAudit extends AbstractDoSDashboardEndpoint {
   public EndpointType endpointType() {
     return EndpointType.POST;
   }
-  
+
   /**
    * {@inheritDoc}
    */
@@ -71,18 +71,18 @@ public class SelectContestsForAudit extends AbstractDoSDashboardEndpoint {
   protected void reset() {
     my_event.set(null);
   }
-  
+
   /**
-   * Attempts to select contests for audit. 
-   * 
+   * Attempts to select contests for audit.
+   *
    * @param the_request The request.
    * @param the_response The response.
    */
   @Override
-  public synchronized String endpointBody(final Request the_request, 
+  public synchronized String endpointBody(final Request the_request,
                                       final Response the_response) {
     try {
-      final ContestToAudit[] contests = 
+      final ContestToAudit[] contests =
           Main.GSON.fromJson(the_request.body(), ContestToAudit[].class);
       final DoSDashboard dosdb = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class);
       if (dosdb == null) {
@@ -108,10 +108,10 @@ public class SelectContestsForAudit extends AbstractDoSDashboardEndpoint {
     }
     return my_endpoint_result.get();
   }
-  
+
   /**
    * Computes the event of this endpoint based on audit info completeness.
-   * 
+   *
    * @param the_dosdb The DoS dashboard.
    */
   private ASMEvent nextEvent(final DoSDashboard the_dosdb) {

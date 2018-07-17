@@ -1,6 +1,6 @@
 /*
  * Free & Fair Colorado RLA System
- * 
+ *
  * @title ColoradoRLA
  * @created Aug 8, 2017
  * @copyright 2017 Colorado Department of State
@@ -34,19 +34,19 @@ public class AuditBoardDashboardASM extends AbstractStateMachine {
   /**
    * The serialVersionUID.
    */
-  private static final long serialVersionUID = 1; 
+  private static final long serialVersionUID = 1;
 
   /**
    * The final states of this ASM.
    */
-  private static final ASMState[] FINAL_STATES = 
+  private static final ASMState[] FINAL_STATES =
       {AuditBoardDashboardState.AUDIT_COMPLETE,
        AuditBoardDashboardState.UNABLE_TO_AUDIT,
        AuditBoardDashboardState.AUDIT_ABORTED};
-  
+
   /**
    * Create the Audit Board Dashboard ASM for the specified county.
-   * 
+   *
    * @param the_county_id The county identifier.
    * @trace asm.county_dashboard_asm
    */

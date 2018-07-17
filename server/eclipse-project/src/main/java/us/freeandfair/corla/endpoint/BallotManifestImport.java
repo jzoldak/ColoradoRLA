@@ -1,6 +1,6 @@
 /*
  * Free & Fair Colorado RLA System
- * 
+ *
  * @title ColoradoRLA
  * @created Jul 27, 2017
  * @copyright 2017 Colorado Department of State
@@ -41,7 +41,7 @@ import us.freeandfair.corla.query.BallotManifestInfoQueries;
 
 /**
  * The "ballot manifest import" endpoint.
- * 
+ *
  * @author Daniel M. Zimmerman <dmz@freeandfair.us>
  * @version 1.0.0
  */
@@ -51,7 +51,7 @@ public class BallotManifestImport extends AbstractCountyDashboardEndpoint {
    * The " (id " string.
    */
   private static final String PAREN_ID = " (id ";
-  
+
   /**
    * {@inheritDoc}
    */
@@ -59,7 +59,7 @@ public class BallotManifestImport extends AbstractCountyDashboardEndpoint {
   public EndpointType endpointType() {
     return EndpointType.POST;
   }
-  
+
   /**
    * {@inheritDoc}
    */
@@ -77,16 +77,16 @@ public class BallotManifestImport extends AbstractCountyDashboardEndpoint {
   }
 
   /**
-   * Updates the appropriate county dashboard to reflect a new 
+   * Updates the appropriate county dashboard to reflect a new
    * ballot manifest upload.
    * @param the_response The response object (for error reporting).
    * @param the_file The uploaded file.
    * @param the_ballot_count The ballot count from the manifest.
    */
-  private void updateCountyDashboard(final Response the_response, 
+  private void updateCountyDashboard(final Response the_response,
                                      final UploadedFile the_file,
                                      final int the_ballot_count) {
-    final CountyDashboard cdb = 
+    final CountyDashboard cdb =
         Persistence.getByID(the_file.county().id(), CountyDashboard.class);
     if (cdb == null) {
       serverError(the_response, "could not locate county dashboard");
@@ -107,26 +107,26 @@ public class BallotManifestImport extends AbstractCountyDashboardEndpoint {
       }
     }
   }
-  
+
   /**
    * Parses an uploaded ballot manifest and attempts to persist it to the database.
-   * 
+   *
    * @param the_response The response (for error reporting).
    * @param the_file The uploaded file.
    */
   // the CSV parser can throw arbitrary runtime exceptions, which we must catch
   @SuppressWarnings({"PMD.AvoidCatchingGenericException"})
-  private void parseFile(final Response the_response, final UploadedFile the_file) {  
+  private void parseFile(final Response the_response, final UploadedFile the_file) {
     try (InputStream bmi_is = the_file.file().getBinaryStream()) {
       final InputStreamReader bmi_isr = new InputStreamReader(bmi_is, "UTF-8");
-      final BallotManifestParser parser = 
-          new ColoradoBallotManifestParser(bmi_isr, 
+      final BallotManifestParser parser =
+          new ColoradoBallotManifestParser(bmi_isr,
                                            the_file.county().id());
       final int deleted = BallotManifestInfoQueries.deleteMatching(the_file.county().id());
       if (parser.parse()) {
         final int imported = parser.recordCount().getAsInt();
-        Main.LOGGER.info(imported + " ballot manifest records parsed from file " + 
-                         the_file.filename() + PAREN_ID + the_file.id() + ") for county " + 
+        Main.LOGGER.info(imported + " ballot manifest records parsed from file " +
+                         the_file.filename() + PAREN_ID + the_file.id() + ") for county " +
                          the_file.county().id());
         updateCountyDashboard(the_response, the_file,
                               parser.ballotCount().getAsInt());
@@ -139,20 +139,20 @@ public class BallotManifestImport extends AbstractCountyDashboardEndpoint {
         }
         okJSON(the_response, Main.GSON.toJson(response));
       } else {
-        Main.LOGGER.info("could not parse malformed ballot manifest file " + 
-                         the_file.filename() + PAREN_ID + the_file.id() + ") for county " + 
+        Main.LOGGER.info("could not parse malformed ballot manifest file " +
+                         the_file.filename() + PAREN_ID + the_file.id() + ") for county " +
                          the_file.county().id());
-        badDataContents(the_response, "malformed ballot manifest file " + 
+        badDataContents(the_response, "malformed ballot manifest file " +
                                       the_file.filename() + PAREN_ID + the_file.id() + ")");
       }
     } catch (final RuntimeException | IOException e) {
-      Main.LOGGER.info("could not parse malformed ballot manifest file " + 
-                       the_file.filename() + PAREN_ID + the_file.id() + ") for county " + 
+      Main.LOGGER.info("could not parse malformed ballot manifest file " +
+                       the_file.filename() + PAREN_ID + the_file.id() + ") for county " +
                        the_file.county().id() + ": " + e);
-      badDataContents(the_response, "malformed ballot manifest file " + 
+      badDataContents(the_response, "malformed ballot manifest file " +
                                     the_file.filename() + PAREN_ID + the_file.id() + ")");
     } catch (final SQLException e) {
-      Main.LOGGER.info("could not read file " + the_file.filename() + 
+      Main.LOGGER.info("could not read file " + the_file.filename() +
                        PAREN_ID + the_file.id() + ") from persistent storage");
     }
   }
@@ -162,7 +162,7 @@ public class BallotManifestImport extends AbstractCountyDashboardEndpoint {
    */
   @Override
   @SuppressWarnings({"PMD.ConfusingTernary"})
-  public String endpointBody(final Request the_request, final Response the_response) {    
+  public String endpointBody(final Request the_request, final Response the_response) {
     // we know we have county authorization, so let's find out which county
     final County county = Main.authentication().authenticatedCounty(the_request);
 
@@ -170,15 +170,15 @@ public class BallotManifestImport extends AbstractCountyDashboardEndpoint {
       unauthorized(the_response, "unauthorized administrator for ballot manifest upload");
       return my_endpoint_result.get();
     }
-    
+
     try {
       final UploadedFile file =
           Main.GSON.fromJson(the_request.body(), UploadedFile.class);
       if (file == null) {
         badDataContents(the_response, "nonexistent file");
       } else if (!file.county().equals(county)) {
-        unauthorized(the_response, "county " + county.id() + " attempted to import " + 
-                                   "file " + file.filename() + " uploaded by county " + 
+        unauthorized(the_response, "county " + county.id() + " attempted to import " +
+                                   "file " + file.filename() + " uploaded by county " +
                                    file.county().id());
       } else if (file.hashStatus() == HashStatus.VERIFIED) {
         parseFile(the_response, file);
@@ -188,7 +188,7 @@ public class BallotManifestImport extends AbstractCountyDashboardEndpoint {
     } catch (final JsonParseException e) {
       badDataContents(the_response, "malformed request: " + e.getMessage());
     }
-    
+
     return my_endpoint_result.get();
   }
 }

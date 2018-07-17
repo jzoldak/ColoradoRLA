@@ -32,7 +32,7 @@ public interface ASMState {
     DOS_AUDIT_COMPLETE,
     AUDIT_RESULTS_PUBLISHED
   }
-  
+
   /**
    * The County Dashboard's states.
    * @trace asm.county_dashboard_state
@@ -48,7 +48,7 @@ public interface ASMState {
     COUNTY_AUDIT_COMPLETE,
     DEADLINE_MISSED
   }
-  
+
   /**
    * The Audit Board Dashboard's states.
    * @trace asm.audit_board_dashboard_state

@@ -1,6 +1,6 @@
 /*
  * Free & Fair Colorado RLA System
- * 
+ *
  * @title ColoradoRLA
  * @created Aug 27, 2017
  * @copyright 2017 Colorado Department of State
@@ -24,7 +24,7 @@ import us.freeandfair.corla.query.AdministratorQueries;
 /**
  * A demonstration implementation of AuthenticationInterface used during
  * development to mock an actual back-end authentication system.
- * 
+ *
  * @author Joseph R. Kiniry <kiniry@freeandfair.us>
  * @author Daniel M. Zimmerman <dmz@freeandfair.us>
  * @version 1.0.0
@@ -37,7 +37,7 @@ public final class DatabaseAuthentication extends AbstractAuthentication {
    */
   @Override
   public boolean secondFactorAuthenticate(final Request the_request,
-                                          final String the_username, 
+                                          final String the_username,
                                           final String the_second_factor) {
     // skip, as we do not implement a second factor in test mode
     return true;
@@ -53,9 +53,9 @@ public final class DatabaseAuthentication extends AbstractAuthentication {
   @SuppressWarnings({"PMD.ConsecutiveLiteralAppends", "checkstyle:magicnumber"})
   public AuthenticationResult traditionalAuthenticate(final Request the_request,
                                                       final Response the_response,
-                                                      final String the_username, 
+                                                      final String the_username,
                                                       final String the_password) {
-    final Administrator admin = 
+    final Administrator admin =
         AdministratorQueries.byUsername(the_username);
     final Random random = new SecureRandom();
     final StringBuilder sb = new StringBuilder();
@@ -66,9 +66,9 @@ public final class DatabaseAuthentication extends AbstractAuthentication {
       sb.append(random.nextInt(8) + 1);
       sb.append("] ");
     }
-    return new AuthenticationResult(admin != null, sb.toString().trim()); 
+    return new AuthenticationResult(admin != null, sb.toString().trim());
   }
-  
+
   /**
    * {@inheritDoc}
    */

@@ -1,6 +1,6 @@
 /*
  * Free & Fair Colorado RLA System
- * 
+ *
  * @title ColoradoRLA
  * @created Jul 27, 2017
  * @copyright 2017 Colorado Department of State
@@ -33,7 +33,7 @@ import us.freeandfair.corla.persistence.Persistence;
 
 /**
  * The "audit CVR upload" endpoint.
- * 
+ *
  * @author Daniel M. Zimmerman <dmz@freeandfair.us>
  * @version 1.0.0
  */
@@ -44,7 +44,7 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
    * The event we will return for the ASM.
    */
   private final ThreadLocal<ASMEvent> my_event = new ThreadLocal<ASMEvent>();
-  
+
   /**
    * {@inheritDoc}
    */
@@ -52,7 +52,7 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
   public EndpointType endpointType() {
     return EndpointType.POST;
   }
-  
+
   /**
    * {@inheritDoc}
    */
@@ -68,7 +68,7 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
   protected ASMEvent endpointEvent() {
     return my_event.get();
   }
-  
+
   /**
    * {@inheritDoc}
    */
@@ -76,7 +76,7 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
   protected void reset() {
     my_event.set(null);
   }
-  
+
   /**
    * {@inheritDoc}
    */
@@ -89,7 +89,7 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
         Main.LOGGER.error("empty audit CVR upload");
         badDataContents(the_response, "empty audit CVR upload");
       } else {
-        final CountyDashboard cdb = 
+        final CountyDashboard cdb =
             Persistence.getByID(Main.authentication().authenticatedCounty(the_request).id(),
                                 CountyDashboard.class);
         if (cdb == null) {
@@ -98,16 +98,16 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
         } else if (cdb.ballotsRemainingInCurrentRound() > 0) {
           final CastVoteRecord acvr = submission.auditCVR();
           acvr.setID(null);
-          final CastVoteRecord real_acvr = 
-              new CastVoteRecord(RecordType.AUDITOR_ENTERED, Instant.now(), 
-                                 acvr.countyID(), acvr.cvrNumber(), null, acvr.scannerID(), 
-                                 acvr.batchID(), acvr.recordID(), acvr.imprintedID(), 
+          final CastVoteRecord real_acvr =
+              new CastVoteRecord(RecordType.AUDITOR_ENTERED, Instant.now(),
+                                 acvr.countyID(), acvr.cvrNumber(), null, acvr.scannerID(),
+                                 acvr.batchID(), acvr.recordID(), acvr.imprintedID(),
                                  acvr.ballotType(), acvr.contestInfo());
           Persistence.saveOrUpdate(real_acvr);
-          Main.LOGGER.info("Audit CVR for CVR id " + submission.cvrID() + 
+          Main.LOGGER.info("Audit CVR for CVR id " + submission.cvrID() +
                            " parsed and stored as id " + real_acvr.id());
 
-          final CastVoteRecord cvr = Persistence.getByID(submission.cvrID(), 
+          final CastVoteRecord cvr = Persistence.getByID(submission.cvrID(),
                                                          CastVoteRecord.class);
           if (cvr == null) {
             Main.LOGGER.error("could not find original CVR");
@@ -122,7 +122,7 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
             }
           }
         } else {
-          invariantViolation(the_response, 
+          invariantViolation(the_response,
                              "ballot submission with no remaining ballots in round");
         }
         if (cdb.ballotsRemainingInCurrentRound() == 0) {

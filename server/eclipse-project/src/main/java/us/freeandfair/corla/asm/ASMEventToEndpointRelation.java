@@ -1,6 +1,6 @@
 /*
  * Free & Fair Colorado RLA System
- * 
+ *
  * @title ColoradoRLA
  * @created Aug 8, 2017
  * @copyright 2017 Colorado Department of State
@@ -20,10 +20,9 @@ import java.util.Set;
 
 import us.freeandfair.corla.endpoint.Endpoint;
 import us.freeandfair.corla.util.Pair;
-
 /**
  * @description The mapping between ASM events and server endpoints.
- * @trace asm.ui_to_asm_event_relation 
+ * @trace asm.ui_to_asm_event_relation
  * @author Joseph R. Kiniry <kiniry@freeandfair.us>
  * @version 1.0.0
  * @todo kiniry Introduce AbstractRelation parent class.
@@ -36,13 +35,13 @@ public class ASMEventToEndpointRelation {
    * endpoint.
    */
   public static final String UNIMPLEMENTED = "UNIMPLEMENTED";
-  
+
   /**
    * The relation encoded via a set of pairs.
    */
-  private final Set<Pair<ASMEvent, String>> my_relation = 
+  private final Set<Pair<ASMEvent, String>> my_relation =
       new HashSet<Pair<ASMEvent, String>>();
-   
+
   /**
    * Create an instance of this relation, which contains the full set
    * of public ASM events and Endpoints.
@@ -53,7 +52,7 @@ public class ASMEventToEndpointRelation {
     addCountyDashboardPairs();
     addAuditBoardDashboardPairs();
   }
-  
+
   private void addDoSDashboardPairs() {
     // All Department of State Dashboard pairs.
     my_relation.add(new Pair<ASMEvent, String>(
@@ -66,7 +65,7 @@ public class ASMEventToEndpointRelation {
         PUBLISH_AUDIT_REPORT_EVENT,
         UNIMPLEMENTED));
   }
-  
+
   private void addCountyDashboardPairs() {
     // All County Dashboard pairs.
     my_relation.add(new Pair<ASMEvent, String>(
@@ -79,7 +78,7 @@ public class ASMEventToEndpointRelation {
         COUNTY_START_AUDIT_EVENT,
         UNIMPLEMENTED));
   }
-  
+
   private void addAuditBoardDashboardPairs() {
     // All Audit Board Dashboard pairs.
     my_relation.add(new Pair<ASMEvent, String>(
@@ -95,7 +94,7 @@ public class ASMEventToEndpointRelation {
         SUBMIT_INTERMEDIATE_AUDIT_REPORT_EVENT,
         UNIMPLEMENTED));
   }
-    
+
   /**
    * Is a_pair a member of this relation?
    * @param a_pair the UIEvent/ASMEvent pair to check.
@@ -125,7 +124,7 @@ public class ASMEventToEndpointRelation {
     }
     return result;
   }
-  
+
   /**
    * Follow the relation from right to left.
    * @param an_endpoint the endpoint to lookup.
