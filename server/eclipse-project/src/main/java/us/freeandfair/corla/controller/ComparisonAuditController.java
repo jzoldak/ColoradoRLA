@@ -44,6 +44,7 @@ import us.freeandfair.corla.model.Round;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.CastVoteRecordQueries;
 import us.freeandfair.corla.query.CountyContestResultQueries;
+import us.freeandfair.corla.service.CountyService;
 
 /**
  * Controller methods relevant to comparison audits.
@@ -385,6 +386,12 @@ public final class ComparisonAuditController {
     the_cdb.setEstimatedSamplesToAudit(Math.max(0,  to_audit));
     the_cdb.setOptimisticSamplesToAudit(Math.max(0,  to_audit));
     if (!county_driving_contests.isEmpty() && 0 < to_audit) {
+      final CountyService county_service = new CountyService(the_cdb.county());
+      // Random numbers based on the number of ballots to audit, in the range
+      // [1, max_ballot_count_to_audit]
+      final List<Long> generated_numbers =
+          county_service.getRandomNumbers(0, to_audit - 1);
+
       // the list of CVRs to audit, in audit sequence order
       final List<CastVoteRecord> cvrs_to_audit =
           getCVRsInAuditSequence(the_cdb.county(), 0, to_audit - 1);
@@ -405,7 +412,9 @@ public final class ComparisonAuditController {
       }
 
       the_cdb.startRound(sorted_deduplicated_cvrs.size(),
-                         to_audit, 0, 
+                         to_audit,
+                         0,
+                         generated_numbers,
                          ballot_ids_to_audit,
                          audit_subsequence_ids);
       updateRound(the_cdb, the_cdb.currentRound());
@@ -442,6 +451,12 @@ public final class ComparisonAuditController {
       // in the audit sequence
       start_index = previous_round.actualAuditedPrefixLength();
     }
+
+    final CountyService county_service = new CountyService(the_cdb.county());
+    // Random numbers based on the number of ballots to audit, in the range
+    // [1, max_ballot_count_to_audit]
+    final List<Long> generated_numbers =
+        county_service.getRandomNumbers(start_index, the_round_length);
 
     // the list of CVRs to audit, in audit sequence order
     final List<CastVoteRecord> new_cvrs =
@@ -491,7 +506,10 @@ public final class ComparisonAuditController {
       }
       the_cdb.startRound(sorted_deduplicated_new_cvrs.size(),
                          start_index + new_cvrs.size(),
-                         start_index, ballot_ids_to_audit, new_cvr_ids);
+                         start_index,
+                         generated_numbers,
+                         ballot_ids_to_audit,
+                         new_cvr_ids);
       updateRound(the_cdb, the_cdb.currentRound());
       updateCVRUnderAudit(the_cdb);
       return true;
@@ -541,6 +559,7 @@ public final class ComparisonAuditController {
       while (sorted_deduplicated_new_cvrs.isEmpty()) {
         expected_prefix_length = computeEstimatedSamplesToAudit(the_cdb);
         if (the_cdb.auditedPrefixLength() < expected_prefix_length) {
+
           final List<CastVoteRecord> extra_cvrs =
               getCVRsInAuditSequence(the_cdb.county(), start_index,
                                      expected_prefix_length - 1);
@@ -564,6 +583,13 @@ public final class ComparisonAuditController {
         }
       }
 
+      final CountyService county_service = new CountyService(the_cdb.county());
+      // Random numbers based on the number of ballots to audit, in the range
+      // [1, max_ballot_count_to_audit]
+      final List<Long> generated_numbers =
+          county_service.getRandomNumbers(start_index,
+                                          expected_prefix_length - 1);
+
       final int round_length = sorted_deduplicated_new_cvrs.size();
 
       // the ids of the CVRs to audit, in audit sequence order
@@ -580,8 +606,12 @@ public final class ComparisonAuditController {
       Main.LOGGER.info("starting audit round " + (rounds.size() + 1) + " for county " +
           the_cdb.id() + " at audit sequence number " + start_index +
           " with " + round_length + " ballots to audit");
-      the_cdb.startRound(round_length, expected_prefix_length, 
-                         start_index, ballot_ids_to_audit, new_cvr_ids);
+      the_cdb.startRound(round_length,
+                         expected_prefix_length,
+                         start_index,
+                         generated_numbers,
+                         ballot_ids_to_audit,
+                         new_cvr_ids);
       updateRound(the_cdb, the_cdb.currentRound());
       updateCVRUnderAudit(the_cdb);
       result = true;
@@ -717,7 +747,6 @@ public final class ComparisonAuditController {
     }
     return result;
   }
-
 
   /**
    * Updates a round object with the disagreements and discrepancies
