@@ -21,8 +21,8 @@ import us.freeandfair.corla.crypto.PseudoRandomNumberGenerator;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 import us.freeandfair.corla.model.County;
 import us.freeandfair.corla.model.DoSDashboard;
-import us.freeandfair.corla.query.CastVoteRecordQueries;
 import us.freeandfair.corla.persistence.Persistence;
+import us.freeandfair.corla.query.CastVoteRecordQueries;
 
 /**
  * Service layer for County model objects.
@@ -57,7 +57,7 @@ public final class CountyService {
   public List<Long> getRandomNumbers(final int minIndex, final int maxIndex) {
     // TODO: Query the ballot manifest rather than the CVR.
     final OptionalLong count =
-      CastVoteRecordQueries.countMatching(this.county.id(), RecordType.UPLOADED);
+        CastVoteRecordQueries.countMatching(this.county.id(), RecordType.UPLOADED);
 
     if (!count.isPresent()) {
       throw new IllegalStateException("unable to count ballots for county " +
@@ -65,9 +65,9 @@ public final class CountyService {
     }
 
     final String seed =
-      Persistence.getByID(DoSDashboard.ID, DoSDashboard.class)
-        .auditInfo()
-        .seed();
+        Persistence.getByID(DoSDashboard.ID, DoSDashboard.class)
+          .auditInfo()
+          .seed();
 
     final boolean withReplacement = true;
     // 1-based index, taking cues from the literature
@@ -75,12 +75,12 @@ public final class CountyService {
     final int maximum = (int) count.getAsLong();
 
     final PseudoRandomNumberGenerator prng =
-      new PseudoRandomNumberGenerator(seed, withReplacement, minimum, maximum);
+        new PseudoRandomNumberGenerator(seed, withReplacement, minimum, maximum);
 
     return prng.getRandomNumbers(minIndex, maxIndex)
-      .stream()
-      // Convert to longs in advance of modifying the underlying PRNG.
-      .map(Integer::toUnsignedLong)
-      .collect(Collectors.toCollection(LinkedList::new));
+       .stream()
+       // Convert to longs in advance of modifying the underlying PRNG.
+       .map(Integer::toUnsignedLong)
+       .collect(Collectors.toCollection(LinkedList::new));
   }
 }

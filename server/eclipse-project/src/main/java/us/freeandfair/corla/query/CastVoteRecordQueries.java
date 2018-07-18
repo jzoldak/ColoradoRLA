@@ -14,8 +14,8 @@ package us.freeandfair.corla.query;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
 import java.util.Set;
@@ -315,7 +315,7 @@ public final class CastVoteRecordQueries {
       final List<Predicate> conjuncts = new ArrayList<>();
       conjuncts.add(cb.equal(root.get(COUNTY_ID), the_county_id));
       conjuncts.add(cb.equal(root.get(RECORD_TYPE), RecordType.UPLOADED));
-      // "my_cvr_number" column is is the value from the csv "CvrNumber" (which
+      // "my_cvr_number" column is the value from the csv "CvrNumber" (which
       // is 1 based) so we are counting on this to be sequential. The
       // "sequence_number" column might also be an option. That is the
       // my_record_count incremented counter in DominionCVRExportParser. That
@@ -329,7 +329,10 @@ public final class CastVoteRecordQueries {
     }
     if (result == null) {
       Main.LOGGER.debug("found no CVRs for county " + the_county_id +
-                        ", type " + RecordType.UPLOADED + ", sequence " + the_sequence_numbers);
+                        ", type " +
+                        RecordType.UPLOADED +
+                        ", sequence " +
+                        the_sequence_numbers);
     } else {
       Main.LOGGER.debug("found " + result.size() + "CVRs ");
     }

@@ -3,11 +3,12 @@
  **/
 package us.freeandfair.corla.controller;
 
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 import us.freeandfair.corla.json.CVRToAuditResponse;
 import us.freeandfair.corla.json.CVRToAuditResponse.BallotOrderComparator;
@@ -18,12 +19,10 @@ import us.freeandfair.corla.query.CastVoteRecordQueries;
 
 public final class BallotSelection {
 
-  private BallotSelection() {
-  }
 
-  @FunctionalInterface
-  public interface CVRQ {
-    public List<CastVoteRecord> apply(List<Long> l, Long c);
+
+  /** prevent construction **/
+  private BallotSelection() {
   }
 
   /**
@@ -50,45 +49,66 @@ public final class BallotSelection {
                     final Long countyID,
                     final Function<Long,Optional<BallotManifestInfo>> queryBMI,
                     final CVRQ queryCVR) {
-    final List<CVRToAuditResponse> a_list = new LinkedList<CVRToAuditResponse>();
-    // here we rely on the id of the cvr to match the audit_sequence_number.
-    // This is done by incrementing a counter during the file import.
-    final List<CastVoteRecord> cvrs = queryCVR.apply(rands, countyID);
 
-    int i = 0;
-    for (final Long rand: rands) {
-      i++;
+    // this is what gets added to and returned
+    final List<CVRToAuditResponse> a_list = new LinkedList<CVRToAuditResponse>();
+
+    // dedup! are we supposed to be doing this? probably(?):
+    // ComparisonAuditController does!
+    final List<Long> deduped = dedup(rands);
+
+    final List<CastVoteRecord> cvrs = queryCVR.apply(deduped, countyID);
+
+    // theoretically we don't need cvrs to render ballot info -
+    // practically, though, we need the cvr info for the app to work
+    // so let's not proceed if we can't join to a cvr
+    assertSameSize(deduped, cvrs);
+
+    Integer i = 0;
+    for (final Long rand: deduped) {
+      // could we get them all at once? I'm not sure
       final Optional<BallotManifestInfo> bmiMaybe = queryBMI.apply(rand);
 
-      CastVoteRecord cvr;
-      try {
-        cvr = cvrs.get(i - 1); // index is 0 based
-      } catch (final IndexOutOfBoundsException e) {
-        // TODO create a warning or a discrepancy of some kind
-        cvr = new CastVoteRecord(CastVoteRecord.RecordType.PHANTOM_RECORD,
-                                 null,
-                                 0L,
-                                 0,
-                                 0,
-                                 0,
-                                 "",
-                                 0,
-                                 "",
-                                 "",
-                                 null);
-        cvr.setID(0L);
-      }
-
       if (bmiMaybe.isPresent()) {
-        a_list.add(toResponse(i, rand, bmiMaybe.get(), cvr));
+        // join the bmi and cvr
+        a_list.add(toResponse(i, rand, bmiMaybe.get(), cvrs.get(i)));
       } else {
-        final String msg = "could not find a ballot manifest for random number: " +
-            rand.toString();
+        final String msg = "could not find a ballot manifest for random number: "
+            + rand;
         throw new BallotSelection.MissingBallotManifestException(msg);
       }
+
+      // increment through rands
+      i++;
     }
     a_list.sort(new BallotOrderComparator());
     return a_list;
+  }
+
+  /** remove duplicates **/
+  public static List<Long> dedup(final List<Long> rands) {
+    return new LinkedList<Long>(new LinkedHashSet<Long>(rands));
+  }
+
+  /** raise exception if sizes are different **/
+  public static void assertSameSize(final List<Long> randoms,
+                                    final List<CastVoteRecord> cvrs) {
+    if (randoms.size() != cvrs.size()) {
+      final String sep = "--\n";//pmd
+      throw new BallotSelection.
+        MissingCastVoteRecordException("number of cvrs: "
+                                       + cvrs.size()
+                                       + sep
+                                       + cvrs.stream().map(c -> c.cvrNumber())
+                                       .collect(Collectors.toList())
+                                       + sep
+                                       + " does not match number of randoms:"
+                                       + randoms.size()
+                                       + sep
+                                       + randoms
+                                       + sep
+                                       );
+    }
   }
 
   /**
@@ -115,13 +135,14 @@ public final class BallotSelection {
    * query the database for ballot_manifest_info that would hold the given
    * random number
    **/
-  public static Optional<BallotManifestInfo> queryBallotManifestInfos(final Long rand) {
+  public static Optional<BallotManifestInfo>
+      queryBallotManifestInfos(final Long rand) {
     return BallotManifestInfoQueries.holdingSequenceNumber(rand);
   }
 
   /**
-   * query the database for cast_vote_records with sequence_numbers that are in the given
-   * list of random numbers
+   * find cast_vote_records with sequence_numbers that are in the given list of
+   * random numbers
    **/
   public static List<CastVoteRecord> queryCastVoteRecords(final List<Long> rands,
                                                           final Long countyID) {
@@ -141,4 +162,26 @@ public final class BallotSelection {
       super(msg);
     }
   }
+
+  /**
+   * We need to join the bmi to a cvr to get the ballot type - and that is how
+   * the system is build
+  **/
+  public static class MissingCastVoteRecordException extends RuntimeException {
+    /** constructor **/
+    public MissingCastVoteRecordException(final String msg) {
+      super(msg);
+    }
+  }
+
+  /**
+   * a functional interface to pass a function as an argument that takes two
+   * arguments
+   **/
+  public interface CVRQ {
+
+    /** how to query the database **/
+    List<CastVoteRecord> apply(List<Long> l, Long c);
+  }
+
 }

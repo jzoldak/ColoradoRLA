@@ -23,15 +23,11 @@ import spark.Response;
 import us.freeandfair.corla.Main;
 import us.freeandfair.corla.controller.BallotSelection;
 import us.freeandfair.corla.controller.CVRSelection;
-import us.freeandfair.corla.controller.ComparisonAuditController;
 import us.freeandfair.corla.json.CVRToAuditResponse;
-import us.freeandfair.corla.json.CVRToAuditResponse.BallotOrderComparator;
-import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.County;
 import us.freeandfair.corla.model.CountyDashboard;
 import us.freeandfair.corla.model.Round;
 import us.freeandfair.corla.persistence.Persistence;
-import us.freeandfair.corla.query.BallotManifestInfoQueries;
 
 /**
  * The CVR to audit list endpoint.
@@ -190,7 +186,6 @@ public class CVRToAuditList extends AbstractEndpoint {
       }
       // get other things we need
       final CountyDashboard cdb = Persistence.getByID(county.id(), CountyDashboard.class);
-      final List<CastVoteRecord> cvr_to_audit_list;
       List<CVRToAuditResponse> response_list = new ArrayList<>();
 
       // compute the round, if any
@@ -207,7 +202,7 @@ public class CVRToAuditList extends AbstractEndpoint {
 
       // feature flag - for emergencies only - TODO: remove after confidence achieved
       final boolean use_ballot_manifest_selection =
-        Main.getBooleanProperty("feature_flag.use_ballot_manifest_selection", true);
+          Main.getBooleanProperty("feature_flag.use_ballot_manifest_selection", true);
 
       if (use_ballot_manifest_selection) {
         final Round the_round = cdb.rounds().get(round.getAsInt() - 1);
