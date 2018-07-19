@@ -8,11 +8,14 @@ import us.freeandfair.corla.persistence.Persistence;
 
 import java.time.Instant;
 
+
 import java.util.ArrayList;
-import java.util.function.Function;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
 import org.testng.annotations.Test;
 import org.testng.Assert;
@@ -22,7 +25,7 @@ public class BallotSelectionTest {
 
   private BallotSelectionTest (){};
 
-  private List<CastVoteRecord> fake_cvrs;
+  private Boolean return_cvr = true;
 
   @Test()
   public void testSelectBallotsReturnsListOfOnes(){
@@ -42,18 +45,18 @@ public class BallotSelectionTest {
     Assert.assertEquals(results.get(0).imprintedID(), "1-1-7");
   }
 
-  // @Test()
-  // public void testSelectBallotsReturnsPhantomRecord(){
-  //   Long rand = 47L;
-  //   Long sequence_start = 41L;
-  //   // overwrite var
-  //   fake_cvrs = new ArrayList<CastVoteRecord>();
-  //   List<CVRToAuditResponse> results = makeSelection(rand,sequence_start);
-  //   Assert.assertEquals(1, results.size());
-  //   Assert.assertEquals(results.get(0).imprintedID(), "1-1-7");
-  //   Assert.assertEquals(results.get(0).ballotType(), "");
-  //   Assert.assertEquals(results.get(0).cvrNumber(), 0);
-  // }
+  @Test()
+  public void testSelectBallotsReturnsPhantomRecord(){
+    Long rand = 47L;
+    Long sequence_start = 41L;
+    // overwrite var
+    return_cvr = false;
+    List<CVRToAuditResponse> results = makeSelection(rand,sequence_start);
+    Assert.assertEquals(1, results.size());
+    Assert.assertEquals(results.get(0).imprintedID(), "1-1-7");
+    Assert.assertEquals(results.get(0).ballotType(), "NOT FOUND");
+    Assert.assertEquals(results.get(0).cvrNumber(), 0);
+  }
 
   private List<CVRToAuditResponse> makeSelection(Long rand, Long sequence_start) {
     // setup
@@ -62,44 +65,37 @@ public class BallotSelectionTest {
     rands.add(rand);
 
     BallotManifestInfo bmi = fakeBMI(sequence_start, sequence_end);
-    List<CastVoteRecord> cvrs = fakeCVRs(rands.size());
     Function<Long,Optional<BallotManifestInfo>> query = (Long r) -> Optional.of(bmi);
-    BallotSelection.CVRQ queryCVRs = (List<Long> l, Long c) -> cvrs;
+    BallotSelection.CVRQ queryCVR = (Long county_id,
+                                     Integer scanner_id,
+                                     String batch_id,
+                                     Long position) -> fakeCVR();
 
     // subject under test
-    return BallotSelection.selectBallots(rands, 0L, query, queryCVRs);
-  }
-
-  public List<CastVoteRecord> fakeCVRs(int n){
-    if (fake_cvrs != null) {
-      return fake_cvrs;
-    } else {
-      List<CastVoteRecord> cvrs = new LinkedList<CastVoteRecord>();
-      CastVoteRecord cvr1 = fakeCVR();
-      for (int i = 0; i<n; i++) {
-        cvrs.add(cvr1);
-      }
-      return cvrs;
-    }
+    return BallotSelection.selectBallots(rands, 0L, query, queryCVR);
   }
 
   public CastVoteRecord fakeCVR() {
-    Instant now = Instant.now();
-    CastVoteRecord cvr = new CastVoteRecord(CastVoteRecord.RecordType.UPLOADED,
-                                            now,
-                                            64L, // county_id
-                                            1,  // cvr_number
-                                            1, // sequence_number
-                                            1, // scanner_id
-                                            "Batch1", // batch_id
-                                            1, // record_id
-                                            "1-Batch1-1", // imprinted_id
-                                            "paper", // ballot_type
-                                            null  // contest_info
-                                            );
+    if (return_cvr) {
+      Instant now = Instant.now();
+      CastVoteRecord cvr = new CastVoteRecord(CastVoteRecord.RecordType.UPLOADED,
+                                              now,
+                                              64L, // county_id
+                                              1,  // cvr_number
+                                              1, // sequence_number
+                                              1, // scanner_id
+                                              "Batch1", // batch_id
+                                              1, // record_id
+                                              "1-Batch1-1", // imprinted_id
+                                              "paper", // ballot_type
+                                              null  // contest_info
+                                              );
 
-    cvr.setID(1L);
-    return cvr;
+      cvr.setID(1L);
+      return cvr;
+    } else {
+      return null;
+    }
   }
 
   public BallotManifestInfo fakeBMI(Long sequence_start,Long sequence_end){

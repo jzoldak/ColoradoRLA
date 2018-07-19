@@ -3,9 +3,11 @@
  **/
 package us.freeandfair.corla.controller;
 
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -38,7 +40,25 @@ public final class BallotSelection {
     return selectBallots(rands,
                          countyID,
                          BallotSelection::queryBallotManifestInfos,
-                         BallotSelection::queryCastVoteRecords);
+                         CastVoteRecordQueries::atPosition);
+  }
+
+  /** PHANTOM_RECORD conspiracy theory time **/
+  public static CastVoteRecord notFoundCVR() {
+    final CastVoteRecord cvr = new CastVoteRecord(CastVoteRecord.RecordType.PHANTOM_RECORD,
+                                            null,
+                                            0L,
+                                            0,
+                                            0,
+                                            0,
+                                            "",
+                                            0,
+                                            "",
+                                            "NOT FOUND",
+                                            null);
+    // TODO prevent a 404 from the client asking about this cvr
+    cvr.setID(0L);
+    return cvr;
   }
 
   /**
@@ -57,21 +77,27 @@ public final class BallotSelection {
     // ComparisonAuditController does!
     final List<Long> deduped = dedup(rands);
 
-    final List<CastVoteRecord> cvrs = queryCVR.apply(deduped, countyID);
-
-    // theoretically we don't need cvrs to render ballot info -
-    // practically, though, we need the cvr info for the app to work
-    // so let's not proceed if we can't join to a cvr
-    assertSameSize(deduped, cvrs);
-
     Integer i = 0;
     for (final Long rand: deduped) {
       // could we get them all at once? I'm not sure
       final Optional<BallotManifestInfo> bmiMaybe = queryBMI.apply(rand);
 
       if (bmiMaybe.isPresent()) {
+        BallotManifestInfo bmi = bmiMaybe.get();
         // join the bmi and cvr
-        a_list.add(toResponse(i, rand, bmiMaybe.get(), cvrs.get(i)));
+        // theoretically we don't need cvrs to render ballot info - practically,
+        // though, we need the cvr info for the app to work so we return a special
+        // CVR
+        //
+        // TODO: when notFoundCVR flag the user and create a discrepancy
+        CastVoteRecord cvr = queryCVR.apply(bmi.countyID(),
+                                            bmi.scannerID(),
+                                            bmi.batchID(),
+                                            bmi.ballotPosition(rand));
+        if (cvr == null) {
+          cvr = notFoundCVR();
+        }
+        a_list.add(toResponse(i, rand, bmi, cvr));
       } else {
         final String msg = "could not find a ballot manifest for random number: "
             + rand;
@@ -88,27 +114,6 @@ public final class BallotSelection {
   /** remove duplicates **/
   public static List<Long> dedup(final List<Long> rands) {
     return new LinkedList<Long>(new LinkedHashSet<Long>(rands));
-  }
-
-  /** raise exception if sizes are different **/
-  public static void assertSameSize(final List<Long> randoms,
-                                    final List<CastVoteRecord> cvrs) {
-    if (randoms.size() != cvrs.size()) {
-      final String sep = "--\n";//pmd
-      throw new BallotSelection.
-        MissingCastVoteRecordException("number of cvrs: "
-                                       + cvrs.size()
-                                       + sep
-                                       + cvrs.stream().map(c -> c.cvrNumber())
-                                       .collect(Collectors.toList())
-                                       + sep
-                                       + " does not match number of randoms:"
-                                       + randoms.size()
-                                       + sep
-                                       + randoms
-                                       + sep
-                                       );
-    }
   }
 
   /**
@@ -140,15 +145,24 @@ public final class BallotSelection {
     return BallotManifestInfoQueries.holdingSequenceNumber(rand);
   }
 
+
   /**
    * find cast_vote_records with sequence_numbers that are in the given list of
    * random numbers
    **/
-  public static List<CastVoteRecord> queryCastVoteRecords(final List<Long> rands,
-                                                          final Long countyID) {
-    return CastVoteRecordQueries.get(countyID,
-                                     rands);
-  }
+  // public static Map<Long,CastVoteRecord> queryCastVoteRecords(final List<Long> rands,
+  //                                                             final Long countyID) {
+  //   // TODO: change CastVoteRecordQueries.get to use Longs
+  //   final List<Integer> shim = rands.stream().map(Long::intValue)
+  //       .collect(Collectors.toList());
+  //   final Map<Long,CastVoteRecord> returnHash = new HashMap<>();
+  //   final Map<Integer,CastVoteRecord> shimHash =
+  //       CastVoteRecordQueries.get(countyID,
+  //                                 CastVoteRecord.RecordType.UPLOADED,
+  //                                 shim);
+  //   shimHash.forEach((k,v) -> returnHash.put(Long.valueOf(k),v));
+  //   return returnHash;
+  // }
 
   /**
    * this is bad, it could be one of two things:
@@ -181,7 +195,10 @@ public final class BallotSelection {
   public interface CVRQ {
 
     /** how to query the database **/
-    List<CastVoteRecord> apply(List<Long> l, Long c);
+    CastVoteRecord apply(Long county_id,
+                         Integer scanner_id,
+                         String batch_id,
+                         Long position);
   }
 
 }

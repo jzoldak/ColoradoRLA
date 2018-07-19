@@ -156,8 +156,6 @@ public final class BallotManifestInfoQueries {
     return result;
   }
 
-  // public static Set<BallotManifestInfo> where (cond) {}
-
   /**
      Find the batch(bmi) that would hold the sequence number given.
    */
