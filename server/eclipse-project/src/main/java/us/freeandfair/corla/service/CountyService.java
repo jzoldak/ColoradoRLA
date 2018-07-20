@@ -40,8 +40,8 @@ public final class CountyService {
    *
    * @param county a County for the service to act on
    */
-  public CountyService(final County county) {
-    this.county = county;
+  public CountyService(final County the_county) {
+    this.county = the_county;
   }
 
   /**

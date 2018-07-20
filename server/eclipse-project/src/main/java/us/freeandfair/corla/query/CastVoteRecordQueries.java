@@ -14,7 +14,6 @@ package us.freeandfair.corla.query;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
@@ -294,53 +293,6 @@ public final class CastVoteRecordQueries {
   }
 
   /**
-   * Obtain the UPLOADED CastVoteRecord objects with the specified county, and
-   * sequence numbers.
-   * note: Copied from get(county_id,type,sequence_numbers)
-   *
-   * @param the_county_id The county.
-   * @param the_type The type.
-   * @param the_sequence_numbers The sequence numbers.
-   * @return the matching CastVoteRecord objects,
-   * an empty list if no records match, or null if the query fails.
-   */
-  public static List<CastVoteRecord> get(final Long the_county_id,
-                                         final List<Long> the_sequence_numbers) {
-    List<CastVoteRecord> result = new LinkedList<CastVoteRecord>();
-    try {
-      final Session s = Persistence.currentSession();
-      final CriteriaBuilder cb = s.getCriteriaBuilder();
-      final CriteriaQuery<CastVoteRecord> cq = cb.createQuery(CastVoteRecord.class);
-      final Root<CastVoteRecord> root = cq.from(CastVoteRecord.class);
-      final List<Predicate> conjuncts = new ArrayList<>();
-      conjuncts.add(cb.equal(root.get(COUNTY_ID), the_county_id));
-      conjuncts.add(cb.equal(root.get(RECORD_TYPE), RecordType.UPLOADED));
-      // "my_cvr_number" column is the value from the csv "CvrNumber" (which
-      // is 1 based) so we are counting on this to be sequential. The
-      // "sequence_number" column might also be an option. That is the
-      // my_record_count incremented counter in DominionCVRExportParser. That
-      // number, however, is 0 based and our generated numbers are 1 based
-      conjuncts.add(root.get("my_cvr_number").in(the_sequence_numbers));
-      cq.select(root).where(cb.and(conjuncts.toArray(new Predicate[conjuncts.size()])));
-      final TypedQuery<CastVoteRecord> query = s.createQuery(cq);
-      result = query.getResultList();
-    } catch (final PersistenceException e) {
-      Main.LOGGER.error(COULD_NOT_QUERY_DATABASE);
-    }
-    if (result == null) {
-      Main.LOGGER.debug("found no CVRs for county " + the_county_id +
-                        ", type " +
-                        RecordType.UPLOADED +
-                        ", sequence " +
-                        the_sequence_numbers);
-    } else {
-      Main.LOGGER.debug("found " + result.size() + "CVRs ");
-    }
-
-    return result;
-  }
-
-  /**
    * Obtain the CastVoteRecord objects with the specified county, type, and
    * sequence numbers.
    *
@@ -425,13 +377,13 @@ public final class CastVoteRecordQueries {
                                           final String batch_id,
                                           final Long position) {
     List<CastVoteRecord> result = null;
+    final int one = 1;//pmd
 
     try {
       final Session s = Persistence.currentSession();
       final CriteriaBuilder cb = s.getCriteriaBuilder();
       final CriteriaQuery<CastVoteRecord> cq = cb.createQuery(CastVoteRecord.class);
       final Root<CastVoteRecord> root = cq.from(CastVoteRecord.class);
-      final List<Predicate> conjuncts = new ArrayList<>();
       cq.select(root).where(cb.and(cb.equal(root.get("my_county_id"), county_id),
                                    cb.equal(root.get("my_scanner_id"), scanner_id),
                                    cb.equal(root.get("my_batch_id"), batch_id),
@@ -441,18 +393,17 @@ public final class CastVoteRecordQueries {
     } catch (final PersistenceException e) {
       Main.LOGGER.error(COULD_NOT_QUERY_DATABASE);
     }
-    if (result == null) {
-      Main.LOGGER.debug("found no CVRs atPosition" );
-    } else {
+    if (result != null) {
       Main.LOGGER.debug("found " + result.size() + "CVRs atPosition");
+      if (result.size() > one) {
+        Main.LOGGER.error("found more than one cvr atPosition: \n" + result);
+        // maybe not the best way to handle this - there is data corruption here
+        return result.get(0);
+      } else {
+        // result.size() == one
+        return result.get(0);
+      }
     }
-    if (result.size() > 1) {
-      Main.LOGGER.error("found more than one cvr atPosition: \n" + result);
-    }
-    if (result.size() == 1) {
-      return result.get(0);
-    } else {
-      return null;
-    }
+    return null;//pmd
   }
 }

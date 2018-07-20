@@ -243,14 +243,6 @@ public class CVRToAuditDownload extends AbstractEndpoint {
                                                 index);
       }
 
-
-
-
-
-
-
-
-
       // generate a CSV file from the response list
       the_response.type("text/csv");
       

@@ -80,15 +80,15 @@ public class BallotSelectionTest {
       Instant now = Instant.now();
       CastVoteRecord cvr = new CastVoteRecord(CastVoteRecord.RecordType.UPLOADED,
                                               now,
-                                              64L, // county_id
-                                              1,  // cvr_number
-                                              1, // sequence_number
-                                              1, // scanner_id
-                                              "Batch1", // batch_id
-                                              1, // record_id
+                                              64L,          // county_id
+                                              1,            // cvr_number
+                                              1,            // sequence_number
+                                              1,            // scanner_id
+                                              "Batch1",     // batch_id
+                                              1,            // record_id
                                               "1-Batch1-1", // imprinted_id
-                                              "paper", // ballot_type
-                                              null  // contest_info
+                                              "paper",      // ballot_type
+                                              null          // contest_info
                                               );
 
       cvr.setID(1L);
@@ -99,13 +99,13 @@ public class BallotSelectionTest {
   }
 
   public BallotManifestInfo fakeBMI(Long sequence_start,Long sequence_end){
-    BallotManifestInfo bmi = new BallotManifestInfo(1L,      // county_id
-                                                    1,       // scanner_id
-                                                    "1",     // batch_id
-                                                    1,       // batch_size
-                                                    "bin-1", // storage_location
-                                                    sequence_start,       // sequence_start
-                                                    sequence_end        // sequence_end
+    BallotManifestInfo bmi = new BallotManifestInfo(1L,             // county_id
+                                                    1,              // scanner_id
+                                                    "1",            // batch_id
+                                                    1,              // batch_size
+                                                    "bin-1",        // storage_location
+                                                    sequence_start, // sequence_start
+                                                    sequence_end    // sequence_end
                                                     );
     return bmi;
   }

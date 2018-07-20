@@ -1,5 +1,7 @@
 /**
- * Prepare a list of cast vote records
+ * Prepare a list of cast vote records. This is the old style of ballot selection
+ * and is deprecated. We're keeping it around as a fallback until we are
+ * confident in the BallotSelection class
  **/
 package us.freeandfair.corla.controller;
 

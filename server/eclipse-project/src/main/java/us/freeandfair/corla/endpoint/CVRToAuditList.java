@@ -11,7 +11,6 @@
 
 package us.freeandfair.corla.endpoint;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.OptionalInt;
 
@@ -186,7 +185,7 @@ public class CVRToAuditList extends AbstractEndpoint {
       }
       // get other things we need
       final CountyDashboard cdb = Persistence.getByID(county.id(), CountyDashboard.class);
-      List<CVRToAuditResponse> response_list = new ArrayList<>();
+      List<CVRToAuditResponse> response_list;
 
       // compute the round, if any
       OptionalInt round = OptionalInt.empty();
