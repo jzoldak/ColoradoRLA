@@ -377,7 +377,6 @@ public final class CastVoteRecordQueries {
                                           final String batch_id,
                                           final Long position) {
     List<CastVoteRecord> result = null;
-    final int one = 1;//pmd
 
     try {
       final Session s = Persistence.currentSession();
@@ -393,17 +392,15 @@ public final class CastVoteRecordQueries {
     } catch (final PersistenceException e) {
       Main.LOGGER.error(COULD_NOT_QUERY_DATABASE);
     }
-    if (result != null) {
-      Main.LOGGER.debug("found " + result.size() + "CVRs atPosition");
-      if (result.size() > one) {
+
+    switch (result.size()) {
+      case 1:
+        return result.get(0);
+      case 0:
+        return null;
+      default:
         Main.LOGGER.error("found more than one cvr atPosition: \n" + result);
-        // maybe not the best way to handle this - there is data corruption here
         return result.get(0);
-      } else {
-        // result.size() == one
-        return result.get(0);
-      }
     }
-    return null;//pmd
   }
 }
