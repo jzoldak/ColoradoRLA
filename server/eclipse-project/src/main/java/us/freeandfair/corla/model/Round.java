@@ -28,6 +28,8 @@ import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.Embeddable;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import us.freeandfair.corla.persistence.AuditSelectionIntegerMapConverter;
 import us.freeandfair.corla.persistence.ElectorListConverter;
 import us.freeandfair.corla.persistence.LongListConverter;
@@ -41,6 +43,7 @@ import us.freeandfair.corla.persistence.LongListConverter;
 @Embeddable
 @SuppressWarnings({"PMD.ImmutableField", "PMD.TooManyMethods"})
 public class Round implements Serializable {
+    private static final Logger LOG = LogManager.getLogger(Round.class);
   /**
    * The serialVersionUID.
    */
@@ -238,6 +241,9 @@ public class Round implements Serializable {
    * @param the_actual_count The count.
    */
   public void setActualCount(final Integer the_actual_count) {
+    LOG.debug("setActualCount; was " +
+              my_actual_count +
+              " -> " + the_actual_count);
     my_actual_count = the_actual_count;
   }
 
@@ -269,7 +275,9 @@ public class Round implements Serializable {
    * @param the_audited_prefix_length The prefix length achieved.
    */
   public void setActualAuditedPrefixLength(final int the_audited_prefix_length) {
-
+    LOG.debug("setActualAuditedPrefixLength: " +
+              my_actual_audited_prefix_length +
+              " -> " + the_audited_prefix_length);
     my_actual_audited_prefix_length = the_audited_prefix_length;
   }
 
@@ -326,12 +334,16 @@ public class Round implements Serializable {
    */
   public void addDiscrepancy(final Set<AuditReason> the_reasons) {
     final Set<AuditSelection> selections = new HashSet<>();
+
     for (final AuditReason r : the_reasons) {
       selections.add(r.selection());
     }
+
     for (final AuditSelection s : selections) {
       my_discrepancies.put(s, my_discrepancies.getOrDefault(s, 0) + 1);
     }
+
+    LOG.trace("addDiscrepancy for reasons: " + the_reasons);
   }
 
   /**

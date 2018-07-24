@@ -17,6 +17,9 @@ import javax.persistence.PersistenceException;
 
 import com.google.gson.JsonParseException;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 import spark.Request;
 import spark.Response;
 
@@ -35,6 +38,11 @@ import us.freeandfair.corla.persistence.Persistence;
  */
 @SuppressWarnings("PMD.AtLeastOneConstructor")
 public class SelectContestsForAudit extends AbstractDoSDashboardEndpoint {
+  /**
+   * A Logger instance to control talkiness
+   */
+  private static final Logger LOG = LogManager.getLogger(SelectContestsForAudit.class);
+
   /**
    * The event to return for this endpoint.
    */
@@ -86,13 +94,13 @@ public class SelectContestsForAudit extends AbstractDoSDashboardEndpoint {
           Main.GSON.fromJson(the_request.body(), ContestToAudit[].class);
       final DoSDashboard dosdb = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class);
       if (dosdb == null) {
-        Main.LOGGER.error("could not get department of state dashboard");
+        LOG.error("could not get department of state dashboard");
         serverError(the_response, "Could not select contests");
       } else {
         // unchecked contests are not posted so that which is not added, is removed.
         dosdb.removeContestsToAudit();
         for (final ContestToAudit c : contests) {
-          Main.LOGGER.info("updating contest audit status: " + c);
+          LOG.info("updating contest audit status: " + c);
           dosdb.updateContestToAudit(c);
           Persistence.saveOrUpdate(dosdb);
         }
@@ -100,10 +108,10 @@ public class SelectContestsForAudit extends AbstractDoSDashboardEndpoint {
         ok(the_response, "Contests selected");
       }
     } catch (final JsonParseException e) {
-      Main.LOGGER.error("malformed contest selection");
+      LOG.error("malformed contest selection");
       badDataContents(the_response, "Invalid contest selection data");
     } catch (final PersistenceException e) {
-      Main.LOGGER.error("could not save contest selection");
+      LOG.error("could not save contest selection");
       serverError(the_response, "Unable to save contest selection");
     }
     return my_endpoint_result.get();
@@ -120,10 +128,10 @@ public class SelectContestsForAudit extends AbstractDoSDashboardEndpoint {
 
     if (info.electionDate() == null || info.electionType() == null ||
         info.publicMeetingDate() == null || info.riskLimit() == null) {
-      Main.LOGGER.debug("partial audit information submitted");
+      LOG.debug("partial audit information submitted");
       result = PARTIAL_AUDIT_INFO_EVENT;
     } else {
-      Main.LOGGER.debug("complete audit information submitted");
+      LOG.debug("complete audit information submitted");
       result = COMPLETE_AUDIT_INFO_EVENT;
     }
 

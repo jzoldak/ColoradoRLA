@@ -16,7 +16,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import us.freeandfair.corla.Main;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 
 /**
  * @description A generic Abstract State Machine (ASM).
@@ -28,6 +29,9 @@ import us.freeandfair.corla.Main;
 // we'll need to investigate the complexity of this class later
 @SuppressWarnings("PMD.CyclomaticComplexity")
 public abstract class AbstractStateMachine implements Serializable {
+
+  private static final Logger LOG = LogManager.getLogger(AbstractStateMachine.class);
+
   /**
    * The serialVersionUID.
    */
@@ -198,11 +202,11 @@ public abstract class AbstractStateMachine implements Serializable {
     // If we are in the right state then transition to the new state.
     if (the_transition.startStates().contains(my_current_state)) {
       my_current_state = the_transition.endState();
-      Main.LOGGER.info("ASM transition " + the_transition + " succeeded from state " +
+      LOG.debug("ASM transition " + the_transition + " succeeded from state " +
                        my_current_state + " for " + getClass().getSimpleName() + "/" +
                        my_identity);
     } else {
-      Main.LOGGER.error("ASM transition " + the_transition +
+      LOG.error("ASM transition " + the_transition +
                         " failed from state " + my_current_state);
       throw new IllegalStateException("Attempted to transition ASM " +
                                       getClass().getName() + "/" + my_identity +
@@ -232,7 +236,7 @@ public abstract class AbstractStateMachine implements Serializable {
       }
     }
     if (result == null) {
-      Main.LOGGER.error("ASM event " + the_event +
+      LOG.error("ASM event " + the_event +
                         " failed from state " + my_current_state);
       throw new IllegalStateException("Illegal transition on ASM " +
                                       getClass().getSimpleName() + "/" + my_identity +
@@ -240,7 +244,7 @@ public abstract class AbstractStateMachine implements Serializable {
                                       the_event + ")");
     } else {
       my_current_state = result;
-      Main.LOGGER.info("ASM event " + the_event + " caused transition to " +
+      LOG.debug("ASM event " + the_event + " caused transition to " +
                        my_current_state + " for " + getClass().getSimpleName() +
                        "/" + my_identity);
       return result;

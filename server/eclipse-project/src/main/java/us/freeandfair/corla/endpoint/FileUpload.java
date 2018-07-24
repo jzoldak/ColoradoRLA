@@ -44,6 +44,9 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.fileupload.util.Streams;
 import org.apache.commons.lang3.StringUtils;
 
+import org.apache.log4j.Logger;
+import org.apache.log4j.LogManager;
+
 import spark.Request;
 import spark.Response;
 
@@ -66,6 +69,11 @@ import us.freeandfair.corla.util.SuppressFBWarnings;
  */
 @SuppressWarnings({"PMD.AtLeastOneConstructor", "PMD.ExcessiveImports"})
 public class FileUpload extends AbstractEndpoint {
+  /**
+   * A Logger instance to control talkiness
+   */
+  private static final Logger LOG = LogManager.getLogger(FileUpload.class);
+
   /**
    * The "hash" form data field name.
    */
@@ -179,7 +187,7 @@ public class FileUpload extends AbstractEndpoint {
       final HttpServletRequest raw = SparkHelper.getRaw(the_request);
       the_info.my_ok = ServletFileUpload.isMultipartContent(raw);
 
-      Main.LOGGER.info("handling file upload request from " + raw.getRemoteHost());
+      LOG.info("handling file upload request from " + raw.getRemoteHost());
       if (the_info.my_ok) {
         final ServletFileUpload upload = new ServletFileUpload();
         final FileItemIterator fii = upload.getItemIterator(raw);
@@ -199,12 +207,12 @@ public class FileUpload extends AbstractEndpoint {
                 FileHelper.bufferedCopy(stream, os, BUFFER_SIZE, MAX_UPLOAD_SIZE);
 
             if (total >= MAX_UPLOAD_SIZE) {
-              Main.LOGGER.info("attempt to upload file greater than max size from " +
+              LOG.warn("attempt to upload file greater than max size from " +
                                raw.getRemoteHost());
               badDataContents(the_response, "Upload Failed");
               the_info.my_ok = false;
             } else {
-              Main.LOGGER.info("successfully saved file of size " + total + " from " +
+              LOG.debug("successfully saved file of size " + total + " from " +
                                raw.getRemoteHost());
             }
             os.close();
@@ -312,15 +320,13 @@ public class FileUpload extends AbstractEndpoint {
                                    Paths.get(the_file_path_and_name));
 
       if (path == null) {
-        Main.LOGGER.info("Error archiving file (" + the_file_path_and_name + ").");
+        LOG.error("Error archiving file (" + the_file_path_and_name + ").");
       } else {
-        Main.LOGGER.info("Successfully archived file (" + the_file_path_and_name + ").");
+        LOG.debug("Successfully archived file (" + the_file_path_and_name + ").");
       }
     } catch (final IOException e) {
-      Main.LOGGER.info("Encountered exception while archiving file (" +
-                       the_file_path_and_name +
-                       ")",
-                       e);
+      LOG.error("Encountered exception while archiving file (" +
+                the_file_path_and_name + ")", e);
     }
   }
 
@@ -340,14 +346,12 @@ public class FileUpload extends AbstractEndpoint {
                StandardCharsets.UTF_8))) {
 
       bw.write(the_hash_value);
-      Main.LOGGER.info("Successfully archived hash file (" +
+      LOG.debug("Successfully archived hash file (" +
                        the_archive_hash_file_name +
                        ").");
     } catch (final IOException e) {
-      Main.LOGGER.info("Encountered exception while archiving hash file (" +
-                       the_archive_hash_file_name +
-                       ")",
-                       e);
+      LOG.error("Encountered exception while archiving hash file (" +
+                the_archive_hash_file_name + ")", e);
     }
   }
 
@@ -414,7 +418,7 @@ public class FileUpload extends AbstractEndpoint {
           // archive file before deleting
           archive(info);
           if (!info.my_file.delete()) {
-            Main.LOGGER.error("Unable to delete temp file " + info.my_file);
+            LOG.error("Unable to delete temp file " + info.my_file);
           }
         } catch (final SecurityException e) {
           // ignored - should never happen

@@ -25,6 +25,9 @@ import java.util.Set;
 
 import javax.persistence.PersistenceException;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 import org.codehaus.plexus.util.ExceptionUtils;
 
 import com.google.gson.JsonParseException;
@@ -70,6 +73,11 @@ import us.freeandfair.corla.util.UploadedFileStreamer;
     "PMD.CyclomaticComplexity", "PMD.ModifiedCyclomaticComplexity",
     "PMD.StdCyclomaticComplexity", "PMD.GodClass", "PMD.DoNotUseThreads"})
 public class CVRExportImport extends AbstractCountyDashboardEndpoint {
+  /**
+   * A Logger instance to control talkiness
+   */
+  private static final Logger LOG = LogManager.getLogger(CVRExportImport.class);
+
   /**
    * The static set of counties that are currently running imports. This is
    * used to prevent multiple counties from importing CVRs at the same time,
@@ -252,17 +260,17 @@ public class CVRExportImport extends AbstractCountyDashboardEndpoint {
           parseFile(my_file);
           updateStateMachine(true);
           Persistence.commitTransaction();
-          Main.LOGGER.info("CVR import complete for county " + my_file.county().id());
+          LOG.info("CVR import complete for county " + my_file.county().id());
         } catch (final PersistenceException e) {
           // the import failed for DB reasons, so clean up
-          Main.LOGGER.error("CVR import failed for county " + my_file.county().id() + ": " +
+          LOG.error("CVR import failed for county " + my_file.county().id() + ": " +
               ExceptionUtils.getStackTrace(e));
           cleanup(my_file.county(), true, "import failed because of database problem");
           updateStateMachine(false);
           Persistence.commitTransaction();
         } catch (final CVRImportException e) {
           // we intentionally failed the import, so clean up
-          Main.LOGGER.error("CVR import failed for county " + my_file.county().id() + ": " +
+          LOG.error("CVR import failed for county " + my_file.county().id() + ": " +
               ExceptionUtils.getStackTrace(e));
           cleanup(my_file.county(), true, e.getMessage());
           updateStateMachine(false);
@@ -272,9 +280,9 @@ public class CVRExportImport extends AbstractCountyDashboardEndpoint {
         // at this point, either a cleanup failed or a state machine update failed,
         // so log it and say there's nothing we can do
 
-        Main.LOGGER.error("Critical CVR import error for county " +
-                          my_file.county().id() +
-                          ", system may be in unstable state: " + e);
+        LOG.error("Critical CVR import error for county " +
+                  my_file.county().id() +
+                  ", system may be in unstable state: " + e);
         if (Persistence.canTransactionRollback()) {
           Persistence.rollbackTransaction();
         }
@@ -318,14 +326,14 @@ public class CVRExportImport extends AbstractCountyDashboardEndpoint {
         status = "unsuccessful";
         event = CountyDashboardEvent.CVR_IMPORT_FAILURE_EVENT;
       }
-      Main.LOGGER.info("updating county " + my_file.county().id() + " state after " +
+      LOG.debug("updating county " + my_file.county().id() + " state after " +
                        status + " CVR import");
       boolean success = false;
       int retries = 0;
       while (!success && retries < UPDATE_RETRIES) {
         try {
           retries = retries + 1;
-          Main.LOGGER.debug("updating state machine, attempt " + retries +
+          LOG.debug("updating state machine, attempt " + retries +
                             COUNTY + my_file.county().id());
           Persistence.beginTransaction();
           final CountyDashboardASM cdb_asm =
@@ -345,7 +353,7 @@ public class CVRExportImport extends AbstractCountyDashboardEndpoint {
             try {
               final long delay =
                   ExponentialBackoffHelper.exponentialBackoff(retries, TRANSACTION_SLEEP_MSEC);
-              Main.LOGGER.info("waiting for county " + my_file.county().id() +
+              LOG.debug("waiting for county " + my_file.county().id() +
                                " state update, retrying in " + delay + "ms");
               Thread.sleep(delay);
             } catch (final InterruptedException ex) {
@@ -365,7 +373,7 @@ public class CVRExportImport extends AbstractCountyDashboardEndpoint {
           try {
             final long delay =
                 ExponentialBackoffHelper.exponentialBackoff(retries, TRANSACTION_SLEEP_MSEC);
-            Main.LOGGER.info("retrying state update for county " +
+            LOG.debug("retrying state update for county " +
                               my_file.county().id() + IN + delay + "ms");
             Thread.sleep(delay);
           } catch (final InterruptedException ex) {
@@ -376,7 +384,7 @@ public class CVRExportImport extends AbstractCountyDashboardEndpoint {
       // we always need a running transaction
       Persistence.beginTransaction();
       if (success && retries > 1) {
-        Main.LOGGER.info("updated state machine for county " + my_file.county().id() +
+        LOG.debug("updated state machine for county " + my_file.county().id() +
                          IN + retries + TRIES);
       } else if (!success) {
         error("could not update state machine for county " + my_file.county().id() +
@@ -403,7 +411,7 @@ public class CVRExportImport extends AbstractCountyDashboardEndpoint {
       while (!success && retries < UPDATE_RETRIES) {
         try {
           retries = retries + 1;
-          Main.LOGGER.debug("updating county dashboard, attempt " + retries +
+          LOG.debug("updating county dashboard, attempt " + retries +
                             COUNTY + my_file.county().id());
           Persistence.beginTransaction();
           final CountyDashboard cdb =
@@ -431,7 +439,7 @@ public class CVRExportImport extends AbstractCountyDashboardEndpoint {
           try {
             final long delay =
                 ExponentialBackoffHelper.exponentialBackoff(retries, TRANSACTION_SLEEP_MSEC);
-            Main.LOGGER.info("retrying county " + my_file.county().id() +
+            LOG.debug("retrying county " + my_file.county().id() +
                              " dashboard update in " + delay + "ms");
             Thread.sleep(delay);
           } catch (final InterruptedException ex) {
@@ -442,7 +450,7 @@ public class CVRExportImport extends AbstractCountyDashboardEndpoint {
       // we always need a running transaction
       Persistence.beginTransaction();
       if (success && retries > 1) {
-        Main.LOGGER.info("updated state machine for county " + my_file.county().id() +
+        LOG.debug("updated state machine for county " + my_file.county().id() +
                          IN + retries + TRIES);
       } else if (!success) {
         error("could not update state machine for county " + my_file.county().id() +
@@ -471,7 +479,7 @@ public class CVRExportImport extends AbstractCountyDashboardEndpoint {
         try {
           final int deleted = cleanup(the_file.county());
           if (deleted > 0) {
-            Main.LOGGER.info("deleted " + deleted + " previously-uploaded CVRs");
+            LOG.debug("deleted " + deleted + " previously-uploaded CVRs");
           }
         } catch (final PersistenceException ex) {
           error("unable to delete previously uploaded CVRs");
@@ -481,7 +489,7 @@ public class CVRExportImport extends AbstractCountyDashboardEndpoint {
 
         if (parser.parse()) {
           final int imported = parser.recordCount().getAsInt();
-          Main.LOGGER.info(imported + " CVRs parsed from file " + the_file.id() +
+          LOG.debug(imported + " CVRs parsed from file " + the_file.id() +
                            " for county " + the_file.county().id());
           updateCountyDashboard(the_file, new ImportStatus(ImportState.SUCCESSFUL), imported);
           handleTies(the_file.county());
@@ -498,7 +506,7 @@ public class CVRExportImport extends AbstractCountyDashboardEndpoint {
                 the_file.filename() + PAREN_ID + the_file.id() + ")]");
         }
       } catch (final PersistenceException e) {
-        Main.LOGGER.info("parse transactions did not complete successfully, " +
+        LOG.warn("parse transactions did not complete successfully, " +
                          "attempting cleanup");
         try {
           cleanup(the_file.county(), true, "could not clean up");
@@ -510,7 +518,7 @@ public class CVRExportImport extends AbstractCountyDashboardEndpoint {
         // we don't want to intercept these, so we just rethrow it
         throw e;
       } catch (final RuntimeException | IOException e) {
-        Main.LOGGER.info("could not parse malformed CVR export file " +
+        LOG.warn("could not parse malformed CVR export file " +
                          the_file.filename() + PAREN_ID + the_file.id() +
                          "): " + ExceptionUtils.getStackTrace(e));
         try {
@@ -562,7 +570,7 @@ public class CVRExportImport extends AbstractCountyDashboardEndpoint {
       while (!success && retries < UPDATE_RETRIES) {
         try {
           retries = retries + 1;
-          Main.LOGGER.debug("updating DoS dashboard, attempt " + retries +
+          LOG.debug("updating DoS dashboard, attempt " + retries +
                             COUNTY + the_county.id());
           Persistence.beginTransaction();
           final DoSDashboard dosdb = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class);
@@ -596,7 +604,7 @@ public class CVRExportImport extends AbstractCountyDashboardEndpoint {
           try {
             final long delay =
                 ExponentialBackoffHelper.exponentialBackoff(retries, TRANSACTION_SLEEP_MSEC);
-            Main.LOGGER.info("retrying DoS dashboard update for county " + the_county.id() +
+            LOG.debug("retrying DoS dashboard update for county " + the_county.id() +
                              IN + delay + "ms");
             Thread.sleep(delay);
           } catch (final InterruptedException ex) {
@@ -607,7 +615,7 @@ public class CVRExportImport extends AbstractCountyDashboardEndpoint {
       // we always need a running transaction
       Persistence.beginTransaction();
       if (success && retries > 1) {
-        Main.LOGGER.info("updated DoS dashboard for county " + the_county.id() +
+        LOG.debug("updated DoS dashboard for county " + the_county.id() +
                          " CVR reset in " + retries + TRIES);
       } else if (!success) {
         error("could not update DoS dashboard for county " + the_county.id() +
@@ -633,7 +641,7 @@ public class CVRExportImport extends AbstractCountyDashboardEndpoint {
       while (!success && retries < UPDATE_RETRIES) {
         try {
           retries = retries + 1;
-          Main.LOGGER.debug("updating DoS dashboard, attempt " + retries +
+          LOG.debug("updating DoS dashboard, attempt " + retries +
                             COUNTY + the_county.id());
           Persistence.beginTransaction();
           final Set<CountyContestResult> contest_results =
@@ -666,7 +674,7 @@ public class CVRExportImport extends AbstractCountyDashboardEndpoint {
           try {
             final long delay =
                 ExponentialBackoffHelper.exponentialBackoff(retries, TRANSACTION_SLEEP_MSEC);
-            Main.LOGGER.info("retrying DoS dashboard update for county " + the_county.id() +
+            LOG.debug("retrying DoS dashboard update for county " + the_county.id() +
                              IN + delay + "ms");
             Thread.sleep(delay);
           } catch (final InterruptedException ex) {
@@ -677,7 +685,7 @@ public class CVRExportImport extends AbstractCountyDashboardEndpoint {
       // we always need a running transaction
       Persistence.beginTransaction();
       if (success && retries > 1) {
-        Main.LOGGER.info("updated DoS dashboard for county " + the_county.id() +
+        LOG.info("updated DoS dashboard for county " + the_county.id() +
                          " tied contests in " + retries + TRIES);
       } else if (!success) {
         error("could not update DoS dashboard for county " + the_county.id() +

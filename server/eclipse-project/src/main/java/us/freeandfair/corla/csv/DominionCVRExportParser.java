@@ -32,6 +32,8 @@ import javax.persistence.PersistenceException;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 
 import us.freeandfair.corla.Main;
 import us.freeandfair.corla.model.CVRContestInfo;
@@ -55,6 +57,11 @@ import us.freeandfair.corla.util.ExponentialBackoffHelper;
 @SuppressWarnings({"PMD.GodClass", "PMD.CyclomaticComplexity", "PMD.ExcessiveImports",
     "PMD.ModifiedCyclomaticComplexity", "PMD.StdCyclomaticComplexity"})
 public class DominionCVRExportParser implements CVRExportParser {
+  /**
+   * A Logger instance to control talkiness
+   */
+  private static final Logger LOG = LogManager.getLogger(DominionCVRExportParser.class);
+
   /**
    * The name of the transaction size property.
    */
@@ -420,7 +427,7 @@ public class DominionCVRExportParser implements CVRExportParser {
     while (!success && retries < UPDATE_RETRIES) {
       try {
         retries = retries + 1;
-        Main.LOGGER.debug("updating county " + my_county.id() + " dashboard, attempt " +
+        LOG.debug("updating county " + my_county.id() + " dashboard, attempt " +
                           retries);
         Persistence.beginTransaction();
         final CountyDashboard cdb =
@@ -448,7 +455,7 @@ public class DominionCVRExportParser implements CVRExportParser {
         try {
           final long delay =
               ExponentialBackoffHelper.exponentialBackoff(retries, TRANSACTION_SLEEP_MSEC);
-          Main.LOGGER.info("retrying county " + my_county.id() +
+          LOG.info("retrying county " + my_county.id() +
                            " dashboard update in " + delay + "ms");
           Thread.sleep(delay);
         } catch (final InterruptedException ex) {
@@ -459,7 +466,7 @@ public class DominionCVRExportParser implements CVRExportParser {
     // we always need a running transaction
     Persistence.beginTransaction();
     if (success && retries > 1) {
-      Main.LOGGER.info("updated state machine for county " + my_county.id() +
+      LOG.info("updated state machine for county " + my_county.id() +
                        " in " + retries + " tries");
     } else if (!success) {
       throw new PersistenceException("could not update state machine for county " +
@@ -532,7 +539,7 @@ public class DominionCVRExportParser implements CVRExportParser {
       for (final CountyContestResult r : my_results) {
         r.addCVR(new_cvr);
       }
-      Main.LOGGER.debug("parsed CVR: " + new_cvr);
+      LOG.debug("parsed CVR: " + new_cvr);
       return new_cvr;
     } catch (final NumberFormatException e) {
       return null;
@@ -648,7 +655,7 @@ public class DominionCVRExportParser implements CVRExportParser {
       return my_parse_success;
     }
 
-    Main.LOGGER.info("parsing CVR export for county " + my_county.id() +
+    LOG.info("parsing CVR export for county " + my_county.id() +
                      ", batch_size=" + my_batch_size +
                      ", transaction_size=" + my_transaction_size);
 
@@ -698,14 +705,14 @@ public class DominionCVRExportParser implements CVRExportParser {
           final CastVoteRecord cvr = extractCVR(cvr_line);
           if (cvr == null) {
             // we don't record the CVR since it didn't parse
-            Main.LOGGER.error("Could not parse malformed CVR record (" + cvr_line + ")");
+            LOG.error("Could not parse malformed CVR record (" + cvr_line + ")");
             my_error_message = "malformed CVR record (" + cvr_line + ")";
             result = false;
             break;
           } else {
             my_record_count = my_record_count + 1;
             if (my_record_count % PROGRESS_INTERVAL == 0) {
-              Main.LOGGER.info("parsed " + my_record_count +
+              LOG.info("parsed " + my_record_count +
                                " CVRs for county " + my_county.id());
             }
           }
@@ -726,7 +733,7 @@ public class DominionCVRExportParser implements CVRExportParser {
       }
     } catch (final NoSuchElementException | StringIndexOutOfBoundsException |
                    ArrayIndexOutOfBoundsException e) {
-      Main.LOGGER.error("Could not parse CVR file because it was malformed");
+      LOG.error("Could not parse CVR file because it was malformed");
       my_error_message = "malformed CVR file";
       result = false;
     }

@@ -339,7 +339,7 @@ public final class Main {
           final Endpoint endpoint =
               (Endpoint) Class.forName(endpoint_class).newInstance();
           endpoints.add(endpoint);
-          Main.LOGGER.info("added endpoint class " + endpoint_class);
+          Main.LOGGER.debug("added endpoint class " + endpoint_class);
         }
         scanner.close();
       }
@@ -468,7 +468,7 @@ public final class Main {
             county = new County(name, id);
           } else if (!county.name().equals(name)) {
             // update the county's name while preserving the rest of its info
-            Main.LOGGER.info("Updating " + county.name() + " county name to " + name);
+            Main.LOGGER.debug("Updating " + county.name() + " county name to " + name);
             final County new_county = new County(name, id);
             new_county.setID(county.id());
             county = new_county;
@@ -626,12 +626,12 @@ public final class Main {
     if (the_args.length > 0) {
       final File file = new File(the_args[0]);
       try {
-        LOGGER.info("attempting to load properties from " + file);
+        LOGGER.debug("attempting to load properties from " + file);
         properties.load(new FileInputStream(file));
       } catch (final IOException e) {
         // could not load properties that way, let's try XML
         try {
-          LOGGER.info("load failed, attempting to load XML properties from " + file);
+          LOGGER.warn("load failed, attempting to load XML properties from " + file);
           properties = new Properties(default_properties);
           properties.loadFromXML(new FileInputStream(file));
         } catch (final IOException ex) {

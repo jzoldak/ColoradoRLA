@@ -26,6 +26,9 @@ import com.google.gson.reflect.TypeToken;
 import spark.Request;
 import spark.Response;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 import us.freeandfair.corla.Main;
 import us.freeandfair.corla.asm.ASMEvent;
 import us.freeandfair.corla.asm.ASMUtilities;
@@ -47,6 +50,8 @@ import us.freeandfair.corla.util.SuppressFBWarnings;
     "PMD.CyclomaticComplexity", "PMD.ModifiedCyclomaticComplexity",
     "PMD.StdCyclomaticComplexity"})
 public class SignOffAuditRound extends AbstractAuditBoardDashboardEndpoint {
+  private static final Logger LOG = LogManager.getLogger(SignOffAuditRound.class);
+
   /**
    * The event to return for this endpoint.
    */
@@ -111,12 +116,12 @@ public class SignOffAuditRound extends AbstractAuditBoardDashboardEndpoint {
       if (parsed_signatories.size() >= CountyDashboard.MIN_ROUND_SIGN_OFF_MEMBERS) {
         final County county = Main.authentication().authenticatedCounty(the_request);
         if (county == null) {
-          Main.LOGGER.error("could not get authenticated county");
+          LOG.error("could not get authenticated county");
           unauthorized(the_response, "not authorized to set an audit board");
         } else {
           final CountyDashboard cdb = Persistence.getByID(county.id(), CountyDashboard.class);
           if (cdb == null) {
-            Main.LOGGER.error("could not get county dashboard");
+            LOG.error("could not get county dashboard");
             serverError(the_response, "could not sign off round");
           } else if (cdb.currentRound() == null) {
             invariantViolation(the_response, "no round to sign off");
@@ -125,8 +130,9 @@ public class SignOffAuditRound extends AbstractAuditBoardDashboardEndpoint {
             // update the ASM state for the county and maybe DoS
             if (!DISABLE_ASM) {
               final boolean audit_complete;
+
               if (cdb.estimatedSamplesToAudit() <= 0) {
-                // we've reached the risk limit, so the county is done
+                LOG.debug("Risk limit achieved: " + cdb);
                 my_event.set(RISK_LIMIT_ACHIEVED_EVENT);
                 cdb.endAudits();
                 audit_complete = true;
@@ -140,9 +146,12 @@ public class SignOffAuditRound extends AbstractAuditBoardDashboardEndpoint {
                 my_event.set(ROUND_SIGN_OFF_EVENT);
                 audit_complete = false;
               }
+
               if (audit_complete) {
+                LOG.debug("Audit complete: " + cdb);
                 notifyAuditComplete(cdb);
               } else {
+                LOG.debug("Round complete: " + cdb);
                 notifyRoundComplete(cdb.id());
               }
             }

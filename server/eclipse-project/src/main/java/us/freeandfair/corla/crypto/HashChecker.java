@@ -21,7 +21,8 @@ import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-import us.freeandfair.corla.Main;
+import org.apache.log4j.Logger;
+import org.apache.log4j.LogManager;
 
 /**
  * Generate a SHA-256 hash of a given file.
@@ -31,6 +32,11 @@ import us.freeandfair.corla.Main;
  * @version 1.0.0
  */
 public final class HashChecker {
+  /**
+   * A Logger instance to control talkiness
+   */
+  private static final Logger LOG = LogManager.getLogger(HashChecker.class);
+
   /**
    * The size of the buffer that we repeatedly read into to compute the SHA-256
    * of a file.
@@ -78,13 +84,12 @@ public final class HashChecker {
         dis.close();
       }
     } catch (final NoSuchAlgorithmException e) {
-      Main.LOGGER.error("No Java security framework installed.");
-      Main.LOGGER.info("Unable to compute SHA-256 hashes.");
+      LOG.error("No Java security framework installed; unable to compute SHA-256 hashes.");
     } catch (final FileNotFoundException e) {
-      Main.LOGGER.warn("File to hash '" + a_file +
+      LOG.warn("File to hash '" + a_file +
                        "' disappeared before it could be hashed.");
     } catch (final IOException e) {
-      Main.LOGGER.warn("Unable to close file '" + a_file +
+      LOG.warn("Unable to close file '" + a_file +
                        "' after hashing it.");
     }
 

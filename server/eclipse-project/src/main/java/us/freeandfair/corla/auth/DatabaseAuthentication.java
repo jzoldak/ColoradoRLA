@@ -14,6 +14,9 @@ package us.freeandfair.corla.auth;
 import java.security.SecureRandom;
 import java.util.Random;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 import spark.Request;
 import spark.Response;
 
@@ -32,6 +35,11 @@ import us.freeandfair.corla.query.AdministratorQueries;
  */
 @SuppressWarnings("PMD.AtLeastOneConstructor")
 public final class DatabaseAuthentication extends AbstractAuthentication {
+  /**
+   * A Logger instance to control talkiness
+   */
+  private static final Logger LOG = LogManager.getLogger(DatabaseAuthentication.class);
+
   /**
    * {@inheritDoc}
    */
@@ -77,7 +85,7 @@ public final class DatabaseAuthentication extends AbstractAuthentication {
                                         final String the_username) {
     the_request.session().removeAttribute(ADMIN);
     the_request.session().removeAttribute(CHALLENGE);
-    Main.LOGGER.info("session is now traditionally deauthenticated");
+    LOG.info("session is now traditionally deauthenticated");
   }
 
   /**
@@ -88,6 +96,6 @@ public final class DatabaseAuthentication extends AbstractAuthentication {
                                       final String the_username) {
     the_request.session().removeAttribute(ADMIN);
     the_request.session().removeAttribute(CHALLENGE);
-    Main.LOGGER.info("session is now second factor deauthenticated");
+    LOG.info("session is now second factor deauthenticated");
   }
 }

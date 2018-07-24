@@ -23,6 +23,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 import javax.persistence.AttributeOverride;
 import javax.persistence.AttributeOverrides;
 import javax.persistence.Cacheable;
@@ -62,6 +65,8 @@ import us.freeandfair.corla.persistence.PersistentEntity;
     "PMD.ExcessivePublicCount", "PMD.CyclomaticComplexity"})
 // note: county dashboard is not serializable because it contains an uploaded file
 public class CountyDashboard implements PersistentEntity {
+  private static final Logger LOG = LogManager.getLogger(CountyDashboard.class);
+
   /**
    * The minimum number of members on an audit board.
    */
@@ -470,7 +475,8 @@ public class CountyDashboard implements PersistentEntity {
     if (my_current_round_index == null) {
       my_current_round_index = my_rounds.size();
     } else {
-      throw new IllegalStateException("cannot start a round while one is running");
+      throw new IllegalStateException("cannot start a round while one is running; round_index " +
+                                      my_current_round_index + " is already in progress");
     }
     // note UI round indexing is from 1, not 0
     final Round round = new Round(my_current_round_index + 1,
@@ -482,6 +488,15 @@ public class CountyDashboard implements PersistentEntity {
                                   the_ballots_to_audit,
                                   the_audit_subsequence);
     my_rounds.add(round);
+
+    LOG.debug("Starting round [round number=" + (my_current_round_index + 1) + "; " +
+              "numBallots=" + the_number_of_ballots + "; " +
+              "prefixLength=" + the_prefix_length + "; " +
+              "startIndex=" + the_start_index + "; " +
+              "ballotsToAudit=" + the_ballots_to_audit + "; " +
+              "auditSubsequence=" + the_audit_subsequence + "; " +
+              "discrepancies=" + discrepancies() + "; " +
+              "disagreements=" + disagreements() + "]");
   }
 
   /**
@@ -551,6 +566,7 @@ public class CountyDashboard implements PersistentEntity {
   public void setDrivingContests(final Set<Contest> the_driving_contests) {
     my_driving_contests.clear();
     my_driving_contests.addAll(the_driving_contests);
+    LOG.trace("setDrivingContests reset: " + the_driving_contests);
   }
 
   /**
@@ -786,6 +802,9 @@ public class CountyDashboard implements PersistentEntity {
    * @param the_estimated_samples_to_audit The estimated number of samples to audit.
    */
   public void setEstimatedSamplesToAudit(final int the_estimated_samples_to_audit) {
+    LOG.trace("setEstimatedSamplesToAudit: " +
+              my_estimated_samples_to_audit +
+              " -> " + the_estimated_samples_to_audit);
     my_estimated_samples_to_audit = the_estimated_samples_to_audit;
   }
 
@@ -803,6 +822,9 @@ public class CountyDashboard implements PersistentEntity {
    * to audit.
    */
   public void setOptimisticSamplesToAudit(final int the_optimistic_samples_to_audit) {
+    LOG.trace("setOptimisticSamplesToAudit: " +
+              my_optimistic_samples_to_audit +
+              " -> " + the_optimistic_samples_to_audit);
     my_optimistic_samples_to_audit = the_optimistic_samples_to_audit;
   }
 
@@ -824,8 +846,13 @@ public class CountyDashboard implements PersistentEntity {
    */
   public void setAuditedPrefixLength(final int the_audited_prefix_length) {
     if (my_current_round_index != null) {
+        LOG.trace("setAuditedPrefixLength: " +
+                  my_audited_prefix_length + " -> " +
+                  the_audited_prefix_length);
       my_audited_prefix_length = the_audited_prefix_length;
-      my_rounds.get(my_current_round_index).setActualAuditedPrefixLength(the_audited_prefix_length);
+      my_rounds
+        .get(my_current_round_index)
+        .setActualAuditedPrefixLength(the_audited_prefix_length);
     }
   }
 
@@ -844,6 +871,9 @@ public class CountyDashboard implements PersistentEntity {
    * @param the_audited_sample_count The audited sample count.
    */
   public void setAuditedSampleCount(final int the_audited_sample_count) {
+    LOG.trace("setAuditedSampleCount: " +
+              my_audited_sample_count +
+              " -> " + the_audited_sample_count);
     my_audited_sample_count = the_audited_sample_count;
   }
 
@@ -872,7 +902,7 @@ public class CountyDashboard implements PersistentEntity {
    */
   @Override
   public String toString() {
-    return "CountyDashboard [county=" + id() + "]";
+    return "CountyDashboard [" + county().name() + "; id=" + id() + "]";
   }
 
   /**

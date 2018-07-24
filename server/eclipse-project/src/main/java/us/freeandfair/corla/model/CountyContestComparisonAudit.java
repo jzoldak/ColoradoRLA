@@ -19,6 +19,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.OptionalInt;
 import java.util.Set;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 
 import javax.persistence.Cacheable;
 import javax.persistence.CollectionTable;
@@ -41,7 +43,6 @@ import javax.persistence.Table;
 import javax.persistence.Version;
 
 import ch.obermuhlner.math.big.BigDecimalMath;
-import us.freeandfair.corla.Main;
 import us.freeandfair.corla.model.CVRContestInfo.ConsensusValue;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 import us.freeandfair.corla.persistence.PersistentEntity;
@@ -63,6 +64,8 @@ import us.freeandfair.corla.persistence.PersistentEntity;
 // note: CountyContestComparisionAudit is not serializable because it references
 // CountyDashboard, which is not serializable.
 public class CountyContestComparisonAudit implements PersistentEntity {
+  private static final Logger LOG = LogManager.getLogger(CountyContestComparisonAudit.class);
+
   /**
    * The database stored precision for decimal types.
    */
@@ -410,6 +413,12 @@ public class CountyContestComparisonAudit implements PersistentEntity {
       // risk limit has not been achieved
       // note that it _is_ possible to go from RISK_LIMIT_ACHIEVED to
       // IN_PROGRESS if a sample or set of samples is "unaudited"
+      if (my_audit_status == AuditStatus.RISK_LIMIT_ACHIEVED) {
+          LOG.warn("Already achieved the risk limit, but moving back to in progress: "
+                   + my_dashboard.toString() + ": "
+                   + my_audit_status + " -> " + AuditStatus.IN_PROGRESS);
+      }
+
       my_audit_status = AuditStatus.IN_PROGRESS;
     }
   }
@@ -466,6 +475,10 @@ public class CountyContestComparisonAudit implements PersistentEntity {
                                                                     my_one_vote_under_count,
                                                                     my_one_vote_over_count,
                                                                     my_two_vote_over_count);
+      LOG.trace("optimistic samples to audit: "
+                + my_optimistic_samples_to_audit
+                + " -> " + optimistic);
+
       my_optimistic_samples_to_audit = optimistic.intValue();
       my_optimistic_recalculate_needed = false;
     }
@@ -474,19 +487,46 @@ public class CountyContestComparisonAudit implements PersistentEntity {
       my_estimated_samples_to_audit = my_optimistic_samples_to_audit;
     } else {
       // compute the "fudge factor" for the estimate
-      final BigDecimal audited_samples = BigDecimal.valueOf(my_dashboard.auditedSampleCount());
+      // FIXME extract-fn and add references to which paper this appears in
+      final BigDecimal scalingFactor;
+
+      final BigDecimal auditedSamples =
+        BigDecimal.valueOf(my_dashboard.auditedSampleCount());
+
       final BigDecimal overstatements =
-          BigDecimal.valueOf(my_one_vote_over_count + my_two_vote_over_count);
-      final BigDecimal fudge_factor;
-      if (audited_samples.equals(BigDecimal.ZERO)) {
-        fudge_factor = BigDecimal.ONE;
+        BigDecimal.valueOf(my_one_vote_over_count + my_two_vote_over_count);
+
+      final BigDecimal understatements =
+        BigDecimal.valueOf(my_one_vote_under_count + my_two_vote_under_count);
+
+      if (auditedSamples.equals(BigDecimal.ZERO)) {
+        scalingFactor = BigDecimal.ONE;
       } else {
-        fudge_factor =
-            BigDecimal.ONE.add(overstatements.divide(audited_samples, MathContext.DECIMAL128));
+        scalingFactor = BigDecimal
+                        .ONE
+                        .add(overstatements
+                             .divide(auditedSamples, MathContext.DECIMAL128));
       }
-      final BigDecimal estimated =
-          BigDecimal.valueOf(my_optimistic_samples_to_audit).multiply(fudge_factor);
-      my_estimated_samples_to_audit = estimated.setScale(0, RoundingMode.CEILING).intValue();
+
+      final int estimated = BigDecimal
+                            .valueOf(my_optimistic_samples_to_audit)
+                            .multiply(scalingFactor)
+                            .setScale(0, RoundingMode.CEILING)
+                            .intValue();
+
+      // FIXME this could be CountyContestComparisonAudit.toString(),
+      // you know...
+      LOG.debug("recalculated estimated samples: [" +
+                "audited samples: " + auditedSamples + "; " +
+                "overstatements: " + overstatements + "; " +
+                "understatements: " + understatements + "; " +
+                "fudge_factor: " + scalingFactor + "; " +
+                "optimistic_samples_to_audit: " +
+                my_optimistic_samples_to_audit + "; " +
+                "estimated_samples_to_audit: " +
+                my_estimated_samples_to_audit + " -> " + estimated + "]");
+
+      my_estimated_samples_to_audit = estimated;
     }
     my_estimated_recalculate_needed = false;
   }
@@ -510,6 +550,7 @@ public class CountyContestComparisonAudit implements PersistentEntity {
                                                      final int the_one_over,
                                                      final int the_two_over) {
     final BigDecimal result;
+
     if (my_audit_status == AuditStatus.NOT_AUDITABLE) {
       // the contest is not auditable, so return the number of ballots in the county
       // (for lack of a better number)
@@ -547,9 +588,9 @@ public class CountyContestComparisonAudit implements PersistentEntity {
       result = ceil.max(over_under_sum);
     }
 
-    Main.LOGGER.info("estimate for contest " + contest().name() +
-                     ", diluted margin " + contestResult().countyDilutedMargin() +
-                     ": " + result);
+    LOG.trace("optimistic estimate for contest " + contest().name() +
+              ", diluted margin " + contestResult().countyDilutedMargin() +
+              ": " + result);
     return result;
   }
 
@@ -583,6 +624,11 @@ public class CountyContestComparisonAudit implements PersistentEntity {
 
     if (my_audit_status != AuditStatus.ENDED &&
         my_audit_status != AuditStatus.NOT_AUDITABLE) {
+
+      if (my_audit_status == AuditStatus.RISK_LIMIT_ACHIEVED) {
+        LOG.warn("RISK_LIMIT_ACHIEVED, but going to be set to IN_PROGRESS anyway!");
+      }
+
       my_audit_status = AuditStatus.IN_PROGRESS;
     }
   }
@@ -661,6 +707,7 @@ public class CountyContestComparisonAudit implements PersistentEntity {
     }
 
     my_discrepancies.put(the_record, the_type);
+    LOG.debug("Recorded discrepency: " + the_record + "; type: " + the_type);
   }
 
   /**

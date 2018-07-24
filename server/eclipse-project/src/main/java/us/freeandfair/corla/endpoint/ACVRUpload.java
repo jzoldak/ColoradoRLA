@@ -19,6 +19,9 @@ import javax.persistence.PersistenceException;
 
 import com.google.gson.JsonParseException;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 import spark.Request;
 import spark.Response;
 
@@ -40,6 +43,11 @@ import us.freeandfair.corla.persistence.Persistence;
 @SuppressWarnings({"PMD.AtLeastOneConstructor", "PMD.CyclomaticComplexity"})
 // TODO: consider rewriting along the same lines as CVRExportUpload
 public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
+  /**
+   * A Logger instance to control talkiness
+   */
+  private static final Logger LOG = LogManager.getLogger(ACVRUpload.class);
+
   /**
    * The event we will return for the ASM.
    */

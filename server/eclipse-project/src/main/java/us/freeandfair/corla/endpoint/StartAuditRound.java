@@ -26,6 +26,9 @@ import com.google.gson.JsonParseException;
 import spark.Request;
 import spark.Response;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 import us.freeandfair.corla.Main;
 import us.freeandfair.corla.asm.ASMEvent;
 import us.freeandfair.corla.asm.ASMState.CountyDashboardState;
@@ -48,6 +51,8 @@ import us.freeandfair.corla.util.SuppressFBWarnings;
                    "PMD.AtLeastOneConstructor", "PMD.ModifiedCyclomaticComplexity",
                    "PMD.NPathComplexity"})
 public class StartAuditRound extends AbstractDoSDashboardEndpoint {
+  private static final Logger LOG = LogManager.getLogger(StartAuditRound.class);
+
   /**
    * The "county " string.
    */
@@ -135,22 +140,26 @@ public class StartAuditRound extends AbstractDoSDashboardEndpoint {
       for (final CountyDashboard cdb : cdbs) {
         try {
           if (cdb.cvrFile() == null || cdb.manifestFile() == null) {
-            Main.LOGGER.info(COUNTY + cdb.id() + " missed the file upload deadline");
+            LOG.info(COUNTY + cdb + " missed the file upload deadline");
           } else {
             // find the initial window
             final boolean started = ComparisonAuditController.initializeAuditData(cdb);
+
+            // FIXME is this an ad-hoc version of `cdb.auditStatus()`?
             if (started) {
-              Main.LOGGER.info(COUNTY + cdb.id() + " estimated to audit " +
-                               cdb.estimatedSamplesToAudit() + " ballots in round 1");
+              LOG.info(cdb + " estimated to audit " +
+                       cdb.estimatedSamplesToAudit() + " ballots in round 1");
             } else if (cdb.drivingContests().isEmpty()) {
-              Main.LOGGER.info(COUNTY + cdb.id() + " has no driving contests, its " +
-                               "audit is complete.");
+              LOG.info(cdb +
+                       " has no driving contests, its audit is complete.");
             } else if (cdb.estimatedSamplesToAudit() == 0) {
-              Main.LOGGER.info(COUNTY + cdb.id() + " needs to audit 0 ballots to " +
-                               "achieve its risk limit, its audit is complete.");
+              LOG.info(cdb +
+                       " needs to audit 0 ballots to " +
+                       "achieve its risk limit, its audit is complete.");
             } else {
-              Main.LOGGER.error("unable to start audit for county " + cdb.id());
+              LOG.error("unable to start audit for county " + cdb.id());
             }
+
             Persistence.saveOrUpdate(cdb);
           }
           // update the ASMs for the county and audit board
@@ -187,7 +196,7 @@ public class StartAuditRound extends AbstractDoSDashboardEndpoint {
           e.printStackTrace(System.out);
           serverError(the_response, "could not start round 1 for county " +
                       cdb.id());
-          Main.LOGGER.info("could not start round 1 for county " + cdb.id());
+          LOG.info("could not start round 1 for county " + cdb.toString());
         } catch (final IllegalStateException e) {
           illegalTransition(the_response, e.getMessage());
         }
@@ -206,6 +215,27 @@ public class StartAuditRound extends AbstractDoSDashboardEndpoint {
     return my_endpoint_result.get();
   }
 
+
+  /**
+   * Figure out what counties we need to do this for, if the list is limited
+   * @returns List<CountyDashboard>
+   * @param Map<Long, Integer> countyBallots the map from county IDs to absolute numbers of ballots per county
+   */
+  public List<CountyDashboard> countiesToStart(SubmittedAuditRoundStart start) {
+    List<CountyDashboard> result;
+
+    if (start.countyBallots() == null || start.countyBallots().isEmpty()) {
+      result = Persistence.getAll(CountyDashboard.class);
+    } else {
+      result = new ArrayList<>();
+      for (final Long id : start.countyBallots().keySet()) {
+        result.add(Persistence.getByID(id, CountyDashboard.class));
+      }
+    }
+
+    return result;
+  }
+
   /**
    * Starts a subsequent audit round.
    *
@@ -213,6 +243,7 @@ public class StartAuditRound extends AbstractDoSDashboardEndpoint {
    * @param the_response The HTTP response.
    * @return the result for endpoint.
    */
+  // FIXME remove the two comments below, as well as their cause
   // FindBugs thinks there's a possible NPE, but there's not because
   // badDataContents() would bail on the method before it happened.
   @SuppressFBWarnings("NP_NULL_ON_SOME_PATH")
@@ -228,27 +259,32 @@ public class StartAuditRound extends AbstractDoSDashboardEndpoint {
     }
 
     try {
-      // first, figure out what counties we need to do this for, if the list is limited
-      final List<CountyDashboard> cdbs;
-      if (start.countyBallots() == null || start.countyBallots().isEmpty()) {
-        cdbs = Persistence.getAll(CountyDashboard.class);
-      } else {
-        cdbs = new ArrayList<>();
-        for (final Long id : start.countyBallots().keySet()) {
-          cdbs.add(Persistence.getByID(id, CountyDashboard.class));
-        }
-      }
+      final List<CountyDashboard> cdbs = countiesToStart(start);
 
+      LOG.debug("Starting these counties: " + cdbs);
+
+      // FIXME extract-fn: startRoundForCounty
+      //
+      // Given a county dashboard `cdb` do the following things:
+      // 1. Find the AuditBoardDashboardASM for the county.
+      // 2. Skip this county if there's no audit in progress.
+      // 3. Throw an exception if there's a round in progress and you're trying to start another one.
+      // 4. Figure out the multiplier for this round.
+      // 5. Figure out if we're using estimates or starting based on length.
+      // 6. Figure out which kind of event we should send the Audit Board.
+      // 7. Update the Audit Board about what's happening with our event.
       for (final CountyDashboard cdb : cdbs) {
         final AuditBoardDashboardASM asm =
             ASMUtilities.asmFor(AuditBoardDashboardASM.class, cdb.id().toString());
+
+        // FIXME this could filter the dashboards by those that had audits in progress.
+        // 2. there is no audit happening, so skip along
         if (asm.isInInitialState() || asm.isInFinalState()) {
-          // there is no audit happening in this county, so go to the next one
-          Main.LOGGER.debug("no audit ongoing in county " + cdb.id() +
-                           ", skipping round start");
+          LOG.trace("no audit ongoing in county " + cdb.id() + ", skipping round start");
           continue;
         }
-        // if the county is in the middle of a round, error out
+
+        // 3. if the county is in the middle of a round, error out
         if (cdb.currentRound() != null) {
           invariantViolation(the_response,
                              "audit round already in progress for county " + cdb.id());
@@ -257,33 +293,42 @@ public class StartAuditRound extends AbstractDoSDashboardEndpoint {
         final ASMEvent audit_event;
         final boolean round_started;
         final BigDecimal multiplier;
+
+        // 4. figure out the start multiplier. what's this all about?
         if (start.multiplier() == null) {
           multiplier = BigDecimal.ONE;
         } else {
           multiplier = start.multiplier();
         }
+
+        // 5. Figure out if we're using estimates or starting based on length
         if (start.useEstimates()) {
+            LOG.debug("Starting round using estimates");
           round_started =
               ComparisonAuditController.startNewRoundFromEstimates(cdb, multiplier);
         } else {
           round_started = ComparisonAuditController.
               startNewRoundOfLength(cdb, start.countyBallots().get(cdb.id()), multiplier);
         }
+
+        // 6. Figure out which event we should throw
         if (round_started) {
-          Main.LOGGER.debug("round started for county " + cdb.id());
+          LOG.debug("round started for county " + cdb.id());
           audit_event = ROUND_START_EVENT;
         } else {
           // we don't know why the round didn't start, so we need to abort the audit
-          Main.LOGGER.debug("no round started for county " + cdb.id());
+          LOG.warn("no round started for " + cdb + "; aboring audit!");
           audit_event = ABORT_AUDIT_EVENT;
         }
 
+        // 7. Update the Audit Board about what's happening
         // update the ASM for the audit board
         if (!DISABLE_ASM) {
           asm.stepEvent(audit_event);
           ASMUtilities.save(asm);
         }
-      }
+      } // end for-loop, or extracted-function.
+
       ok(the_response, "new audit round started");
     } catch (final PersistenceException e) {
       serverError(the_response, "could not start new audit round");

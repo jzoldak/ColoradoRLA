@@ -18,6 +18,7 @@ import java.util.Locale;
 import javax.persistence.PersistenceException;
 
 import org.apache.log4j.Logger;
+import org.apache.log4j.LogManager;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
@@ -45,6 +46,11 @@ import us.freeandfair.corla.query.AdministratorQueries;
     "PMD.ModifiedCyclomaticComplexity", "PMD.StdCyclomaticComplexity",
     "PMD.EmptyMethodInAbstractClassShouldBeAbstract", "PMD.GodClass"})
 public abstract class AbstractAuthentication implements AuthenticationInterface {
+  /**
+   * A Logger instance to control talkiness
+   */
+  private static final Logger LOG = LogManager.getLogger(AbstractAuthentication.class);
+
   /**
    * Authenticate the administrator `the_username` with credentials
    * `the_password` (for traditional authentication) or `the_second_factor`
@@ -104,7 +110,7 @@ public abstract class AbstractAuthentication implements AuthenticationInterface 
               final Administrator admin =
                   AdministratorQueries.byUsername(lowercase_username);
               if (admin == null) {
-                Main.LOGGER.info("User " + lowercase_username + " not found in database, " +
+                LOG.info("User " + lowercase_username + " not found in database, " +
                                  "aborting authentication.");
                 result = false;
               } else {
@@ -113,11 +119,11 @@ public abstract class AbstractAuthentication implements AuthenticationInterface 
                 the_request.session().attribute(AUTH_STAGE, TRADITIONALLY_AUTHENTICATED);
                 the_request.session().attribute(ADMIN, admin);
                 the_request.session().attribute(CHALLENGE, auth_result.challenge());
-                Main.LOGGER.info("Traditional authentication succeeded for administrator " +
+                LOG.info("Traditional authentication succeeded for administrator " +
                                  lowercase_username);
               }
             } else {
-              Main.LOGGER.info("Traditional authentication failed for administrator " +
+              LOG.info("Traditional authentication failed for administrator " +
                                lowercase_username);
               result = false;
             }
@@ -133,20 +139,20 @@ public abstract class AbstractAuthentication implements AuthenticationInterface 
               the_request.session().attribute(AUTH_STAGE, SECOND_FACTOR_AUTHENTICATED);
               the_request.session().attribute(ADMIN, admin);
               the_request.session().removeAttribute(CHALLENGE);
-              Main.LOGGER.info("Second factor authentication succeeded for administrator " +
+              LOG.info("Second factor authentication succeeded for administrator " +
                                lowercase_username + " in role " + admin.type());
               if (admin.type() == AdministratorType.COUNTY) {
-                Main.LOGGER.info(lowercase_username + " is an administrator for county " +
+                LOG.info(lowercase_username + " is an administrator for county " +
                                  admin.county());
               }
               if (admin.type() == AdministratorType.STATE) {
-                Main.LOGGER.info(lowercase_username + " is a state administrator");
+                LOG.info(lowercase_username + " is a state administrator");
               }
             } else {
               // Send the authentication state machine back to its initial state.
               the_request.session().attribute(AUTH_STAGE, NOT_AUTHENTICATED);
               the_request.session().removeAttribute(CHALLENGE);
-              Main.LOGGER.info("Second factor authentication failed for administrator" +
+              LOG.info("Second factor authentication failed for administrator" +
                                lowercase_username);
               result = false;
             }
@@ -171,7 +177,7 @@ public abstract class AbstractAuthentication implements AuthenticationInterface 
     if (!result) {
       // a failed authentication attempt removes any existing session authentication
       deauthenticate(the_request);
-      Main.LOGGER.info("Authentication failed for user " + the_username);
+      LOG.info("Authentication failed for user " + the_username);
     }
     return result;
   }
@@ -236,7 +242,7 @@ public abstract class AbstractAuthentication implements AuthenticationInterface 
                                         final String the_username) {
     the_request.session().removeAttribute(ADMIN);
     the_request.session().removeAttribute(CHALLENGE);
-    Main.LOGGER.info("session is now traditionally deauthenticated");
+    LOG.info("session is now traditionally deauthenticated");
   }
 
   /**
@@ -247,7 +253,7 @@ public abstract class AbstractAuthentication implements AuthenticationInterface 
                                       final String the_username) {
     the_request.session().removeAttribute(ADMIN);
     the_request.session().removeAttribute(CHALLENGE);
-    Main.LOGGER.info("session is now second factor deauthenticated");
+    LOG.info("session is now second factor deauthenticated");
   }
 
   /**
@@ -318,7 +324,7 @@ public abstract class AbstractAuthentication implements AuthenticationInterface 
       // this should never happen since we control what's in the session object,
       // but if it does, we'll clear out that attribute and thereby force another
       // authentication
-      Main.LOGGER.error("Invalid admin or auth stage type detected in session.");
+      LOG.error("Invalid admin or auth stage type detected in session.");
       deauthenticate(the_request);
     }
     return result;
@@ -347,7 +353,7 @@ public abstract class AbstractAuthentication implements AuthenticationInterface 
       // this should never happen since we control what's in the session object,
       // but if it does, we'll clear out that attribute and thereby force another
       // authentication
-      Main.LOGGER.error("Invalid admin or auth stage type detected in session.");
+      LOG.error("Invalid admin or auth stage type detected in session.");
       deauthenticate(the_request);
     }
     return result;
@@ -370,12 +376,12 @@ public abstract class AbstractAuthentication implements AuthenticationInterface 
     }
 
     if (admin == null) {
-      Main.LOGGER.warn("Deauthenticated an unauthenticated session.");
+      LOG.warn("Deauthenticated an unauthenticated session.");
     } else {
       // update the last logout time for the logged in administrator
       admin.updateLastLogoutTime();
       Persistence.saveOrUpdate(admin);
-      Main.LOGGER.info("Deauthenticated user '" + admin.username() + "'");
+      LOG.info("Deauthenticated user '" + admin.username() + "'");
       // Take care of any specific back-end deauthentication logic.
       traditionalDeauthenticate(the_request, admin.username());
       twoFactorDeauthenticate(the_request, admin.username());
@@ -390,7 +396,7 @@ public abstract class AbstractAuthentication implements AuthenticationInterface 
    */
   @Override
   public void setLogger(final Logger the_logger) {
-    // skip, as we have access to Main.LOGGER
+    // skip, as we have access to LOG
   }
 
   /**

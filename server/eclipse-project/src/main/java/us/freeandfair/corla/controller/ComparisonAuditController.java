@@ -24,7 +24,10 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import us.freeandfair.corla.Main;
+
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 import us.freeandfair.corla.crypto.PseudoRandomNumberGenerator;
 import us.freeandfair.corla.model.AuditReason;
 import us.freeandfair.corla.model.AuditType;
@@ -54,6 +57,8 @@ import us.freeandfair.corla.query.CountyContestResultQueries;
 @SuppressWarnings({"PMD.GodClass", "PMD.CyclomaticComplexity", "PMD.ExcessiveImports",
     "PMD.ModifiedCyclomaticComplexity", "PMD.StdCyclomaticComplexity"})
 public final class ComparisonAuditController {
+  private static final Logger LOG = LogManager.getLogger(ComparisonAuditController.class);
+
   /**
    * Private constructor to prevent instantiation.
    */
@@ -380,7 +385,7 @@ public final class ComparisonAuditController {
       }
     }
     the_cdb.setComparisonAudits(comparison_audits);
-    Main.LOGGER.info("driving contests setting: " + county_driving_contests);
+    LOG.info("driving contests setting: " + county_driving_contests);
     the_cdb.setDrivingContests(county_driving_contests);
     the_cdb.setEstimatedSamplesToAudit(Math.max(0,  to_audit));
     the_cdb.setOptimisticSamplesToAudit(Math.max(0,  to_audit));
@@ -481,9 +486,10 @@ public final class ComparisonAuditController {
     }
 
     if (sorted_deduplicated_new_cvrs.isEmpty()) {
+      LOG.debug("No new CVRs, bailing out!");
       return false;
     } else {
-      Main.LOGGER.info("starting audit round " + (rounds.size() + 1) + " for county " +
+      LOG.info("starting audit round " + (rounds.size() + 1) + " for county " +
           the_cdb.id() + " at audit sequence number " + start_index +
           " with " + sorted_deduplicated_new_cvrs.size() + " ballots to audit");
       final List<Long> ballot_ids_to_audit = new ArrayList<>();
@@ -535,7 +541,7 @@ public final class ComparisonAuditController {
     boolean result = false;
     if (the_cdb.ballotsAudited() == cvr_count.getAsLong()) {
       // if we've audited all the CVRs already, we're done
-      Main.LOGGER.info("all CVRs have been audited, not starting new round");
+      LOG.info("all CVRs have been audited, not starting new round");
     } else {
       // use estimates based on current error rate to get length of round
       // we keep doing this until we find a CVR to actually audit
@@ -543,11 +549,17 @@ public final class ComparisonAuditController {
           new TreeSet<>(new CastVoteRecord.BallotOrderComparator());
       final List<CastVoteRecord> new_cvrs = new ArrayList<>();
       int expected_prefix_length = 0;
+
       while (sorted_deduplicated_new_cvrs.isEmpty()) {
+        LOG.trace("sorted_deduplicated_new_cvrs is empty");
+
         expected_prefix_length = computeEstimatedSamplesToAudit(the_cdb);
+
+        LOG.debug("expected_prefix_length: " + expected_prefix_length);
+
         if (the_cdb.auditedPrefixLength() < expected_prefix_length) {
-          final List<CastVoteRecord> extra_cvrs = 
-              getCVRsInAuditSequence(the_cdb.county(), start_index, 
+          final List<CastVoteRecord> extra_cvrs =
+              getCVRsInAuditSequence(the_cdb.county(), start_index,
                                      expected_prefix_length - 1);
           new_cvrs.addAll(extra_cvrs);
           Persistence.saveOrUpdate(the_cdb);
@@ -563,11 +575,15 @@ public final class ComparisonAuditController {
             for (final Long cvr_id : round.ballotSequence()) {
               if (unique_new_cvr_ids.contains(cvr_id)) {
                 unique_new_cvr_ids.remove(cvr_id);
-                sorted_deduplicated_new_cvrs.remove(Persistence.getByID(cvr_id,
-                                                                        CastVoteRecord.class));
+                sorted_deduplicated_new_cvrs
+                    .remove(Persistence.getByID(cvr_id, CastVoteRecord.class));
               }
             }
           }
+        }
+        else {
+          LOG.error("Unable to find any new CVRs to audit.");
+          throw new IllegalStateException("Audit prefix is greater than the expected prefix, can't find any CVRs for the next round. We're in an infinite loop.");
         }
       }
 
@@ -584,7 +600,7 @@ public final class ComparisonAuditController {
       for (final CastVoteRecord cvr : sorted_deduplicated_new_cvrs) {
         ballot_ids_to_audit.add(cvr.id());
       }
-      Main.LOGGER.info("starting audit round " + (rounds.size() + 1) + " for county " +
+      LOG.info("starting audit round " + (rounds.size() + 1) + " for county " +
           the_cdb.id() + " at audit sequence number " + start_index +
           " with " + round_length + " ballots to audit");
       the_cdb.startRound(round_length,
@@ -619,13 +635,13 @@ public final class ComparisonAuditController {
     // are the same card
     boolean result = false;
 
-    final CVRAuditInfo info =
-        Persistence.getByID(the_cvr_under_audit.id(), CVRAuditInfo.class);
+    final CVRAuditInfo info = Persistence
+                              .getByID(the_cvr_under_audit.id(),
+                                       CVRAuditInfo.class);
 
     if (info == null) {
-      Main.LOGGER.info("attempt to submit ACVR for county " +
-                       the_cdb.id() + ", cvr " +
-                       the_cvr_under_audit.id() + " not under audit");
+      LOG.warn("Attempt to submit ACVR for county " + the_cdb +
+               ": The CVR " + the_cvr_under_audit + " is not under audit!");
     } else if (checkACVRSanity(the_cvr_under_audit, the_audit_cvr)) {
       // if the record is the current CVR under audit, or if it hasn't been
       // audited yet, we can just process it
@@ -641,6 +657,7 @@ public final class ComparisonAuditController {
                                       new_count);
       } else {
         // the record has been audited before, so we need to "unaudit" it
+        LOG.trace("Unauditing / Auditing: " + info);
         final int former_count = unaudit(the_cdb, info);
         info.setACVR(the_audit_cvr);
         final int new_count = audit(the_cdb, info, true);
@@ -648,11 +665,12 @@ public final class ComparisonAuditController {
                                       former_count + new_count);
       }
       result = true;
-    }  else {
-      Main.LOGGER.info("attempt to submit non-corresponding ACVR " +
-                       the_audit_cvr.id() + " for county " + the_cdb.id() +
-                       ", cvr " + the_cvr_under_audit.id());
+    } else {
+      LOG.warn("attempt to submit non-corresponding ACVR " +
+               the_audit_cvr.id() + " for county " + the_cdb.id() +
+               ", cvr " + the_cvr_under_audit.id());
     }
+
     Persistence.flush();
     updateCVRUnderAudit(the_cdb);
     the_cdb.
@@ -674,16 +692,20 @@ public final class ComparisonAuditController {
    * @param the_cdb The dashboard.
    */
   public static int
-      computeEstimatedSamplesToAudit(final CountyDashboard the_cdb) {
+    computeEstimatedSamplesToAudit(final CountyDashboard the_cdb) {
     int to_audit = Integer.MIN_VALUE;
     final Set<Contest> driving_contests = the_cdb.drivingContests();
+
     for (final CountyContestComparisonAudit ccca : the_cdb.comparisonAudits()) {
       if (driving_contests.contains(ccca.contest())) {
         final int bta = ccca.estimatedSamplesToAudit();
         to_audit = Math.max(to_audit, bta);
       }
     }
-    return Math.max(0,  to_audit);
+
+    int max = Math.max(0, to_audit);
+    LOG.debug("computeEstimatedSamplesToAudit: " + max);
+    return max;
   }
 
   /**
@@ -761,6 +783,7 @@ public final class ComparisonAuditController {
             discrepancies.add(ca.auditReason());
           }
         }
+
         for (final CVRContestInfo ci : cvrai.acvr().contestInfo()) {
           final AuditReason reason = audit_reasons.get(ci.contest());
           if (ci.consensus() == ConsensusValue.NO) {
@@ -787,7 +810,7 @@ public final class ComparisonAuditController {
    *
    * @param the_cdb The dashboard.
    * @param the_info The CVRAuditInfo to audit.
-   * @param the_update_counters true to update the county dashboard
+   * @param updateCounters true to update the county dashboard
    * counters, false otherwise; false is used when this ballot
    * has already been audited once.
    * @return the number of times the record was audited.
@@ -796,7 +819,7 @@ public final class ComparisonAuditController {
       "PMD.NPathComplexity"})
   private static int audit(final CountyDashboard the_cdb,
                            final CVRAuditInfo the_info,
-                           final boolean the_update_counters) {
+                           final boolean updateCounters) {
     final Set<Contest> contest_disagreements = new HashSet<>();
     final Set<AuditReason> discrepancies = new HashSet<>();
     final Set<AuditReason> disagreements = new HashSet<>();
@@ -819,22 +842,25 @@ public final class ComparisonAuditController {
         }
         discrepancies.add(ca.auditReason());
       }
+
       if (contest_disagreements.contains(ca.contest())) {
         for (int i = 0; i < audit_count; i++) {
           ca.recordDisagreement(the_info);
         }
         disagreements.add(ca.auditReason());
       }
+
       ca.signalSampleAudited(audit_count);
       Persistence.saveOrUpdate(ca);
     }
+
 
     the_info.setDiscrepancy(discrepancies);
     the_info.setDisagreement(disagreements);
     the_info.setCounted(the_info.multiplicity());
     Persistence.saveOrUpdate(the_info);
 
-    if (the_update_counters) {
+    if (updateCounters) {
       the_cdb.addDiscrepancy(discrepancies);
       the_cdb.addDisagreement(disagreements);
     }
@@ -908,21 +934,25 @@ public final class ComparisonAuditController {
   private static void updateCVRUnderAudit(final CountyDashboard the_cdb) {
     // start from where we are in the current round
     final Round round = the_cdb.currentRound();
-    Main.LOGGER.info("WE ARE ON ROUND! " + round);
 
     if (round != null) {
       final Set<Long> checked_ids = new HashSet<>();
-      //          184 - 87 = 97
-      int index = round.actualAuditedPrefixLength() - round.startAuditedPrefixLength();
-      Main.LOGGER.info("ADJUSTING INDEX!" + index);
 
-      // audit subsequence 97
-      while (index < round.auditSubsequence().size()) {
-          Main.LOGGER.info("YOU WILL NEVER SEE: WHILE INDEX LESS THAN AUDIT SUBSEQUENCE!");
+      // 184 - 87 = 97
+      int index = round.actualAuditedPrefixLength() - round.startAuditedPrefixLength();
+      int auditSize = round.auditSubsequence().size();
+      LOG.debug("index: actualAuditedPrefixLength " + round.actualAuditedPrefixLength() +
+                " - (startAuditedPrefixLength) " + round.startAuditedPrefixLength() +
+                " = " + index);
+      LOG.trace("auditSize: " + auditSize);
+
+      while (index < auditSize) {
         final Long cvr_id = round.auditSubsequence().get(index);
 
         if (!checked_ids.contains(cvr_id)) {
+          LOG.trace("CVR ID <" + cvr_id + "> at index <" + index + "> of audit size <" + auditSize + "> not in checked_ids");
           checked_ids.add(cvr_id);
+
           final CVRAuditInfo cai = Persistence.getByID(cvr_id, CVRAuditInfo.class);
 
           if (cai.acvr() == null) {
@@ -931,15 +961,17 @@ public final class ComparisonAuditController {
             final int audit_count = audit(the_cdb, cai, false);
             the_cdb.setAuditedSampleCount(the_cdb.auditedSampleCount() + audit_count);
           }
+        } else {
+          LOG.trace("CVR ID <" + cvr_id + "> at index <" + index + "> of audit size <" +
+                   auditSize + "> has already been checked");
         }
+
         index = index + 1;
-        Main.LOGGER.info("incrementing INDEX!" + index);
       }
 
-      Main.LOGGER.info("updating audited prefix length b/c of CVR");
       the_cdb.setAuditedPrefixLength(index + round.startAuditedPrefixLength());
     }
-    else { Main.LOGGER.info("ROUND WAS NULL BUT NOBODY CARED!"); }
+    else { LOG.error("Round is null for: " + the_cdb); }
   }
 
   /**

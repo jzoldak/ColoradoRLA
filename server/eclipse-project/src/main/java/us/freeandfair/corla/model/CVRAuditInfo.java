@@ -30,6 +30,9 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.Version;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 import us.freeandfair.corla.persistence.AuditReasonSetConverter;
 import us.freeandfair.corla.persistence.PersistentEntity;
 import us.freeandfair.corla.util.NaturalOrderComparator;
@@ -49,6 +52,8 @@ import us.freeandfair.corla.util.NaturalOrderComparator;
 // which is not serializable
 @SuppressWarnings("PMD.ImmutableField")
 public class CVRAuditInfo implements PersistentEntity {
+  private static final Logger LOG = LogManager.getLogger(CVRAuditInfo.class);
+
   /**
    * The ID number. This is always the same as the CVR ID number.
    */
@@ -63,14 +68,14 @@ public class CVRAuditInfo implements PersistentEntity {
   private Long my_version;
 
   /**
-   * The CVR to audit.
+   * The CVR to audit. The machine interpretation of the scanned ballot card.
    */
   @ManyToOne(optional = false, fetch = FetchType.LAZY)
   @JoinColumn
   private CastVoteRecord my_cvr;
 
   /**
-   * The submitted audit CVR.
+   * The submitted audit CVR. The human interpretation from a physical ballot card.
    */
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn
@@ -183,6 +188,7 @@ public class CVRAuditInfo implements PersistentEntity {
    * @param the_multiplicity The new value.
    */
   public void setMultiplicity(final int the_multiplicity) {
+    LOG.trace("Setting multiplicity of CVR " + this + " to: " + the_multiplicity);
     my_multiplicity = the_multiplicity;
   }
 
@@ -261,7 +267,7 @@ public class CVRAuditInfo implements PersistentEntity {
     } else {
       acvr = my_acvr.id().toString();
     }
-    return "CVRAuditInfo [cvr=" + cvr + ", acvr=" + acvr + "]";
+    return "CVRAuditInfo [cvr=" + cvr + ", acvr=" + acvr + ", multiplicity=" + my_multiplicity + ", counted=" + my_counted + "]";
   }
 
   /**

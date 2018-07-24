@@ -24,6 +24,9 @@ import javax.persistence.PersistenceException;
 
 import com.google.gson.JsonParseException;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 import spark.Request;
 import spark.Response;
 
@@ -47,6 +50,11 @@ import us.freeandfair.corla.query.BallotManifestInfoQueries;
  */
 @SuppressWarnings({"PMD.AtLeastOneConstructor", "PMD.ExcessiveImports"})
 public class BallotManifestImport extends AbstractCountyDashboardEndpoint {
+  /**
+   * A Logger instance to control talkiness
+   */
+  private static final Logger LOG = LogManager.getLogger(BallotManifestImport.class);
+
   /**
    * The " (id " string.
    */
@@ -125,7 +133,7 @@ public class BallotManifestImport extends AbstractCountyDashboardEndpoint {
       final int deleted = BallotManifestInfoQueries.deleteMatching(the_file.county().id());
       if (parser.parse()) {
         final int imported = parser.recordCount().getAsInt();
-        Main.LOGGER.info(imported + " ballot manifest records parsed from file " +
+        LOG.info(imported + " ballot manifest records parsed from file " +
                          the_file.filename() + PAREN_ID + the_file.id() + ") for county " +
                          the_file.county().id());
         updateCountyDashboard(the_response, the_file,
@@ -139,20 +147,20 @@ public class BallotManifestImport extends AbstractCountyDashboardEndpoint {
         }
         okJSON(the_response, Main.GSON.toJson(response));
       } else {
-        Main.LOGGER.info("could not parse malformed ballot manifest file " +
+        LOG.info("could not parse malformed ballot manifest file " +
                          the_file.filename() + PAREN_ID + the_file.id() + ") for county " +
                          the_file.county().id());
         badDataContents(the_response, "malformed ballot manifest file " +
                                       the_file.filename() + PAREN_ID + the_file.id() + ")");
       }
     } catch (final RuntimeException | IOException e) {
-      Main.LOGGER.info("could not parse malformed ballot manifest file " +
+      LOG.info("could not parse malformed ballot manifest file " +
                        the_file.filename() + PAREN_ID + the_file.id() + ") for county " +
                        the_file.county().id() + ": " + e);
       badDataContents(the_response, "malformed ballot manifest file " +
                                     the_file.filename() + PAREN_ID + the_file.id() + ")");
     } catch (final SQLException e) {
-      Main.LOGGER.info("could not read file " + the_file.filename() +
+      LOG.info("could not read file " + the_file.filename() +
                        PAREN_ID + the_file.id() + ") from persistent storage");
     }
   }
