@@ -23,9 +23,9 @@ import java.util.OptionalLong;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import us.freeandfair.corla.Main;
-import us.freeandfair.corla.crypto.PseudoRandomNumberGenerator;
 import us.freeandfair.corla.model.AuditReason;
 import us.freeandfair.corla.model.AuditType;
 import us.freeandfair.corla.model.CVRAuditInfo;
@@ -42,6 +42,7 @@ import us.freeandfair.corla.model.CountyDashboard;
 import us.freeandfair.corla.model.DoSDashboard;
 import us.freeandfair.corla.model.Round;
 import us.freeandfair.corla.persistence.Persistence;
+import us.freeandfair.corla.query.BallotManifestInfoQueries;
 import us.freeandfair.corla.query.CastVoteRecordQueries;
 import us.freeandfair.corla.query.CountyContestResultQueries;
 import us.freeandfair.corla.service.CountyService;
@@ -63,44 +64,6 @@ public final class ComparisonAuditController {
   }
 
   /**
-   * Gets the sequence numbers, in audit sequence order, of the CVRs to audit
-   * for the given county dashboard in the specified range in the audit sequence.
-   *
-   * @param the_cdb The county dashboard.
-   * @param the_min_index The minimum index to return.
-   * @param the_max_index The maximum index to return.
-   * @return the list of sequence numbers, of size
-   * the_max_index - the_min_index + 1; the first element of this list will be
-   * the "min_index"th ballot card to audit, and the last will be the "max_index"th.
-   */
-  public static List<Integer> getCVRSeqNumsInAuditSequence(final County the_county,
-                                                           final int the_min_index,
-                                                           final int the_max_index) {
-    final OptionalLong count =
-        CastVoteRecordQueries.countMatching(the_county.id(), RecordType.UPLOADED);
-
-    if (!count.isPresent()) {
-      throw new IllegalStateException("unable to count CVRs for county " + the_county.id());
-    }
-
-    final String seed =
-        Persistence.getByID(DoSDashboard.ID, DoSDashboard.class).auditInfo().seed();
-    final boolean with_replacement = true;
-    // assuming that CVRs are indexed from 0
-    final int minimum = 0;
-    // the number of CVRs for the_contest_to_audit - note that the sequence
-    // generator generates a sequence of the numbers minimum ... maximum
-    // inclusive, so we subtract 1 from the number of CVRs to give it the
-    // correct range for our actual list of CVRs (indexed from 0).
-    final int maximum = (int) count.getAsLong() - 1;
-
-    final PseudoRandomNumberGenerator prng =
-        new PseudoRandomNumberGenerator(seed, with_replacement,
-                                        minimum, maximum);
-    return prng.getRandomNumbers(the_min_index, the_max_index);
-  }
-
-  /**
    * Get the CVRs for the specified list of sequence numbers for the specified
    * county.
    *
@@ -109,16 +72,8 @@ public final class ComparisonAuditController {
    */
   public static List<CastVoteRecord>
       getCVRsForSequenceNumbers(final County the_county,
-                                final List<Integer> the_seq_num_list) {
-    final Map<Integer, CastVoteRecord> matching_cvrs =
-        CastVoteRecordQueries.get(the_county.id(), RecordType.UPLOADED, the_seq_num_list);
-    final List<CastVoteRecord> result = new ArrayList<>();
-
-    for (final int index : the_seq_num_list) {
-      result.add(matching_cvrs.get(index));
-    }
-
-    return result;
+                                final List<Long> rands) {
+    return BallotSelection.selectCVRs(rands, the_county.id());
   }
 
   /**
@@ -132,13 +87,30 @@ public final class ComparisonAuditController {
    * the first element of this list will be the "min_index"th ballot card to audit,
    * and the last will be the "max_index"th.
    */
-  public static List<CastVoteRecord> getCVRsInAuditSequence(final County the_county,
-                                                            final int the_min_index,
-                                                            final int the_max_index) {
-    final List<Integer> list_of_cvrs_to_audit =
-        getCVRSeqNumsInAuditSequence(the_county, the_min_index, the_max_index);
-    return getCVRsForSequenceNumbers(the_county, list_of_cvrs_to_audit);
+  public static List<CastVoteRecord> getCVRsInAuditSequence(final County county,
+                                                            final int min,
+                                                            final int max) {
+    final CountyService county_service = new CountyService(county);
+    return getCVRsInAuditSequence(county, min, max, county_service);
   }
+
+  /**
+   * generate random numbers, then get the CVRs that they should line up with
+   **/
+  public static List<CastVoteRecord>
+      getCVRsInAuditSequence(final County the_county,
+                           final int min,
+                           final int max,
+                           final CountyService county_service) {
+    // Random numbers based on the number of ballots to audit, in the range
+    // [1, max_ballot_count_to_audit]
+    final List<Long> generated_numbers =
+        county_service.getRandomNumbers(min, max);
+
+    // the list of CVRs to audit, in audit sequence order
+    return getCVRsForSequenceNumbers(the_county, generated_numbers);
+  }
+
 
   /**
    * Gets all CVRs to audit in the specified round for the specified county
@@ -273,10 +245,15 @@ public final class ComparisonAuditController {
 
     // we need to get the CVRs for the county's sequence, starting at the_start_index,
     // and eliminate duplicates
+    final CountyService county_service = new CountyService(the_cdb.county());
+    // Random numbers based on the number of ballots to audit, in the range
+    // [1, max_ballot_count_to_audit]
+    final List<Long> generated_numbers =
+        county_service.getRandomNumbers(the_start_index, the_desired_prefix_length - 1);
 
+    // the list of CVRs to audit, in audit sequence order
     final List<CastVoteRecord> cvrs =
-        getCVRsInAuditSequence(the_cdb.county(), the_start_index,
-                               the_desired_prefix_length - 1); // end is inclusive
+        getCVRsForSequenceNumbers(the_cdb.county(), generated_numbers);
     final Set<CastVoteRecord> cvr_set = new HashSet<>();
     final Set<CastVoteRecord> previous_cvr_set = new HashSet<>();
     final List<CastVoteRecord> cvr_to_audit_list = new ArrayList<>();
@@ -286,8 +263,12 @@ public final class ComparisonAuditController {
     // stage of the audit
 
     if (the_start_index > 0) {
-      previous_cvr_set.addAll(getCVRsInAuditSequence(the_cdb.county(), 0,
-                                                     the_start_index - 1));
+      final List<Long> previous_generated_numbers =
+          county_service.getRandomNumbers(0, the_start_index - 1);
+
+
+      previous_cvr_set.addAll(getCVRsForSequenceNumbers(the_cdb.county(),
+                                                        previous_generated_numbers));
     }
 
     for (int i = 0; i < cvrs.size(); i++) {
@@ -394,7 +375,7 @@ public final class ComparisonAuditController {
 
       // the list of CVRs to audit, in audit sequence order
       final List<CastVoteRecord> cvrs_to_audit =
-          getCVRsInAuditSequence(the_cdb.county(), 0, to_audit - 1);
+          getCVRsForSequenceNumbers(the_cdb.county(), generated_numbers);
 
       // the IDs of the CVRs to audit, in audit sequence order
       final List<Long> audit_subsequence_ids = new ArrayList<Long>();
@@ -460,7 +441,7 @@ public final class ComparisonAuditController {
 
     // the list of CVRs to audit, in audit sequence order
     final List<CastVoteRecord> new_cvrs =
-        getCVRsInAuditSequence(the_cdb.county(), start_index, the_round_length);
+        getCVRsForSequenceNumbers(the_cdb.county(), generated_numbers);
 
     List<CastVoteRecord> extra_cvrs = new_cvrs;
     final SortedSet<CastVoteRecord> sorted_deduplicated_new_cvrs =
@@ -468,9 +449,12 @@ public final class ComparisonAuditController {
     sorted_deduplicated_new_cvrs.addAll(new_cvrs);
     while (!extra_cvrs.isEmpty() &&
            sorted_deduplicated_new_cvrs.size() < the_round_length) {
-      extra_cvrs =
-          getCVRsInAuditSequence(the_cdb.county(), start_index + new_cvrs.size(),
-                                 the_round_length - sorted_deduplicated_new_cvrs.size());
+      final int minIndex = start_index + new_cvrs.size();
+      final int maxIndex = the_round_length - sorted_deduplicated_new_cvrs.size();
+      final List<Long> extra_rands = county_service.getRandomNumbers(minIndex, maxIndex);
+      generated_numbers.addAll(extra_rands);
+
+      extra_cvrs = getCVRsForSequenceNumbers(the_cdb.county(), extra_rands);
       new_cvrs.addAll(extra_cvrs);
       sorted_deduplicated_new_cvrs.addAll(extra_cvrs);
     }
@@ -531,7 +515,8 @@ public final class ComparisonAuditController {
       startNewRoundFromEstimates(final CountyDashboard the_cdb,
                                  final BigDecimal the_multiplier) {
     final OptionalLong cvr_count =
-        CastVoteRecordQueries.countMatching(the_cdb.id(), RecordType.UPLOADED);
+        BallotManifestInfoQueries.maxSequence(the_cdb.county().id());
+
     if (!cvr_count.isPresent()) {
       throw new IllegalArgumentException("no cvrs");
     }
@@ -555,14 +540,21 @@ public final class ComparisonAuditController {
       final SortedSet<CastVoteRecord> sorted_deduplicated_new_cvrs =
           new TreeSet<>(new CastVoteRecord.BallotOrderComparator());
       final List<CastVoteRecord> new_cvrs = new ArrayList<>();
+      final CountyService county_service = new CountyService(the_cdb.county());
+      final List<Long> generated_numbers = new ArrayList<>();
+
       int expected_prefix_length = 0;
+      List<Long> rands;
       while (sorted_deduplicated_new_cvrs.isEmpty()) {
         expected_prefix_length = computeEstimatedSamplesToAudit(the_cdb);
         if (the_cdb.auditedPrefixLength() < expected_prefix_length) {
+          rands = county_service.getRandomNumbers(start_index,
+                                                  expected_prefix_length - 1);
 
           final List<CastVoteRecord> extra_cvrs =
-              getCVRsInAuditSequence(the_cdb.county(), start_index,
-                                     expected_prefix_length - 1);
+              getCVRsForSequenceNumbers(the_cdb.county(), rands);
+
+          generated_numbers.addAll(rands);
           new_cvrs.addAll(extra_cvrs);
           Persistence.saveOrUpdate(the_cdb);
           sorted_deduplicated_new_cvrs.addAll(new_cvrs);
@@ -583,12 +575,8 @@ public final class ComparisonAuditController {
         }
       }
 
-      final CountyService county_service = new CountyService(the_cdb.county());
       // Random numbers based on the number of ballots to audit, in the range
       // [1, max_ballot_count_to_audit]
-      final List<Long> generated_numbers =
-          county_service.getRandomNumbers(start_index,
-                                          expected_prefix_length - 1);
 
       final int round_length = sorted_deduplicated_new_cvrs.size();
 
@@ -605,6 +593,7 @@ public final class ComparisonAuditController {
       }
       Main.LOGGER.info("starting audit round " + (rounds.size() + 1) + " for county " +
           the_cdb.id() + " at audit sequence number " + start_index +
+
           " with " + round_length + " ballots to audit");
       the_cdb.startRound(round_length,
                          expected_prefix_length,

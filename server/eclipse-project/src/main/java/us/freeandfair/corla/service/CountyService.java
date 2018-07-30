@@ -22,6 +22,7 @@ import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 import us.freeandfair.corla.model.County;
 import us.freeandfair.corla.model.DoSDashboard;
 import us.freeandfair.corla.persistence.Persistence;
+import us.freeandfair.corla.query.BallotManifestInfoQueries;
 import us.freeandfair.corla.query.CastVoteRecordQueries;
 
 /**
@@ -55,9 +56,8 @@ public final class CountyService {
    *                  the county, inclusive
    */
   public List<Long> getRandomNumbers(final int minIndex, final int maxIndex) {
-    // TODO: Query the ballot manifest rather than the CVR.
     final OptionalLong count =
-        CastVoteRecordQueries.countMatching(this.county.id(), RecordType.UPLOADED);
+      BallotManifestInfoQueries.maxSequence(this.county.id());
 
     if (!count.isPresent()) {
       throw new IllegalStateException("unable to count ballots for county " +

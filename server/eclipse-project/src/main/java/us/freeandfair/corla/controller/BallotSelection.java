@@ -3,11 +3,13 @@
  **/
 package us.freeandfair.corla.controller;
 
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
+import java.util.stream.Collectors;
+
 
 import us.freeandfair.corla.json.CVRToAuditResponse;
 import us.freeandfair.corla.json.CVRToAuditResponse.BallotOrderComparator;
@@ -44,20 +46,16 @@ public final class BallotSelection {
   public static List<CVRToAuditResponse>
       selectBallots(final List<Long> rands,
                     final Long countyID,
-                    final Function<Long,Optional<BallotManifestInfo>> queryBMI,
+                    final BMIQ queryBMI,
                     final CVRQ queryCVR) {
 
     // this is what gets added to and returned
-    final List<CVRToAuditResponse> a_list = new LinkedList<CVRToAuditResponse>();
-
-    // dedup! are we supposed to be doing this? probably(?):
-    // ComparisonAuditController does!
-    final List<Long> deduped = dedup(rands);
+    final List<CVRToAuditResponse> responses = new LinkedList<CVRToAuditResponse>();
 
     Integer audit_sequence_number = 0;
-    for (final Long rand: deduped) {
+    for (final Long rand: rands) {
       // could we get them all at once? I'm not sure
-      final Optional<BallotManifestInfo> bmiMaybe = queryBMI.apply(rand);
+      final Optional<BallotManifestInfo> bmiMaybe = queryBMI.apply(rand,countyID);
       CastVoteRecord cvr;
 
       if (bmiMaybe.isPresent()) {
@@ -65,14 +63,14 @@ public final class BallotSelection {
         // theoretically we don't need cvrs to render ballot info - practically,
         // though, we need the cvr info for the app to work
         cvr = queryCVR.apply(bmi.countyID(),
-                                            bmi.scannerID(),
-                                            bmi.batchID(),
-                                            bmi.ballotPosition(rand));
+                             bmi.scannerID(),
+                             bmi.batchID(),
+                             bmi.ballotPosition(rand));
         if (cvr == null) {
           // TODO: create a discrepancy when this happens
-          cvr = notFoundCVR();
+          cvr = phantomRecord();
         }
-        a_list.add(toResponse(audit_sequence_number, rand, bmi, cvr));
+        responses.add(toResponse(audit_sequence_number, rand, bmi, cvr));
       } else {
         final String msg = "could not find a ballot manifest for random number: "
             + rand;
@@ -81,17 +79,62 @@ public final class BallotSelection {
 
       audit_sequence_number++;
     }
-    a_list.sort(new BallotOrderComparator());
-    return a_list;
+    return responses;
+  }
+
+  /** select CVRs from random numbers through ballot manifest info
+      in "audit sequence order"
+   **/
+  public static List<CastVoteRecord> selectCVRs(final List<Long> rands, final Long countyId) {
+    return selectCVRs(rands,
+                      countyId,
+                      BallotManifestInfoQueries::holdingSequenceNumber,
+                      CastVoteRecordQueries::atPosition);
+  }
+
+  /** same as above with dependency injection **/
+  public static List<CastVoteRecord> selectCVRs(final List<Long> rands,
+                                                final Long countyId,
+                                                final BMIQ queryBMI,
+                                                final CVRQ queryCVR) {
+    final List<CastVoteRecord> cvrs = new LinkedList<CastVoteRecord>();
+    for (final Long rand: rands) {
+      // could we get them all at once? I'm not sure
+      final Optional<BallotManifestInfo> bmiMaybe = queryBMI.apply(rand, countyId);
+      if (!bmiMaybe.isPresent()) {
+        final String msg = "could not find a ballot manifest for random number: "
+            + rand;
+        throw new BallotSelection.MissingBallotManifestException(msg);
+      }
+      final BallotManifestInfo bmi = bmiMaybe.get();
+      CastVoteRecord cvr = queryCVR.apply(bmi.countyID(),
+                                          bmi.scannerID(),
+                                          bmi.batchID(),
+                                          bmi.ballotPosition(rand));
+      if (cvr == null) {
+        // TODO: create a discrepancy when this happens
+        cvr = phantomRecord();
+      }
+
+      cvrs.add(cvr);
+    }
+    return cvrs;
+  }
+
+  /** sort without mutation **/
+  public static List<CVRToAuditResponse> sort(final List<CVRToAuditResponse> cars) {
+    final List<CVRToAuditResponse> clone = new LinkedList<CVRToAuditResponse>(cars);
+    clone.sort(new BallotOrderComparator());
+    return clone;
   }
 
   /** remove duplicates **/
-  public static List<Long> dedup(final List<Long> rands) {
-    return new LinkedList<Long>(new LinkedHashSet<Long>(rands));
+  public static List<CVRToAuditResponse> dedup(final List<CVRToAuditResponse> cars) {
+    return new LinkedList<CVRToAuditResponse>(new LinkedHashSet<CVRToAuditResponse>(cars));
   }
 
   /** PHANTOM_RECORD conspiracy theory time **/
-  public static CastVoteRecord notFoundCVR() {
+  public static CastVoteRecord phantomRecord() {
     final CastVoteRecord cvr = new CastVoteRecord(CastVoteRecord.RecordType.PHANTOM_RECORD,
                                                   null,
                                                   0L,
@@ -101,7 +144,7 @@ public final class BallotSelection {
                                                   "",
                                                   0,
                                                   "",
-                                                  "NOT FOUND",
+                                                  "PHANTOM RECORD",
                                                   null);
     // TODO prevent the client from requesting info about this cvr
     cvr.setID(0L);
@@ -152,5 +195,16 @@ public final class BallotSelection {
                          Integer scanner_id,
                          String batch_id,
                          Long position);
+  }
+
+  /**
+   * a functional interface to pass a function as an argument that takes two
+   * arguments
+   **/
+  public interface BMIQ {
+
+    /** how to query the database **/
+    Optional<BallotManifestInfo> apply(Long rand,
+                                       Long countyId);
   }
 }

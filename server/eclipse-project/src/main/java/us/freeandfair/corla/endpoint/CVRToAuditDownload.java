@@ -224,24 +224,13 @@ public class CVRToAuditDownload extends AbstractEndpoint {
         }
       }
 
-      // feature flag - for emergencies only - TODO: remove after confidence achieved
-      final boolean use_ballot_manifest_selection =
-          Main.getBooleanProperty("feature_flag.use_ballot_manifest_selection", true);
+      final Round the_round = cdb.rounds().get(round.getAsInt() - 1);
 
-      if (use_ballot_manifest_selection) {
-        final Round the_round = cdb.rounds().get(round.getAsInt() - 1);
-        // replace the var
-        response_list = BallotSelection.selectBallots(the_round.generatedNumbers(),
-                                                      county.id());
-      } else {
-        // replace the var
-        response_list = CVRSelection.selectCVRs(cdb,
-                                                round,
-                                                audited,
-                                                duplicates,
-                                                ballot_count,
-                                                index);
-      }
+      response_list = BallotSelection
+        .dedup(BallotSelection
+               .sort(BallotSelection
+                     .selectBallots(the_round.generatedNumbers(),
+                                    county.id())));
 
       // generate a CSV file from the response list
       the_response.type("text/csv");
