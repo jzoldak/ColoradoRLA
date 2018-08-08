@@ -377,9 +377,13 @@ public class DominionCVRExportParser implements CVRExportParser {
       // note that we're using the "Vote For" number as the number of winners
       // allowed as well, because the Dominion format doesn't give us that
       // separately
-      final Contest c = new Contest(cn, my_county, "", choices,
-                                    the_votes_allowed.get(cn), the_votes_allowed.get(cn),
-                                    contest_count);
+      final Contest c = new Contest(cn,                        //name
+                                    my_county,                 //county
+                                    "",                        //desc
+                                    choices,                   //choices
+                                    the_votes_allowed.get(cn), //votes_allowed
+                                    the_votes_allowed.get(cn), //winners_allowed
+                                    contest_count);            //sequence_number
       contest_count = contest_count + 1;
       Persistence.saveOrUpdate(c);
       final CountyContestResult r =

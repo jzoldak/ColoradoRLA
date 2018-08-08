@@ -120,7 +120,33 @@ public final class CountyContestResultQueries {
 
     return result;
   }
-  
+
+   /**
+   * Gets CountyContestResults that are in the specified county.
+   *
+   * @param the_county The county.
+   * @return the matching CountyContestResults, or null if the query fails.
+   */
+  public static Set<CountyContestResult> forContest(final Contest the_contest) {
+    Set<CountyContestResult> result = null;
+
+    try {
+      final Session s = Persistence.currentSession();
+      final CriteriaBuilder cb = s.getCriteriaBuilder();
+      final CriteriaQuery<CountyContestResult> cq =
+          cb.createQuery(CountyContestResult.class);
+      final Root<CountyContestResult> root = cq.from(CountyContestResult.class);
+      cq.select(root);
+      cq.where(cb.equal(root.get("my_contest"), the_contest));
+      final TypedQuery<CountyContestResult> query = s.createQuery(cq);
+      result = new HashSet<CountyContestResult>(query.getResultList());
+    } catch (final PersistenceException e) {
+      Main.LOGGER.error("Exception when reading contests from database: " + e);
+    }
+
+    return result;
+  }
+
   /**
    * Deletes all the contest results for the county with the specified ID.
    * 

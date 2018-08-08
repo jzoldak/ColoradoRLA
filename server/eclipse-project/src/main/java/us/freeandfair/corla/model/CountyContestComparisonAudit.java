@@ -42,6 +42,7 @@ import javax.persistence.Version;
 
 import ch.obermuhlner.math.big.BigDecimalMath;
 import us.freeandfair.corla.Main;
+import us.freeandfair.corla.controller.ContestCounter;
 import us.freeandfair.corla.model.CVRContestInfo.ConsensusValue;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 import us.freeandfair.corla.persistence.PersistentEntity;
@@ -509,12 +510,8 @@ public class CountyContestComparisonAudit implements PersistentEntity {
                                                      final int the_one_under,
                                                      final int the_one_over,
                                                      final int the_two_over) {
-    final BigDecimal result;
+    BigDecimal result = BigDecimal.valueOf(0);
     if (my_audit_status == AuditStatus.NOT_AUDITABLE) {
-      // the contest is not auditable, so return the number of ballots in the county
-      // (for lack of a better number)
-      result = BigDecimal.valueOf(my_contest_result.countyBallotCount());
-    } else {
       final BigDecimal invgamma = BigDecimal.ONE.divide(my_gamma, MathContext.DECIMAL128);
       final BigDecimal twogamma = BigDecimal.valueOf(2).multiply(my_gamma);
       final BigDecimal invtwogamma = 
@@ -543,7 +540,7 @@ public class CountyContestComparisonAudit implements PersistentEntity {
           multiply(BigDecimalMath.log(my_risk_limit, MathContext.DECIMAL128).
                    add(two_under.add(one_under).add(one_over).add(two_over)));
       final BigDecimal ceil =
-          numerator.divide(my_contest_result.countyDilutedMargin(),
+        numerator.divide(ContestCounter.dilutedMargin(my_contest_result.voteTotals()),
                            MathContext.DECIMAL128).setScale(0, RoundingMode.CEILING);
       result = ceil.max(over_under_sum);
     }

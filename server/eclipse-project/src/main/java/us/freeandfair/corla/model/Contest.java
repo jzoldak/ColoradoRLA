@@ -146,7 +146,7 @@ public class Contest implements PersistentEntity, Serializable {
    * be made in this contest.
    * @param the_winners_allowed The maximum number of winners for
    * this contest.
-   * @param the_sequence_number The sequence number.
+   * @param the_sequence_number used for ordering contests
    */
   //@ requires 1 <= the_votes_allowed;
   //@ requires the_votes_allowed <= the_choices.size();
