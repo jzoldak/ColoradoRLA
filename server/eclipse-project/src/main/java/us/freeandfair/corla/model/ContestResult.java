@@ -41,13 +41,12 @@ import us.freeandfair.corla.persistence.StringSetConverter;
          @UniqueConstraint(columnNames = {"contest_id"}) },
        indexes = { @Index(name = "idx_cr_contest",
                           columnList = "contest_id",
-                          unique = true),
-                   @Index(name = "idx_ccr_contest", columnList = "contest_id") })
+                          unique = true)})
 public class ContestResult implements PersistentEntity, Serializable {
   /**
-   * The "my_id" string.
+   * The "id" string.
    */
-  private static final String MY_ID = "my_id";
+  private static final String ID = "id";
 
   /**
    * The "result_id" string.
@@ -100,7 +99,7 @@ public class ContestResult implements PersistentEntity, Serializable {
   @ElementCollection(fetch = FetchType.EAGER)
   @CollectionTable(name = "contest_vote_total",
                    joinColumns = @JoinColumn(name = RESULT_ID,
-                                             referencedColumnName = MY_ID))
+                                             referencedColumnName = ID))
   @MapKeyColumn(name = "choice")
   @Column(name = "vote_total")
   private Map<String, Integer> vote_totals = new HashMap<>();
