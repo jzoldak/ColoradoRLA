@@ -44,6 +44,7 @@ import us.freeandfair.corla.model.CountyContestResult;
 import us.freeandfair.corla.model.CountyDashboard;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.CountyContestResultQueries;
+import us.freeandfair.corla.query.ContestQueries;
 import us.freeandfair.corla.util.ExponentialBackoffHelper;
 
 /**
@@ -377,15 +378,17 @@ public class DominionCVRExportParser implements CVRExportParser {
       // note that we're using the "Vote For" number as the number of winners
       // allowed as well, because the Dominion format doesn't give us that
       // separately
-      final Contest c = new Contest(cn,                        //name
-                                    my_county,                 //county
-                                    "",                        //desc
-                                    choices,                   //choices
-                                    the_votes_allowed.get(cn), //votes_allowed
-                                    the_votes_allowed.get(cn), //winners_allowed
-                                    contest_count);            //sequence_number
+      final Contest contest = new Contest(cn,                        //name
+                                          my_county,                 //county
+                                          "",                        //desc
+                                          choices,                   //choices
+                                          the_votes_allowed.get(cn), //votes_allowed
+                                          the_votes_allowed.get(cn), //winners_allowed
+                                          contest_count);            //sequence_number
       contest_count = contest_count + 1;
-      Persistence.saveOrUpdate(c);
+      // contests are the top level now, not counties, so we check to see if
+      // this is the same contest that another county has already added
+      final Contest c = ContestQueries.matching(contest);
       final CountyContestResult r =
           CountyContestResultQueries.matching(my_county, c);
       my_contests.add(c);

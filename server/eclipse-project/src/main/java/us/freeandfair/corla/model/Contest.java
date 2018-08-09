@@ -179,7 +179,7 @@ public class Contest implements PersistentEntity, Serializable {
   public void setID(final Long the_id) {
     my_id = the_id;
   }
-  
+
   /**
    * {@inheritDoc}
    */

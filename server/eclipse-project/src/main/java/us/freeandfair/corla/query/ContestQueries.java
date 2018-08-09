@@ -74,7 +74,44 @@ public final class ContestQueries {
 
     return result;
   }
-  
+
+
+  /** find or create a Contest by name **/
+  public static Contest matching(final Contest contest) {
+    Contest result = null;
+
+    try {
+      final Session s = Persistence.currentSession();
+      final CriteriaBuilder cb = s.getCriteriaBuilder();
+      final CriteriaQuery<Contest> cq =
+          cb.createQuery(Contest.class);
+      final Root<Contest> root = cq.from(Contest.class);
+      final List<Predicate> conjuncts = new ArrayList<>();
+      conjuncts.add(cb.equal(root.get("my_name"), contest.name()));
+      cq.select(root).where(cb.and(conjuncts.toArray(new Predicate[conjuncts.size()])));
+      final TypedQuery<Contest> query = s.createQuery(cq);
+      final List<Contest> query_results = query.getResultList();
+      // there should only be one, if one exists
+      if (query_results.size() == 1) {
+        result = query_results.get(0);
+      } else if (query_results.isEmpty()) {
+        result = contest; // here is the create step
+        Persistence.saveOrUpdate(result);
+      } else {
+        throw new IllegalStateException("unique constraint violated on Contest");
+      }
+    } catch (final PersistenceException e) {
+      e.printStackTrace(System.out);
+      Main.LOGGER.error("could not query database for contest results");
+    }
+    if (result == null) {
+      Main.LOGGER.debug("found no contest results matching + " + contest.name());
+    } else {
+      Main.LOGGER.debug("found contest results " + result);
+    }
+    return result;
+  }
+
   /**
    * Gets contests that are in the specified county.
    * 
