@@ -17,11 +17,15 @@ import static us.freeandfair.corla.util.EqualsHashcodeHelper.*;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.persistence.Cacheable;
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
+import javax.persistence.CascadeType;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -30,8 +34,11 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Index;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
 import javax.persistence.ManyToOne;
+import javax.persistence.ManyToMany;
 import javax.persistence.OrderColumn;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import javax.persistence.Version;
@@ -52,10 +59,8 @@ import us.freeandfair.corla.persistence.PersistentEntity;
 @Cacheable(true)
 @Table(name = "contest",
        uniqueConstraints = {
-           @UniqueConstraint(columnNames = {"name", "county_id", "description", "votes_allowed"}) },
-       indexes = { @Index(name = "idx_contest_name", columnList = "name"),
-                   @Index(name = "idx_contest_name_county_description_votes_allowed", 
-                          columnList = "name, county_id, description, votes_allowed") })
+           @UniqueConstraint(columnNames = {"name"}) },
+       indexes = { @Index(name = "idx_contest_name", columnList = "name") })
 @JsonAdapter(ContestJsonAdapter.class)
 //this class has many fields that would normally be declared final, but
 //cannot be for compatibility with Hibernate and JPA.
@@ -86,13 +91,19 @@ public class Contest implements PersistentEntity, Serializable {
   @Column(name = "name", nullable = false)
   private String my_name;
 
-  /**
-   * The county to which this contest result set belongs. 
-   */
-  @ManyToOne(optional = false, fetch = FetchType.LAZY)
-  @JoinColumn  
-  private County my_county;
-  
+  @ManyToMany(cascade = { CascadeType.ALL })
+  @JoinTable(name = "counties_to_contests",
+             joinColumns = { @JoinColumn(name = "contest_id") },
+             inverseJoinColumns = { @JoinColumn(name = "county_id") })
+  @ElementCollection(targetClass=County.class)
+  private Set<County> counties = new HashSet<>();
+
+  @OneToOne(mappedBy="contest")
+  private ContestResult contestResult;
+
+  public ContestResult getContestResult() {
+    return this.contestResult;
+  }
   /**
    * The contest description.
    */
@@ -156,7 +167,6 @@ public class Contest implements PersistentEntity, Serializable {
                  final int the_sequence_number)  {
     super();
     my_name = the_name;
-    my_county = the_county;
     my_description = the_description;
     my_choices.addAll(the_choices);
     my_votes_allowed = the_votes_allowed;
@@ -201,14 +211,22 @@ public class Contest implements PersistentEntity, Serializable {
   public String description() {
     return my_description;
   }
-  
-  /**
-   * @return the county ID.
-   */
+
   public County county() {
-    return my_county;
+    // todo remove this - it is a lie
+    return new County();
   }
-  
+
+  public Set<County> getCounties(){
+    return this.counties;
+  }
+
+  public Set<Long> getCountyIds() {
+    return getCounties().stream()
+      .map(c -> c.id())
+      .collect(Collectors.toSet());
+  }
+
   /**
    * Checks to see if the specified choice is valid for this contest.
    * 
@@ -292,4 +310,9 @@ public class Contest implements PersistentEntity, Serializable {
   public int hashCode() {
     return nullableHashCode(name().hashCode());
   }
+
+  public static Integer sort(Contest c1, Contest c2) {
+    return c1.sequenceNumber().compareTo(c2.sequenceNumber());
+  }
+
 }

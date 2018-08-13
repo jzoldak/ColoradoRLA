@@ -16,6 +16,11 @@ import static us.freeandfair.corla.util.EqualsHashcodeHelper.*;
 
 import java.io.Serializable;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
@@ -23,6 +28,7 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Version;
+import javax.persistence.ManyToMany;
 
 import org.hibernate.annotations.Immutable;
 
@@ -65,6 +71,13 @@ public class County implements PersistentEntity, Serializable {
   @Column(nullable = false, updatable = false, unique = true)
   private String my_name;
 
+  @ManyToMany(mappedBy = "counties")
+  private Set<Contest> contests = new HashSet<>();
+
+  @ManyToMany(mappedBy = "counties")
+  private Set<ContestResult> contest_results = new HashSet<>();
+
+
   /**
    * Constructs an empty county, solely for persistence. 
    */
@@ -91,7 +104,24 @@ public class County implements PersistentEntity, Serializable {
   public String name() {
     return my_name;
   }
-  
+
+  /** contests **/
+  public Set<Contest> getContests() {
+    return this.contests;
+  }
+
+  /** contests **/
+  public Set<ContestResult> getContestResults() {
+    return this.contest_results;
+  }
+
+  // /** contestResults **/
+  // public Set<ContestResult> getContestResults() {
+  //   return getContests().stream()
+  //     .map(c -> (ContestResult) c.getContestResult())
+  //     .collect(Collectors.toSet());
+  // }
+
   /**
    * @return the county ID.
    */
@@ -119,7 +149,7 @@ public class County implements PersistentEntity, Serializable {
   }
   
   /**
-   * @return a String representation of this contest.
+   * @return a String representation of this county.
    */
   @Override
   public String toString() {

@@ -6,11 +6,14 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+
+
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import javax.persistence.Cacheable;
+import javax.persistence.CascadeType;
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
 import javax.persistence.Convert;
@@ -22,12 +25,15 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Index;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
 import javax.persistence.ManyToOne;
+import javax.persistence.ManyToMany;
 import javax.persistence.MapKeyColumn;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import javax.persistence.Version;
 
+import us.freeandfair.corla.model.County;
 import us.freeandfair.corla.persistence.PersistentEntity;
 import us.freeandfair.corla.persistence.StringSetConverter;
 
@@ -103,6 +109,13 @@ public class ContestResult implements PersistentEntity, Serializable {
   @MapKeyColumn(name = "choice")
   @Column(name = "vote_total")
   private Map<String, Integer> vote_totals = new HashMap<>();
+
+  @ManyToMany(cascade = { CascadeType.ALL })
+  @JoinTable(name = "counties_to_contest_results",
+             joinColumns = { @JoinColumn(name = "contest_result_id") },
+             inverseJoinColumns = { @JoinColumn(name = "county_id") })
+  private Set<County> counties = new HashSet<>();
+
 
   /**
    * Constructs a new empty ContestResult (solely for persistence).

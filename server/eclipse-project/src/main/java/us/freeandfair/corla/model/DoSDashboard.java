@@ -255,11 +255,11 @@ public class DoSDashboard implements PersistentEntity, Serializable {
   }
 
   /**
-   * @return the current set of contests. This is an unmodifiable
-   * set; to update, use updateContestToAudit().
+   * @return current definition of multi-county contests
    */
-  public List<Contest> targetedContests() {
+  public List<Contest> targetedStateWideContests() {
     return contestsToAudit().stream()
+      .filter(a -> a.isStateWide())
       .map(a -> a.contest())
       .collect(Collectors.toList());
   }

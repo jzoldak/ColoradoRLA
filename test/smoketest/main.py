@@ -652,7 +652,7 @@ def dos_start(ac):
     'Run DOS steps to start the audit, enabling county auditing to begin: contest selection, seed, etc.'
 
     if len(ac.audited_contests) <= 0:
-        print("No contests to audit, status_code = %d" % r.status_code)
+        print("No contests to audit")
         return
 
     for contest_id in ac.audited_contests:

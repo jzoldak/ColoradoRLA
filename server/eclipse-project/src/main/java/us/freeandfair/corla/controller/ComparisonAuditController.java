@@ -33,6 +33,7 @@ import us.freeandfair.corla.model.CVRContestInfo;
 import us.freeandfair.corla.model.CVRContestInfo.ConsensusValue;
 import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.Contest;
+import us.freeandfair.corla.model.ContestResult;
 import us.freeandfair.corla.model.ContestToAudit;
 import us.freeandfair.corla.model.County;
 import us.freeandfair.corla.model.CountyContestComparisonAudit;
@@ -353,8 +354,7 @@ public final class ComparisonAuditController {
 
     the_cdb.setAuditedPrefixLength(0);
     the_cdb.setAuditedSampleCount(0);
-    for (final CountyContestResult ccr :
-         CountyContestResultQueries.forCounty(the_cdb.county())) {
+    for (final ContestResult ccr : the_cdb.county().getContestResults()) {
       AuditReason reason = contest_reasons.get(ccr.contest());
       if (reason == null) {
         reason = AuditReason.OPPORTUNISTIC_BENEFITS;

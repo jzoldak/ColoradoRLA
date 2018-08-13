@@ -106,6 +106,11 @@ public class ContestToAudit implements Serializable {
     return my_audit;
   }
 
+  /** statewide? **/
+  public boolean isStateWide(){
+    return my_reason == AuditReason.STATE_WIDE_CONTEST;
+  }
+
   /**
    * @return boolean
    */

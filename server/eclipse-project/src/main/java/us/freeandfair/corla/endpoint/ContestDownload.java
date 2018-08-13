@@ -69,14 +69,7 @@ public class ContestDownload extends AbstractEndpoint {
    */
   @Override
   public String endpointBody(final Request the_request, final Response the_response) {
-    // only return contests for counties that have finished their uploads
-    final Set<County> county_set = new HashSet<>();
-    for (final CountyDashboard cdb : Persistence.getAll(CountyDashboard.class)) {
-      if (cdb.manifestFile() != null && cdb.cvrFile() != null) {
-        county_set.add(cdb.county());
-      }
-    }
-    final List<Contest> contest_list = ContestQueries.forCounties(county_set);
+    final List<Contest> contest_list = Persistence.getAll(Contest.class);
     try (OutputStream os = SparkHelper.getRaw(the_response).getOutputStream();
          BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os, "UTF-8"));
          JsonWriter jw = new JsonWriter(bw)) {
@@ -84,7 +77,8 @@ public class ContestDownload extends AbstractEndpoint {
       for (final Contest contest : contest_list) {
         jw.jsonValue(Main.GSON.toJson(Persistence.unproxy(contest)));
         Persistence.evict(contest);
-      } 
+
+      }
       jw.endArray();
       jw.flush();
       jw.close();

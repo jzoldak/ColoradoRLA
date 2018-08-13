@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.persistence.PersistenceException;
 import javax.persistence.TypedQuery;
@@ -50,29 +51,13 @@ public final class ContestQueries {
    * @param the_counties The counties.
    * @return the matching contests, or null if the query fails.
    */
-  public static List<Contest> forCounties(final Set<County> the_counties) {
-    List<Contest> result = null;
-    
-    try {
-      final Session s = Persistence.currentSession();
-      final CriteriaBuilder cb = s.getCriteriaBuilder();
-      final CriteriaQuery<Contest> cq = cb.createQuery(Contest.class);
-      final Root<Contest> root = cq.from(Contest.class);
-      final List<Predicate> disjuncts = new ArrayList<Predicate>();
-      for (final County county : the_counties) {
-        disjuncts.add(cb.equal(root.get("my_county"), county));
-      }
-      cq.select(root);
-      cq.where(cb.or(disjuncts.toArray(new Predicate[disjuncts.size()])));
-      cq.orderBy(cb.asc(root.get("my_county").get("my_id")), 
-                 cb.asc(root.get("my_sequence_number")));
-      final TypedQuery<Contest> query = s.createQuery(cq);
-      result = query.getResultList();  
-    } catch (final PersistenceException e) {
-      Main.LOGGER.error("Exception when reading contests from database: " + e);
-    }
-
-    return result;
+  public static List<Contest> forCounties(final Set<County> counties) {
+    return Persistence.getAllAsStream(Contest.class)
+      .filter(c -> {Set union = c.getCounties();
+                    union.retainAll(counties);
+                    return union.isEmpty();})
+      .sorted(Contest::sort)
+      .collect(Collectors.toList());
   }
 
 
@@ -127,7 +112,7 @@ public final class ContestQueries {
       final CriteriaQuery<Contest> cq = cb.createQuery(Contest.class);
       final Root<Contest> root = cq.from(Contest.class);
       cq.select(root);
-      cq.where(cb.equal(root.get("my_county"), the_county));
+      cq.where(root.get("counties").in(the_county));
       cq.orderBy(cb.asc(root.get("my_sequence_number")));
       final TypedQuery<Contest> query = s.createQuery(cq);
       result = new HashSet<Contest>(query.getResultList());

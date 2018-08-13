@@ -80,32 +80,6 @@ public final class ContestResultQueries {
   }
   
   /**
-   * Gets ContestResults that are in the specified county.
-   * 
-   * @param the_county The county.
-   * @return the matching ContestResults, or null if the query fails.
-   */
-  public static Set<ContestResult> forCounty(final County the_county) {
-    Set<ContestResult> result = null;
-    
-    try {
-      final Session s = Persistence.currentSession();
-      final CriteriaBuilder cb = s.getCriteriaBuilder();
-      final CriteriaQuery<ContestResult> cq =
-          cb.createQuery(ContestResult.class);
-      final Root<ContestResult> root = cq.from(ContestResult.class);
-      cq.select(root);
-      cq.where(cb.equal(root.get("my_county"), the_county));
-      final TypedQuery<ContestResult> query = s.createQuery(cq);
-      result = new HashSet<ContestResult>(query.getResultList());
-    } catch (final PersistenceException e) {
-      Main.LOGGER.error("Exception when reading contests from database: " + e);
-    }
-
-    return result;
-  }
-
-  /**
    * find a ContestResult for a CONTEST if it exists, otherwise, create one
    **/
   public static ContestResult forContest(final Contest contest) {
@@ -139,20 +113,5 @@ public final class ContestResultQueries {
     return result;
   }
 
-  /**
-   * Deletes all the contest results for the county with the specified ID.
-   * 
-   * @param the_id The county ID.
-   */
-  public static void deleteForCounty(final Long the_county_id) {
-    final Set<ContestResult> results =
-        forCounty(Persistence.getByID(the_county_id, County.class));
-    if (results != null) {
-      for (final ContestResult c : results) {
-        Persistence.delete(c);
-        Persistence.delete(c.contest());
-      }
-    }
-    Persistence.flush();
-  }
+
 }

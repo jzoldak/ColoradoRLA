@@ -130,10 +130,12 @@ public class StartAuditRound extends AbstractDoSDashboardEndpoint {
   public String startRoundOne(final Request the_request, final Response the_response) {
 
 
-    // update every targeted contest's voteTotals from the counties
+    // Update every targeted contest's voteTotals from the counties. This needs
+    // to happen between all counties uploading there data and before the
+    // ballot selection happens
     final DoSDashboard dosdb = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class);
-    final List<Contest> targetedContests = dosdb.targetedContests();
-    final List<ContestResult> contestResults = targetedContests.stream()
+    final List<Contest> multiCountyContests = dosdb.targetedStateWideContests();
+    final List<ContestResult> contestResults = multiCountyContests.stream()
       .map(ContestCounter::countContest)
       .collect(Collectors.toList());
 

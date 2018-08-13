@@ -90,7 +90,7 @@ public class ContestDownloadByCounty extends AbstractEndpoint {
         for (final Contest contest : contest_list) {
           jw.jsonValue(Main.GSON.toJson(Persistence.unproxy(contest)));
           Persistence.evict(contest);
-        } 
+        }
         jw.endArray();
         jw.flush();
         jw.close();

@@ -297,9 +297,9 @@ public class CountyDashboardRefreshResponse {
     if (the_dashboard.cvrFile() != null &&
         the_dashboard.manifestFile() != null) {
       // only add contests if uploads are done
-      for (final Contest c : ContestQueries.forCounty(county)) {
-        contests.add(c.id());
-      }
+      // for (final Contest c : ContestQueries.forCounty(county)) {
+      //   contests.add(c.id());
+      // }
 
       for (final ContestToAudit cta : dosd.contestsToAudit()) {
         if (cta.audit() == AuditType.COMPARISON && 

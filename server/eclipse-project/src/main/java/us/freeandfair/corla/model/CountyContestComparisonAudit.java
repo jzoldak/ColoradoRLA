@@ -160,13 +160,20 @@ public class CountyContestComparisonAudit implements PersistentEntity {
   @JoinColumn
   private Contest my_contest;
   
+  // /**
+  //  * The contest result for this audit state.
+  //  */
+  // @ManyToOne(optional = false, fetch = FetchType.LAZY)
+  // @JoinColumn
+  // private CountyContestResult my_contest_result;
+
   /**
    * The contest result for this audit state.
    */
   @ManyToOne(optional = false, fetch = FetchType.LAZY)
-  @JoinColumn
-  private CountyContestResult my_contest_result;
-  
+  @JoinColumn()
+  private ContestResult contest_result;
+
   /**
    * The reason for this audit.
    */
@@ -306,16 +313,17 @@ public class CountyContestComparisonAudit implements PersistentEntity {
    * @param the_audit_reason The audit reason.
    */
   public CountyContestComparisonAudit(final CountyDashboard the_dashboard,
-                                      final CountyContestResult the_contest_result,
+                                      final ContestResult the_contest_result,
                                       final BigDecimal the_risk_limit,
                                       final AuditReason the_audit_reason) {
     super();
     my_dashboard = the_dashboard;
-    my_contest_result = the_contest_result;
-    my_contest = my_contest_result.contest();
+    contest_result = the_contest_result;
+    my_contest = contest_result.contest();
     my_risk_limit = the_risk_limit;
     my_audit_reason = the_audit_reason;
-    if (the_contest_result.countyDilutedMargin().equals(BigDecimal.ZERO)) {
+    // lets do this differently maybe
+    if (ContestCounter.dilutedMargin(contest_result.getVoteTotals()).equals(BigDecimal.ZERO)) {
       // the county diluted margin is 0, so this contest is not auditable
       my_audit_status = AuditStatus.NOT_AUDITABLE;
     }
@@ -362,8 +370,8 @@ public class CountyContestComparisonAudit implements PersistentEntity {
   /**
    * @return the contest result associated with this audit.
    */
-  public CountyContestResult contestResult() {
-    return my_contest_result;
+  public ContestResult contestResult() {
+    return contest_result;
   }
   
   /**
@@ -511,6 +519,7 @@ public class CountyContestComparisonAudit implements PersistentEntity {
                                                      final int the_one_over,
                                                      final int the_two_over) {
     BigDecimal result = BigDecimal.valueOf(0);
+    BigDecimal dilutedMargin = BigDecimal.valueOf(0);
     if (my_audit_status == AuditStatus.NOT_AUDITABLE) {
       final BigDecimal invgamma = BigDecimal.ONE.divide(my_gamma, MathContext.DECIMAL128);
       final BigDecimal twogamma = BigDecimal.valueOf(2).multiply(my_gamma);
@@ -539,14 +548,15 @@ public class CountyContestComparisonAudit implements PersistentEntity {
           twogamma.negate().
           multiply(BigDecimalMath.log(my_risk_limit, MathContext.DECIMAL128).
                    add(two_under.add(one_under).add(one_over).add(two_over)));
+      dilutedMargin = ContestCounter.dilutedMargin(contest_result.getVoteTotals());
       final BigDecimal ceil =
-        numerator.divide(ContestCounter.dilutedMargin(my_contest_result.voteTotals()),
+        numerator.divide(dilutedMargin,
                            MathContext.DECIMAL128).setScale(0, RoundingMode.CEILING);
       result = ceil.max(over_under_sum);
     }
     
     Main.LOGGER.info("estimate for contest " + contest().name() + 
-                     ", diluted margin " + contestResult().countyDilutedMargin() + 
+                     ", diluted margin " + dilutedMargin +
                      ": " + result);
     return result;
   }
@@ -792,9 +802,9 @@ public class CountyContestComparisonAudit implements PersistentEntity {
                                         final CastVoteRecord the_acvr) {
     OptionalInt result = OptionalInt.empty();
     final CVRContestInfo cvr_info = 
-        the_cvr.contestInfoForContest(my_contest_result.contest());
+        the_cvr.contestInfoForContest(contest_result.contest());
     final CVRContestInfo acvr_info =
-        the_acvr.contestInfoForContest(my_contest_result.contest());
+        the_acvr.contestInfoForContest(contest_result.contest());
 
     if (the_acvr.recordType() == RecordType.PHANTOM_BALLOT) {
       result = OptionalInt.of(computePhantomBallotDiscrepancy(cvr_info));
@@ -854,7 +864,7 @@ public class CountyContestComparisonAudit implements PersistentEntity {
     
     boolean possible_understatement = true;
     
-    for (final String winner : my_contest_result.winners()) {
+    for (final String winner : contest_result.getWinners()) {
       final int winner_change;
       if (!cvr_choices.contains(winner) && acvr_choices.contains(winner)) {
         // this winner gained a vote
@@ -866,12 +876,12 @@ public class CountyContestComparisonAudit implements PersistentEntity {
         // this winner's votes didn't change
         winner_change = 0;
       }
-      if (my_contest_result.losers().isEmpty()) {
+      if (contest_result.getLosers().isEmpty()) {
         // if there are no losers, we'll just negate this number - even though in 
         // real life, we wouldn't be auditing the contest at all
         raw_result = Math.max(raw_result, -winner_change);
       } else {
-        for (final String loser : my_contest_result.losers()) {
+        for (final String loser : contest_result.getLosers()) {
           final int loser_change;
           if (!cvr_choices.contains(loser) && acvr_choices.contains(loser)) {
             // this loser gained a vote
@@ -946,7 +956,7 @@ public class CountyContestComparisonAudit implements PersistentEntity {
     } else {
       // this contest does appear in the CVR, so we can actually check
       final Set<String> winner_votes = new HashSet<>(the_info.choices());    
-      winner_votes.removeAll(my_contest_result.losers());
+      winner_votes.removeAll(contest_result.getLosers());
       if (winner_votes.isEmpty()) {
         result = 1;
       } else { 
