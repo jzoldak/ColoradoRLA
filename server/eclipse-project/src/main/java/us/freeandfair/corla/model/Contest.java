@@ -98,9 +98,9 @@ public class Contest implements PersistentEntity, Serializable {
    * belongs to a ContestResult. A ContestResult is the roll up of many
    * CountyContestResults which each have one Contest.
    */
-  @ManyToOne(optional = false, fetch = FetchType.LAZY)
-  @JoinColumn
-  private County contest_result_id;
+  // @ManyToOne(optional = false, fetch = FetchType.LAZY)
+  // @JoinColumn
+  // private ContestResult contest_result;
 
   /**
    * The contest description.

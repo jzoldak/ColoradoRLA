@@ -104,10 +104,10 @@ public final class CountyContestResultQueries {
    */
   public static List<CountyContestResult> withContestName(final String contestName) {
     final Session s = Persistence.currentSession();
-    final Query q = s.createQuery("select CountyContestResult ccr " +
+    final Query q = s.createQuery("select ccr from CountyContestResult ccr " +
                                   "inner join Contest c " +
-                                  "on ccr.contest_id = c.id " +
-                                  "where c.name = :contestName");
+                                  "on ccr.my_contest = c " +
+                                  "where c.my_name = :contestName");
     q.setParameter("contestName", contestName);
     return q.list();
   }

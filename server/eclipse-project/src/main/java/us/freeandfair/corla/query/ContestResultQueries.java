@@ -82,8 +82,8 @@ public final class ContestResultQueries {
 
   public static ContestResult withContestName(final String contestName) {
     final Session s = Persistence.currentSession();
-    final Query q = s.createQuery("select ContestResult cr " +
-                                  "where cr.name = :contestName");
+    final Query q = s.createQuery("select cr from ContestResult cr " +
+                                  "where cr.contestName = :contestName");
     q.setParameter("contestName", contestName);
     List<ContestResult> results = q.getResultList();
     if (results.size() == 1) {
