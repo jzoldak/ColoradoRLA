@@ -54,7 +54,7 @@ import us.freeandfair.corla.persistence.PersistentEntity;
        uniqueConstraints = {
            @UniqueConstraint(columnNames = {"name", "county_id", "description", "votes_allowed"}) },
        indexes = { @Index(name = "idx_contest_name", columnList = "name"),
-                   @Index(name = "idx_contest_name_county_description_votes_allowed", 
+                   @Index(name = "idx_contest_name_county_description_votes_allowed",
                           columnList = "name, county_id, description, votes_allowed") })
 @JsonAdapter(ContestJsonAdapter.class)
 //this class has many fields that would normally be declared final, but
@@ -87,12 +87,21 @@ public class Contest implements PersistentEntity, Serializable {
   private String my_name;
 
   /**
-   * The county to which this contest result set belongs. 
+   * The county to which this contest result set belongs.
    */
   @ManyToOne(optional = false, fetch = FetchType.LAZY)
-  @JoinColumn  
+  @JoinColumn
   private County my_county;
-  
+
+  /**
+   * The contest result to which this contest result set belongs. A Contest
+   * belongs to a ContestResult. A ContestResult is the roll up of many
+   * CountyContestResults which each have one Contest.
+   */
+  @ManyToOne(optional = false, fetch = FetchType.LAZY)
+  @JoinColumn
+  private County contest_result_id;
+
   /**
    * The contest description.
    */
@@ -150,8 +159,8 @@ public class Contest implements PersistentEntity, Serializable {
    */
   //@ requires 1 <= the_votes_allowed;
   //@ requires the_votes_allowed <= the_choices.size();
-  public Contest(final String the_name, final County the_county, 
-                 final String the_description, final List<Choice> the_choices, 
+  public Contest(final String the_name, final County the_county,
+                 final String the_description, final List<Choice> the_choices,
                  final int the_votes_allowed, final int the_winners_allowed,
                  final int the_sequence_number)  {
     super();
@@ -179,7 +188,7 @@ public class Contest implements PersistentEntity, Serializable {
   public void setID(final Long the_id) {
     my_id = the_id;
   }
-  
+
   /**
    * {@inheritDoc}
    */
@@ -201,14 +210,14 @@ public class Contest implements PersistentEntity, Serializable {
   public String description() {
     return my_description;
   }
-  
+
   /**
    * @return the county ID.
    */
   public County county() {
     return my_county;
   }
-  
+
   /**
    * Checks to see if the specified choice is valid for this contest.
    * 
@@ -292,4 +301,9 @@ public class Contest implements PersistentEntity, Serializable {
   public int hashCode() {
     return nullableHashCode(name().hashCode());
   }
+
+  public static Integer sort(Contest c1, Contest c2) {
+    return c1.sequenceNumber().compareTo(c2.sequenceNumber());
+  }
+
 }
