@@ -18,13 +18,13 @@ import us.freeandfair.corla.model.County;
 public class ContestResultQueriesTest {
 
 
-  @BeforeTest
+  @BeforeTest(enabled=false)
   public void setUp() {
     Setup.setProperties();
     Persistence.beginTransaction();
   }
 
-  @AfterTest
+  @AfterTest(enabled=false)
   public void tearDown() {
     try {
     Persistence.rollbackTransaction();
@@ -32,7 +32,7 @@ public class ContestResultQueriesTest {
     }
   }
 
-  @Test()
+  @Test(enabled=false)
   public void forCountyTest() {
     County county = new County("cba", 321L);
     Persistence.saveOrUpdate(county);
