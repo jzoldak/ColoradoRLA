@@ -137,10 +137,16 @@ public class StartAuditRound extends AbstractDoSDashboardEndpoint {
     // final List<Contest> multiCountyContests = dosdb.targetedStateWideContests();
     final List<Contest> multiCountyContests = dosdb.targetedContests();
 
-    final List<ContestResult> contestResults = multiCountyContests.stream()
-      .map(c -> c.name())
-      .map(ContestCounter::countContest)
-      .collect(Collectors.toList());
+    // final List<ContestResult> contestResults = multiCountyContests.stream()
+    //   .map(c -> c.name())
+    //   .map(ContestCounter::countContest)
+    //   .collect(Collectors.toList());
+
+    final List<ContestResult> contestResults = new ArrayList<ContestResult>();
+    for (Contest c: multiCountyContests) {
+      // the name is what links all contests together and the one contest result
+      contestResults.add(ContestCounter.countContest(c.name()));
+    }
 
     for (ContestResult cr: contestResults) {
       Persistence.saveOrUpdate(cr);

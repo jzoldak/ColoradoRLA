@@ -77,7 +77,7 @@ public class ContestResult implements PersistentEntity, Serializable {
    * The version (for optimistic locking).
    */
   @Version
-  private Long version;
+  private Long version = 0L;
 
   /**
    * The contest relation.
@@ -149,9 +149,9 @@ public class ContestResult implements PersistentEntity, Serializable {
    *
    * @param the_contest The contest.
    */
-  public ContestResult(final Contest the_contest) {
+  public ContestResult(final String contestName) {
     super();
-    this.contest = the_contest;
+    this.contestName = contestName;
   }
 
   /**

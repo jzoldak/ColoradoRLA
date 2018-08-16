@@ -30,6 +30,8 @@ public final class ContestCounter {
     final List<CountyContestResult> countyResults =
       CountyContestResultQueries.withContestName(contestName);
     final ContestResult contestResult = ContestResultQueries.withContestName(contestName);
+    System.out.println("countyResults " + countyResults.size());
+    System.out.println("contestResults " + contestResult.getContestName());
     contestResult.setVoteTotals( accumulateVoteTotals(countyResults.stream()
                                                       .map((cr) -> cr.voteTotals())
                                                       .collect(Collectors.toList())));
@@ -40,6 +42,7 @@ public final class ContestCounter {
   /** add em up **/
   public static Map<String,Integer> accumulateVoteTotals(final List<Map<String,Integer>> voteTotals) {
     final Map<String,Integer> acc = new HashMap<String,Integer>();
+    System.out.println("voteTotals " + voteTotals.size());
     return voteTotals.stream().reduce(acc,
                                       (a, vt) -> addVoteTotal(a, vt));
   }
@@ -47,6 +50,7 @@ public final class ContestCounter {
   /** add one vote total to another **/
   public static Map<String,Integer> addVoteTotal(final Map<String,Integer> acc,
                                                  final Map<String,Integer> vt) {
+    System.out.println(vt);
     // we iterate over vt because it may have a key that the accumulator has not
     // seen yet
     vt.forEach((k,v) -> acc.merge(k, v, (v1,v2) -> {return (null == v1) ? v2: v1 + v2;}));
