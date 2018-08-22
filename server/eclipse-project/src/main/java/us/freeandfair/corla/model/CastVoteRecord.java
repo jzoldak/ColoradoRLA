@@ -423,8 +423,9 @@ public class CastVoteRecord implements PersistentEntity, Serializable {
       result &= nullableEquals(the_other.recordID(), recordID());
       result &= nullableEquals(the_other.imprintedID(), imprintedID());
       result &= nullableEquals(the_other.ballotType(), ballotType());
-      result &= recordType().isAuditorGenerated() ^
-                the_other.recordType().isAuditorGenerated();
+      // if PHANTOM_RECORD, neither are auditorGenerated
+      // result &= recordType().isAuditorGenerated() ^
+      //           the_other.recordType().isAuditorGenerated();
     }
 
     return result;
@@ -450,6 +451,14 @@ public class CastVoteRecord implements PersistentEntity, Serializable {
      */
     public boolean isAuditorGenerated() {
       return this == AUDITOR_ENTERED || this == PHANTOM_BALLOT;
+    }
+
+    /**
+     * the cvr data did not contain a cvr we looked for so we generate a
+     * discrepancy automatically, at least for PHANTOM_RECORD
+     **/
+    public boolean isSystemGenerated() {
+      return this == PHANTOM_RECORD;
     }
   }
 

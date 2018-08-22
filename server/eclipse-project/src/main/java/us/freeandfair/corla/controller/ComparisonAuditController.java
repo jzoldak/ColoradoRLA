@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalInt;
@@ -378,6 +379,10 @@ public final class ComparisonAuditController {
       final List<CastVoteRecord> cvrs_to_audit =
           getCVRsInAuditSequence(the_cdb.county(), 0, to_audit - 1);
 
+      cvrs_to_audit.stream()
+          .filter(c -> { return c.recordType() == CastVoteRecord.RecordType.PHANTOM_RECORD; } )
+          .forEach(c -> { createDiscrepancy(the_cdb, c, CastVoteRecord.RecordType.PHANTOM_RECORD); } );
+
       // the IDs of the CVRs to audit, in audit sequence order
       final List<Long> audit_subsequence_ids = new ArrayList<Long>();
       for (final CastVoteRecord cvr : cvrs_to_audit) {
@@ -404,6 +409,28 @@ public final class ComparisonAuditController {
     }
 
     return result;
+  }
+
+  /** create a discrepency as if it was submitted by the client **/
+  public static void createDiscrepancy(final CountyDashboard cdb,
+                                       final CastVoteRecord cvr,
+                                       final CastVoteRecord.RecordType recordType) {
+    Persistence.saveOrUpdate(cvr);
+    CVRAuditInfo cvrAuditInfo = new CVRAuditInfo(cvr);
+    Persistence.saveOrUpdate(cvrAuditInfo);
+    final CastVoteRecord acvr = new CastVoteRecord(recordType,
+                                                   Instant.now(),
+                                                   cvr.countyID(),
+                                                   cvr.cvrNumber(),
+                                                   null,
+                                                   cvr.scannerID(),
+                                                   cvr.batchID(),
+                                                   cvr.recordID(),
+                                                   cvr.imprintedID(),
+                                                   cvr.ballotType(),
+                                                   cvr.contestInfo());
+    Persistence.saveOrUpdate(acvr);
+    submitAuditCVR(cdb, cvr, acvr);
   }
 
   /**
@@ -918,6 +945,8 @@ public final class ComparisonAuditController {
   private static boolean checkACVRSanity(final CastVoteRecord the_cvr,
                                          final CastVoteRecord the_acvr) {
     return the_cvr.isAuditPairWith(the_acvr) &&
-           the_acvr.recordType().isAuditorGenerated();
+      (the_acvr.recordType().isAuditorGenerated()
+       || the_acvr.recordType().isSystemGenerated())
+      ;
   }
 }
