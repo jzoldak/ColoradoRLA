@@ -324,6 +324,13 @@ public class CastVoteRecord implements PersistentEntity, Serializable {
     return Collections.unmodifiableList(my_contest_info);
   }
 
+  /** setter **/
+  public void setContestInfo (List<CVRContestInfo> contestInfos) {
+    this.my_contest_info.clear();
+    this.my_contest_info.addAll(contestInfos);
+  }
+
+
   /**
    * Gets the choices for the specified contest.
    *
