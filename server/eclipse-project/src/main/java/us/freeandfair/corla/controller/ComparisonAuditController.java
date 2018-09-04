@@ -24,6 +24,7 @@ import java.util.OptionalLong;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import us.freeandfair.corla.Main;
 import us.freeandfair.corla.crypto.PseudoRandomNumberGenerator;
@@ -44,6 +45,7 @@ import us.freeandfair.corla.model.Round;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.BallotManifestInfoQueries;
 import us.freeandfair.corla.query.CastVoteRecordQueries;
+import us.freeandfair.corla.query.ContestQueries;
 import us.freeandfair.corla.query.CountyContestResultQueries;
 
 /**
@@ -381,7 +383,9 @@ public final class ComparisonAuditController {
 
       cvrs_to_audit.stream()
           .filter(c -> { return c.recordType() == CastVoteRecord.RecordType.PHANTOM_RECORD; } )
-          .distinct() // in case the random number occurs twice, we only want to create one discrepency
+          // in case the random number occurs twice, we only want to create one
+          // discrepency because the multiplicity is accounted for in that process
+          .distinct()
           .forEach(c -> { createPhantomRecord(the_cdb, c); } );
 
       // the IDs of the CVRs to audit, in audit sequence order
@@ -419,6 +423,7 @@ public final class ComparisonAuditController {
     // however we need to make sure this is not done twice
     // let's assume the list of phantom records has been deduped, I think that will get us there
 
+    Main.LOGGER.info("createPhantomRecord");
 
     // we need to create a discrepancy for every contest that COULD have appeared on the ballot,
     // which we take to mean all the contests that occur in the county
@@ -428,7 +433,7 @@ public final class ComparisonAuditController {
       .map(c -> {return new CVRContestInfo(c,
                                            "PHANTOM_RECORD - CVR not found",
                                            null,
-                                           new ArrayList<String>()) } )
+                                           new ArrayList<String>()); } )
       .collect(Collectors.toList());
 
     cvr.setContestInfo(phantomContestInfos);
@@ -450,6 +455,7 @@ public final class ComparisonAuditController {
                                                    cvr.ballotType(),
                                                    phantomContestInfos);
     Persistence.saveOrUpdate(acvr);
+
     submitAuditCVR(cdb, cvr, acvr);
   }
 
@@ -785,6 +791,7 @@ public final class ComparisonAuditController {
           audit_reasons.put(ca.contest(), ca.auditReason());
           if (!discrepancies.contains(ca.auditReason()) &&
               ca.computeDiscrepancy(cvrai.cvr(), cvrai.acvr()).isPresent()) {
+            Main.LOGGER.info("submitRound discrepancies.add " + ca.auditReason());
             discrepancies.add(ca.auditReason());
           }
         }

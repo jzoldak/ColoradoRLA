@@ -23,6 +23,8 @@ public final class BallotSelection {
    **/
   public static List<CastVoteRecord> selectCVRs(final List<Integer> rands,
                                                 final Long countyId) {
+
+    System.out.println("selectCVRs: "+ rands);
     return selectCVRs(rands,
                       countyId,
                       BallotManifestInfoQueries::holdingSequenceNumber,
@@ -45,13 +47,19 @@ public final class BallotSelection {
         throw new BallotSelection.MissingBallotManifestException(msg);
       }
       final BallotManifestInfo bmi = bmiMaybe.get();
+
+      System.out.println("query cast_vote_record for county_id "+ bmi.countyID());
+      System.out.println("query cast_vote_record for "+ bmi.imprintedID(rand));
       CastVoteRecord cvr = queryCVR.apply(bmi.countyID(),
                                           bmi.scannerID(),
                                           bmi.batchID(),
                                           bmi.ballotPosition(rand));
       if (cvr == null) {
-        // TODO: create a discrepancy when this happens
-        cvr = phantomRecord();
+        // a discrepancy will be created for this later on
+        cvr = phantomRecord(bmi.countyID(),
+                            bmi.scannerID(),
+                            bmi.batchID(),
+                            bmi.ballotPosition(rand));
       }
 
       cvrs.add(cvr);
@@ -60,20 +68,27 @@ public final class BallotSelection {
   }
 
   /** PHANTOM_RECORD conspiracy theory time **/
-  public static CastVoteRecord phantomRecord() {
+  public static CastVoteRecord phantomRecord(final Long county_id,
+                                             final Integer scanner_id,
+                                             final String batch_id,
+                                             final Long position) {
+    String imprinted_id = scanner_id +"-"+ batch_id +"-"+ position;
+    System.out.println("new phantomRecord for "+ imprinted_id);
+    //cvr_number (this would have been in the file)
+    Integer cvr_number = 0;
+    //sequence_number (this would have been set in the file read loop)
+    Integer sequence_number = 0;
     final CastVoteRecord cvr = new CastVoteRecord(CastVoteRecord.RecordType.PHANTOM_RECORD,
-                                                  null,
-                                                  0L,
-                                                  0,
-                                                  0,
-                                                  0,
-                                                  "",
-                                                  0,
-                                                  "",
-                                                  "PHANTOM RECORD",
-                                                  null);
-    // TODO prevent the client from requesting info about this cvr
-    cvr.setID(0L);
+                                                  null, //timestamp
+                                                  county_id,
+                                                  cvr_number,
+                                                  sequence_number,
+                                                  scanner_id,
+                                                  batch_id,
+                                                  position.intValue(),//record_id
+                                                  imprinted_id,//imprinted_id
+                                                  "PHANTOM RECORD", //ballot_type
+                                                  null);//contest_info - filled in later
     return cvr;
   }
 

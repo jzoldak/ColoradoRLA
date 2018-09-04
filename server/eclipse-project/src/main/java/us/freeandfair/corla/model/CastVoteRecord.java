@@ -118,7 +118,7 @@ public class CastVoteRecord implements PersistentEntity, Serializable {
 
   /**
    * The sequence number of this cast vote record. Only applicable
-   * to imported CVRs.
+   * to imported CVRs. - nth of the county
    */
   @Column(name = "sequence_number", updatable = false)
   private Integer my_sequence_number;
@@ -136,7 +136,7 @@ public class CastVoteRecord implements PersistentEntity, Serializable {
   private String my_batch_id;
 
   /**
-   * The record ID of this cast vote record.
+   * The record ID of this cast vote record. - nth of the batch
    */
   @Column(updatable = false, nullable = false)
   private Integer my_record_id;
