@@ -791,7 +791,7 @@ public final class ComparisonAuditController {
           audit_reasons.put(ca.contest(), ca.auditReason());
           if (!discrepancies.contains(ca.auditReason()) &&
               ca.computeDiscrepancy(cvrai.cvr(), cvrai.acvr()).isPresent()) {
-            Main.LOGGER.info("submitRound discrepancies.add " + ca.auditReason());
+            Main.LOGGER.info("updateRound discrepancies.add " + ca.auditReason());
             discrepancies.add(ca.auditReason());
           }
         }
@@ -809,7 +809,10 @@ public final class ComparisonAuditController {
           the_round.addDisagreement(disagreements);
         }
 
+        Main.LOGGER.info("submitRound cvrai.multiplicity " + cvrai.multiplicity());
         cvrai.setMultiplicity(cvrai.multiplicity() + multiplicity);
+
+        Main.LOGGER.info("submitRound cvrai.multiplicity " + cvrai.multiplicity());
       }
     }
   }
@@ -848,6 +851,7 @@ public final class ComparisonAuditController {
           ca.computeDiscrepancy(cvr_under_audit, audit_cvr);
       if (discrepancy.isPresent()) {
         for (int i = 0; i < audit_count; i++) {
+          Main.LOGGER.info("audit discrepancies.add " + ca.auditReason());
           ca.recordDiscrepancy(the_info, discrepancy.getAsInt());
         }
         discrepancies.add(ca.auditReason());

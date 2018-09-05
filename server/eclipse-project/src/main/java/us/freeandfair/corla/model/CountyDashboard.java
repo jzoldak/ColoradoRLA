@@ -46,6 +46,7 @@ import javax.persistence.Version;
 
 import us.freeandfair.corla.model.ImportStatus.ImportState;
 import us.freeandfair.corla.persistence.AuditSelectionIntegerMapConverter;
+import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.persistence.PersistentEntity;
 
 /**
@@ -592,11 +593,21 @@ public class CountyDashboard implements PersistentEntity {
    */
   public Long cvrUnderAudit() {
     final Round round = currentRound();
+    // expectedCount is expected to be the ballotSequence size
     if (round == null || round.actualCount().compareTo(round.expectedCount()) >= 0) {
       return null;
     } else {
       // get the current CVR to audit from the round object
-      return round.ballotSequence().get(round.actualCount());
+      Long cvrId = round.ballotSequence().get(round.actualCount());
+      CastVoteRecord cvr = Persistence.getByID(cvrId, CastVoteRecord.class);
+      if (cvr.recordType() != CastVoteRecord.RecordType.PHANTOM_RECORD) {
+        return cvr.id();
+      } else {
+        round.setActualCount(round.actualCount() + 1);
+
+        // try this again
+        return cvrUnderAudit();
+      }
     }
   }
   

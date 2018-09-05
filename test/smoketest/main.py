@@ -755,6 +755,12 @@ def county_audit(ac, county_id):
 
         r = test_endpoint_get(ac, county_s, "/cvr/id/%d" % selected[i]['db_id'], show=False)
         acvr = r.json()
+
+        if acvr['record_type'] == 'PHANTOM_BALLOT':
+            # it has already been audited (automatically)
+            # the client will use cdb.cvrUnderAudit which will check for this as well
+            next #(next cvr)
+
         logging.debug("Original CVR: %s" % json.dumps(acvr))
         acvr['record_type'] = 'AUDITOR_ENTERED'
 
