@@ -478,6 +478,12 @@ public final class Persistence {
     currentSession().save(the_object);
   }
 
+  public static void save(final PersistentEntity the_object)
+    throws IllegalStateException, PersistenceException {
+    checkForRunningTransaction();
+    currentSession().save(the_object);
+  }
+
   /**
    * Updates the specified object in persistent storage. This will cause an
    * exception if there is no object in persistent storage with the same class

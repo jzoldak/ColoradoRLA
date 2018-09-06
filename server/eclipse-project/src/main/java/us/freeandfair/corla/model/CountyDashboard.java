@@ -44,6 +44,7 @@ import javax.persistence.OrderColumn;
 import javax.persistence.Table;
 import javax.persistence.Version;
 
+import us.freeandfair.corla.Main;
 import us.freeandfair.corla.model.ImportStatus.ImportState;
 import us.freeandfair.corla.persistence.AuditSelectionIntegerMapConverter;
 import us.freeandfair.corla.persistence.Persistence;
@@ -597,20 +598,37 @@ public class CountyDashboard implements PersistentEntity {
     if (round == null || round.actualCount().compareTo(round.expectedCount()) >= 0) {
       return null;
     } else {
+      return round.ballotSequence().get(round.actualCount());
+    }
+  }
+
+  /** skip over PHANTOM_RECORDs **/
+  public Long skipOverNextMaybe() {
+    final Round round = currentRound();
+    // expectedCount is expected to be the ballotSequence size
+    if (round == null || round.actualCount().compareTo(round.expectedCount()) >= 0) {
+
+      Main.LOGGER.info("skipOverNextMaybe null" );
+      return null;
+    } else {
       // get the current CVR to audit from the round object
       Long cvrId = round.ballotSequence().get(round.actualCount());
       CastVoteRecord cvr = Persistence.getByID(cvrId, CastVoteRecord.class);
+      // this could also be a check for audited/audit_flag I think
       if (cvr.recordType() != CastVoteRecord.RecordType.PHANTOM_RECORD) {
+        Main.LOGGER.info("skipOverNextMaybe "+ cvr.id() +" actualCount: " + round.actualCount());
         return cvr.id();
       } else {
+        // skip it
         round.setActualCount(round.actualCount() + 1);
 
+        Main.LOGGER.info("skipOverNextMaybe RECURSE "+ cvr.id() +" actualCount: " + round.actualCount());
         // try this again
-        return cvrUnderAudit();
+        return skipOverNextMaybe();
       }
     }
   }
-  
+
   /**
    * @return the number of ballots audited.
    */

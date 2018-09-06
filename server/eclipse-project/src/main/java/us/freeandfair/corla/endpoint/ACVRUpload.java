@@ -92,6 +92,7 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
         final CountyDashboard cdb = 
             Persistence.getByID(Main.authentication().authenticatedCounty(the_request).id(),
                                 CountyDashboard.class);
+
         if (cdb == null) {
           Main.LOGGER.error("could not get audit board dashboard");
           serverError(the_response, "Could not save ACVR to dashboard");
@@ -125,6 +126,9 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
           invariantViolation(the_response, 
                              "ballot submission with no remaining ballots in round");
         }
+        // check if the next ballot is a PHANTOM_RECORD so we can skip it
+        cdb.skipOverNextMaybe();
+
         if (cdb.ballotsRemainingInCurrentRound() == 0) {
           // the round is over
           my_event.set(ROUND_COMPLETE_EVENT);
