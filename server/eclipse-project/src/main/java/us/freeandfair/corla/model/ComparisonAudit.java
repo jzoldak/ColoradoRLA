@@ -192,12 +192,6 @@ public class ComparisonAudit implements PersistentEntity {
   private Integer my_disagreement_count = 0;
 
   /**
-   * gets incremented
-   */
-  @Column(nullable = true) // true for migration
-  private BigDecimal overstatements = BigDecimal.ZERO;
-
-  /**
    * A flag that indicates whether the optimistic ballots to audit
    * estimate needs to be recalculated.
    */
@@ -435,12 +429,9 @@ public class ComparisonAudit implements PersistentEntity {
    *
    * The number of one-vote and two-vote overstatements across the set
    * of counties participating in this audit.
-   *
-   * TODO collect the number of 1 and 2 vote overstatements across
-   * participating counties.
    */
-  public BigDecimal getOverstatements() {
-    return this.overstatements; // FIXME
+  public Integer overStatements() {
+    return this.my_two_vote_over_count + this.my_one_vote_over_count;
   }
 
   /** the number of ballots audited  **/
@@ -455,12 +446,12 @@ public class ComparisonAudit implements PersistentEntity {
    * overstatements to samples increases.
    */
   private BigDecimal scalingFactor() {
-    final BigDecimal auditedSamples = BigDecimal.valueOf(getAuditedSampleCount());
-    if (auditedSamples.equals(BigDecimal.ZERO)) {
+    final BigDecimal numAuditedSamples = BigDecimal.valueOf(getAuditedSampleCount());
+    final BigDecimal numOverStatements = BigDecimal.valueOf(overStatements());
+    if (numAuditedSamples.equals(BigDecimal.ZERO)) {
       return BigDecimal.ONE;
     } else {
-      return BigDecimal.ONE.add(getOverstatements()
-                                .divide(auditedSamples, MathContext.DECIMAL128));
+      return BigDecimal.ONE.add(numOverStatements.divide(numAuditedSamples, MathContext.DECIMAL128));
     }
   }
 
@@ -479,7 +470,6 @@ public class ComparisonAudit implements PersistentEntity {
                                  + " my_optimistic_samples_to_audit=%d,"
                                  + " computeOptimisticSamplesToAudit=%f]",
                                  my_optimistic_samples_to_audit, optimistic));
-;
       my_optimistic_samples_to_audit = optimistic.intValue();
       my_optimistic_recalculate_needed = false;
     }
@@ -524,7 +514,7 @@ public class ComparisonAudit implements PersistentEntity {
                                                      final int oneOver,
                                                      final int twoOver) {
     return Audit.optimistic(getRiskLimit(), getDilutedMargin(), getGamma(),
-                            twoUnder, oneUnder, oneOver, twoOver) ;
+                            twoUnder, oneUnder, oneOver, twoOver);
   }
 
   /**
@@ -952,12 +942,12 @@ public class ComparisonAudit implements PersistentEntity {
    */
   @Override
   public String toString() {
-    return  String.format("[ComparisonAudit for %s: counties=%s, auditedSampleCount=%d, overstatements=%f,"
+    return  String.format("[ComparisonAudit for %s: counties=%s, auditedSampleCount=%d, overstatements=%d,"
                           + " contestResult.contestCvrIds=%s, status=%s, reason=%s]",
                           this.contestResult().getContestName(),
                           this.contestResult().getCounties(),
                           this.getAuditedSampleCount(),
-                          this.getOverstatements(),
+                          this.overStatements(),
                           this.contestResult().getContestCVRIds(),
                           my_audit_status,
                           this.auditReason());
