@@ -872,7 +872,7 @@ public class CountyDashboard implements PersistentEntity {
     // NOTE: we may be asking for this when we don't need to; when there are no
     // audits setup yet
     if (maybe.isPresent()) {
-      return maybe.get();
+      return maybe.get()  - auditedSampleCount();
     } else {
       return 0;
     }
