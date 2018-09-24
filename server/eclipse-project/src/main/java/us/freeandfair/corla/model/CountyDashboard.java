@@ -828,6 +828,17 @@ public class CountyDashboard implements PersistentEntity {
     }
   }
 
+
+  /**
+   *  takes the targeted contests/ComparisonAudits and checks them for completion/RiskLimitAchieved
+   **/
+  public Boolean allAuditsComplete() {
+    return comparisonAudits().stream()
+      .filter(ca -> ca.auditReason() != AuditReason.OPPORTUNISTIC_BENEFITS)
+      .allMatch(ca -> (ca.auditStatus() == AuditStatus.RISK_LIMIT_ACHIEVED
+                       || ca.auditStatus() == AuditStatus.ENDED));
+  }
+
   /**
    * @return the estimated number of samples to audit.
    */
@@ -835,7 +846,7 @@ public class CountyDashboard implements PersistentEntity {
     // NOTE: there could be race conditions between audit boards across counties
     Optional<Integer> maybe = comparisonAudits().stream()
       .filter(ca -> ca.auditReason() != AuditReason.OPPORTUNISTIC_BENEFITS)
-      .map(ca -> ca.estimatedSamplesToAudit())
+      .map(ca -> ca.estimatedRemaining())
       .max(Comparator.naturalOrder());
     // NOTE: we may be asking for this when we don't need to; when there are no
     // audits setup yet

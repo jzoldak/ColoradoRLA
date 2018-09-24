@@ -413,10 +413,12 @@ public class ComparisonAudit implements PersistentEntity {
     if (my_optimistic_recalculate_needed) {
       recalculateSamplesToAudit();
     }
-
     return my_optimistic_samples_to_audit;
   }
 
+  public final Integer estimatedRemaining() {
+    return estimatedSamplesToAudit() - getAuditedSampleCount();
+  }
   /**
    * @return the expected overall number of ballots to audit, assuming
    * overstatements continue to occur at the current rate.
