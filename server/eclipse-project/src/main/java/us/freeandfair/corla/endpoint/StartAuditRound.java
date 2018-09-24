@@ -302,7 +302,7 @@ public class StartAuditRound extends AbstractDoSDashboardEndpoint {
         Selection selection = BallotSelection.randomSelection(contestResult,
                                                               seed,
                                                               startIndex,
-                                                              endIndex);
+                                                              Math.max(startIndex,endIndex));
         LOGGER.debug(String.format("[makeSelections selection=%s, "
                                    + "selection.contestCVRIds=%s, startIndex=%d, endIndex=%d]",
                                    selection,
