@@ -27,6 +27,7 @@ import us.freeandfair.corla.model.CVRAuditInfo;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.BallotManifestInfoQueries;
 import us.freeandfair.corla.query.CastVoteRecordQueries;
+import us.freeandfair.corla.util.BallotSequencer;
 import us.freeandfair.corla.util.PhantomBallots;
 
 // TODO remove suppression and refactor
@@ -78,7 +79,7 @@ public final class BallotSelection {
     /**
      * The set of CVRs to audit in audit sequence order, no duplicates.
      */
-    public Set<CastVoteRecord> cvrs = new TreeSet<>();
+    public List<CastVoteRecord> cvrs = new ArrayList<>();
 
     /**
      * CVR IDs in audit sequence order, possible duplicates.
@@ -188,7 +189,7 @@ public final class BallotSelection {
      * contests) into a single segment that can be given to a county.
      */
     public static Segment combineSegments(final Collection<Segment> segments) {
-      return segments.stream()
+      final Segment rawSegment = segments.stream()
         .filter(s -> null != s)
         .reduce(new Segment(),
                 (acc,s) -> {
@@ -197,6 +198,9 @@ public final class BallotSelection {
                   acc.addCvrIds(s.cvrIds);
                   acc.addCvrs(s.cvrs);
                   return acc;});
+
+      return BallotSequencer
+        .sortAndDeduplicateCVRs(PhantomBallots.removePhantomRecords(rawSegment.cvrs);
     }
 
     /**
@@ -448,7 +452,7 @@ public final class BallotSelection {
    * Produces a list of CVRToAuditResponse elements which represent the CVRs
    * augmented with ballot manifest data.
    *
-   * @return CVRs joind with ballot manifest data
+   * @return CVRs joined with ballot manifest data
    */
   public static List<CVRToAuditResponse>
       toResponseList(final List<CastVoteRecord> cvrs) {
@@ -463,8 +467,9 @@ public final class BallotSelection {
    * augmented with ballot manifest data.
    *
    * Uses a passed-in BallotManifestInfo query.
+   * TODO perf-hotspot?
    *
-   * @return CVRs joind with ballot manifest data
+   * @return CVRs joined with ballot manifest data
    */
   public static List<CVRToAuditResponse>
       toResponseList(final List<CastVoteRecord> cvrs, final BMILOCQ bmiq) {

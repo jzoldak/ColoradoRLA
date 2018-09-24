@@ -277,9 +277,9 @@ public class StartAuditRound extends AbstractDoSDashboardEndpoint {
         final Integer startIndex = BallotSelection.auditedPrefixLength(contestResult.getContestCVRIds());
         final Integer endIndex = comparisonAudit.optimisticSamplesToAudit();
 
-        final Selection selection =
-          BallotSelection.randomSelection(contestResult, seed,
-                                          startIndex, endIndex);
+        // Map of county id to stuffs
+        final Selection selection = BallotSelection.randomSelection(contestResult, seed,
+                                                                    startIndex, endIndex);
 
         LOGGER.debug(String.format("[makeSelections for ContestResult: contestName=%s, "
                                    + "contestResult.contestCVRIds=%s, selection=%s, "

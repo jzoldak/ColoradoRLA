@@ -10,7 +10,8 @@
 package us.freeandfair.corla.util;
 
 import java.util.List;
-
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import us.freeandfair.corla.controller.BallotSelection;
@@ -44,25 +45,30 @@ public final class BallotSequencer {
    * @param cvrs input CVRs
    * @return sorted, deduplicated list of CVR database IDs
    */
-  public static List<Long>
+  public static List<CastVoteRecord>
       sortAndDeduplicateCVRs(final List<CastVoteRecord> cvrs) {
     // Deduplicate CVRs.
-    final List<CastVoteRecord> deduplicatedCvrs = cvrs.stream()
-        .distinct()
-        .collect(Collectors.toList());
+    final Map<Long, CastVoteRecord> deduplicatedCvrs = cvrs.stream()
+      .distinct()
+      .collect(Collectors.toMap(cvr -> cvr.id(),
+                                Function.identity(),
+                                (a, b) -> b));
 
     // Join with ballot manifest for the purposes of sorting by location, then
     // sort it.
     //
-    // TOOD: Abusing the CVRToAuditResponse class for sorting is wrong; we
+    // TODO: Abusing the CVRToAuditResponse class for sorting is wrong; we
     // should reify the "joined CVR / Ballot Manifest" concept.
     final List<CVRToAuditResponse> sortedAuditResponses =
-        BallotSelection.toResponseList(deduplicatedCvrs);
+      BallotSelection.toResponseList(deduplicatedCvrs.entrySet().stream()
+                                     .map(m -> m.getValue())
+                                     .collect(Collectors.toList()));
     sortedAuditResponses.sort(null);
 
     // Pull CVR database IDs back out of the now-sorted list.
-    return sortedAuditResponses.stream()
-        .map(auditResponse -> auditResponse.dbID())
-        .collect(Collectors.toList());
+    return sortedAuditResponses
+      .stream()
+      .map(x -> deduplicatedCvrs.get(x.dbID()))
+      .collect(Collectors.toList());
   }
 }
