@@ -21,11 +21,11 @@ per contest with a "--", e.g.
 
 ./genelect.py -u 100 200 300 -- 5000 900 -200 1500 > cvr-5000-900--200-1500_100-200-300.csv
 
-A county specific contest can be added with --with-county. One of the contests
+A county specific contest can be added with --county. One of the contests
 with have the county name prepended to it so that it will be unique to the
 county. The other contests will be possibly shared with other counties.
 
-./genelect.py 5000 900 -200 1500 --with-county Arapahoe > cvr-arapahoe.csv
+./genelect.py 5000 900 -200 1500 --county Arapahoe > cvr-arapahoe.csv
 
     ,,,,,,Arapahoe Prop 1 (Vote For=1),
 

@@ -2,72 +2,70 @@
 
 set -m #job control
 
-# no whitespace in names, not sure how to support that yet...
-# TODO: split by newline somehow
-counties=( Adams
-           Alamosa
-           Arapahoe
-           Archuleta
-           Baca
-           Bent
-           Boulder
-           Broomfield
-           Chaffee
-           Cheyenne
-           Clear-Creek
-           Conejos
-           Costilla
-           Crowley
-           Custer
-           Delta
-           Denver
-           Dolores
-           Douglas
-           Eagle
-           Elbert
-           El-Paso
-           Fremont
-           Garfield
-           Gilpin
-           Grand
-           Gunnison
-           Hinsdale
-           Huerfano
-           Jackson
-           Jefferson
-           Kiowa
-           Kit-Carson
-           Lake
-           La-Plata
-           Larimer
-           Las-Animas
-           Lincoln
-           Logan
-           Mesa
-           Mineral
-           Moffat
-           Montezuma
-           Montrose
-           Morgan
-           Otero
-           Ouray
-           Park
-           Phillips
-           Pitkin
-           Prowers
-           Pueblo
-           Rio-Blanco
-           Rio-Grande
-           Routt
-           Saguache
-           San-Juan
-           San-Miguel
-           Sedgwick
-           Summit
-           Teller
-           Washington
-           Weld
-           Yuma);
+declare -a counties=("Adams"
+                     "Alamosa"
+                     "Arapahoe"
+                     "Archuleta"
+                     "Baca"
+                     "Bent"
+                     "Boulder"
+                     "Broomfield"
+                     "Chaffee"
+                     "Cheyenne"
+                     "Clear Creek"
+                     "Conejos"
+                     "Costilla"
+                     "Crowley"
+                     "Custer"
+                     "Delta"
+                     "Denver"
+                     "Dolores"
+                     "Douglas"
+                     "Eagle"
+                     "Elbert"
+                     "El Paso"
+                     "Fremont"
+                     "Garfield"
+                     "Gilpin"
+                     "Grand"
+                     "Gunnison"
+                     "Hinsdale"
+                     "Huerfano"
+                     "Jackson"
+                     "Jefferson"
+                     "Kiowa"
+                     "Kit Carson"
+                     "Lake"
+                     "La Plata"
+                     "Larimer"
+                     "Las Animas"
+                     "Lincoln"
+                     "Logan"
+                     "Mesa"
+                     "Mineral"
+                     "Moffat"
+                     "Montezuma"
+                     "Montrose"
+                     "Morgan"
+                     "Otero"
+                     "Ouray"
+                     "Park"
+                     "Phillips"
+                     "Pitkin"
+                     "Prowers"
+                     "Pueblo"
+                     "Rio Blanco"
+                     "Rio Grande"
+                     "Routt"
+                     "Saguache"
+                     "San Juan"
+                     "San Miguel"
+                     "Sedgwick"
+                     "Summit"
+                     "Teller"
+                     "Washington"
+                     "Weld"
+                     "Yuma");
 
 # num ballots, margin for county, rest are margins for state-wide
 # remember to calculate margin by multiplying counties by ballot count for a total
@@ -76,13 +74,14 @@ small=(64000 450 450 450);
 function import() {
     trap exit INT #easy quit
     countyId=1;
-    for county in ${counties[*]}; do
-            echo "importing county ${countyId} ${county[0]}";
-            cvrFile=cvr-${county[0]}.csv;
+
+    for county in "${counties[@]}"; do
+        echo "importing county ${countyId} ${county}";
+            cvrFile=cvr-${county// /-}.csv;
             manifestFile=manifest-${small[0]}.csv
             ballotCount=${small[0]}
             sed "s/{ballot-count}/${ballotCount}/g" > $manifestFile < manifest-template.csv
-            ../smoketest/genelect.py ${small[*]} --county ${county[0]} > $cvrFile;
+            ../smoketest/genelect.py ${small[*]} --county "${county}" > $cvrFile;
             ../smoketest/main.py -c $countyId county_setup -f $cvrFile -F $manifestFile;
             rm $cvrFile;
             rm $manifestFile;
