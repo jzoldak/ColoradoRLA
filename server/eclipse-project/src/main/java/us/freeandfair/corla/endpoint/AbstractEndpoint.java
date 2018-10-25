@@ -37,6 +37,7 @@ import us.freeandfair.corla.auth.AuthenticationInterface;
 import us.freeandfair.corla.json.Result;
 import us.freeandfair.corla.model.Administrator;
 import us.freeandfair.corla.model.LogEntry;
+import us.freeandfair.corla.model.Session;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.LogEntryQueries;
 import us.freeandfair.corla.util.SuppressFBWarnings;
@@ -94,7 +95,13 @@ public abstract class AbstractEndpoint implements Endpoint {
    */
   protected ThreadLocal<List<LogEntry>> my_log_entries = 
       new ThreadLocal<List<LogEntry>>();
-  
+
+
+  /**
+   * the DB session instance
+   **/
+  protected ThreadLocal<Session> session = new ThreadLocal<Session>();
+
   /**
    * Halts the endpoint execution by ending the request and returning the
    * most recently set response code and endpoint result.
@@ -417,8 +424,8 @@ public abstract class AbstractEndpoint implements Endpoint {
     } else {
       serverError(the_response, "no database");
       halt(the_response);
-    } 
-
+    }
+    loadSession(the_request.session());
     // Check that the user is authorized for this endpoint
     if (!checkAuthorization(the_request, requiredAuthorization())) {
       unauthorized(the_response,
@@ -435,7 +442,43 @@ public abstract class AbstractEndpoint implements Endpoint {
     // Load and check the ASM
     loadAndCheckASM(the_request, the_response);
   } 
-  
+
+  private Session getSession() {
+    return this.session.get();
+  }
+
+  private void setSession(Session session) {
+    this.session.set(session);
+  }
+
+  /**
+   * read SESSION_ID from spark session and load session from db if present
+   * otherwise create a new session
+   **/
+  public void loadSession(final spark.Session reqSess) {
+    Long sessionId = reqSess.attribute("SESSION_ID");
+    Session session = null;
+    if (null != sessionId) {
+      session = Persistence.getByID(Long.valueOf(sessionId), Session.class);
+    }
+    if (null == session) {
+      session = new Session();
+    }
+    setSession(session);
+    session.copyTo(reqSess);
+  }
+
+  /**
+   * reflect changes to request.session() in the db
+   * record remains on logout, but vars are empty
+   **/
+  public void updateSession(final spark.Session reqSess) {
+    Session session = getSession();
+    session.copyFrom(reqSess);
+    Persistence.saveOrUpdate(session);
+    reqSess.attribute("SESSION_ID", session.id());
+  }
+
   /**
    * The main body of the endpoint. This method wraps an execution of the
    * endpointBody() method of a child class in a way such that unexpected
@@ -491,6 +534,7 @@ public abstract class AbstractEndpoint implements Endpoint {
    */
   public void after(final Request the_request, final Response the_response) {
     // skip
+    updateSession(the_request.session());
   }
   
   /**
@@ -585,7 +629,7 @@ public abstract class AbstractEndpoint implements Endpoint {
   public void afterAfter(final Request the_request, final Response the_response) {
     // try to take the transition for this endpoint in the ASM and save it to the DB
     // note that we do not try to commit when we have an error code in the response
-    if (successful() && 
+    if (successful() &&
         transitionAndSaveASM(the_response) && 
         Persistence.isTransactionActive()) {
       try {

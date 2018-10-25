@@ -88,7 +88,10 @@ public interface AuthenticationInterface {
    * enumeration.
    */
   String AUTH_STAGE = "authentication_stage";
-  
+
+  /** the constant for the key that holds the database id for Session **/
+  String SESSION_ID = "SESSION_ID";
+
   /**
    * Set the logger for the authentication subsystem.  This method should
    * be called immediately after construction and before the subsystem is used.
