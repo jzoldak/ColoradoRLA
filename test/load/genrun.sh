@@ -4,70 +4,70 @@ set -m #job control
 
 # no whitespace in names, not sure how to support that yet...
 # TODO: split by newline somehow
-counties=( Adams
-           Alamosa
-           Arapahoe
-           Archuleta
-           Baca
-           Bent
-           Boulder
-           Broomfield
-           Chaffee
-           Cheyenne
-           Clear-Creek
-           Conejos
-           Costilla
-           Crowley
-           Custer
-           Delta
-           Denver
-           Dolores
-           Douglas
-           Eagle
-           Elbert
-           El-Paso
-           Fremont
-           Garfield
-           Gilpin
-           Grand
-           Gunnison
-           Hinsdale
-           Huerfano
-           Jackson
-           Jefferson
-           Kiowa
-           Kit-Carson
-           Lake
-           La-Plata
-           Larimer
-           Las-Animas
-           Lincoln
-           Logan
-           Mesa
-           Mineral
-           Moffat
-           Montezuma
-           Montrose
-           Morgan
-           Otero
-           Ouray
-           Park
-           Phillips
-           Pitkin
-           Prowers
-           Pueblo
-           Rio-Blanco
-           Rio-Grande
-           Routt
-           Saguache
-           San-Juan
-           San-Miguel
-           Sedgwick
-           Summit
-           Teller
-           Washington
-           Weld
-           Yuma);
+counties=( adams
+           alamosa
+           arapahoe
+           archuleta
+           baca
+           bent
+           boulder
+           broomfield
+           chaffee
+           cheyenne
+           clear-creek
+           conejos
+           costilla
+           crowley
+           custer
+           delta
+           denver
+           dolores
+           douglas
+           eagle
+           elbert
+           el-paso
+           fremont
+           garfield
+           gilpin
+           grand
+           gunnison
+           hinsdale
+           huerfano
+           jackson
+           jefferson
+           kiowa
+           kit-carson
+           lake
+           la-plata
+           larimer
+           las-animas
+           lincoln
+           logan
+           mesa
+           mineral
+           moffat
+           montezuma
+           montrose
+           morgan
+           otero
+           ouray
+           park
+           phillips
+           pitkin
+           prowers
+           pueblo
+           rio-blanco
+           rio-grande
+           routt
+           saguache
+           san-juan
+           san-miguel
+           sedgwick
+           summit
+           teller
+           washington
+           weld
+           yuma);
 
 # num ballots, margin for county, rest are margins for state-wide
 # remember to calculate margin by multiplying counties by ballot count for a total
@@ -78,14 +78,16 @@ function import() {
     countyId=1;
     for county in ${counties[*]}; do
             echo "importing county ${countyId} ${county[0]}";
-            cvrFile=cvr-${county[0]}.csv;
-            manifestFile=manifest-${small[0]}.csv
-            ballotCount=${small[0]}
-            sed "s/{ballot-count}/${ballotCount}/g" > $manifestFile < manifest-template.csv
-            ../smoketest/genelect.py ${small[*]} --county ${county[0]} > $cvrFile;
+            # cvrFile=cvr-${county[0]}.csv;
+            # manifestFile=manifest-${small[0]}.csv
+            cvrFile=2018-general-mock-cvrs/${county[0]}-cvr.csv;
+            manifestFile=2018-general-mock-cvrs/${county[0]}-manifest.csv;
+            # ballotCount=${small[0]}
+            # sed "s/{ballot-count}/${ballotCount}/g" > $manifestFile < manifest-template.csv
+            # ../smoketest/genelect.py ${small[*]} --county ${county[0]} > $cvrFile;
             ../smoketest/main.py -c $countyId county_setup -f $cvrFile -F $manifestFile;
-            rm $cvrFile;
-            rm $manifestFile;
+            # rm $cvrFile;
+            # rm $manifestFile;
             ((countyId++));
             if [ $countyId -gt $counties_todo ]; then
                 echo "done"

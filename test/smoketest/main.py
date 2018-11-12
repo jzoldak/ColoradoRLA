@@ -1,4 +1,5 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+
 """corla_test: drive testing of ColoradoRLA
 
 Examples. Note that 'crtest' and/or corla_test should be defined
@@ -137,8 +138,6 @@ https://github.com/jjyr/zerotest/issues/12
 TODO: to help human testers using web client, display CVRs corresponding to selected ACVRs for a given county
 """
 
-from __future__ import (print_function, division,
-                        absolute_import, unicode_literals)
 import sys
 import codecs
 import os
@@ -190,7 +189,7 @@ parser.add_argument('-p, --discrepancy-plan', dest='plan', default="5 17",
                     'This default is designed to hit a known ballot and to trigger a second round.'
                     'You will see different audits happen from different discrepancies happening '
                     '(or not happening) on different ballots.')
-parser.add_argument('-P, --discrepancy-end', dest='plan_limit', type=int, default=sys.maxint,
+parser.add_argument('-P, --discrepancy-end', dest='plan_limit', type=int, default=sys.maxsize,
                     help='Last upload with possible discrepancy is # PLAN_LIMIT')
 
 parser.add_argument('-n, --notfound-plan', dest='notfound_plan', default="-1 1",
@@ -758,6 +757,9 @@ def county_audit(ac, county_id):
     round = len(county_dashboard['rounds'])
     r = test_endpoint_get(ac, county_s, "/cvr-to-audit-download?round=%d" % round)
     r = test_endpoint_get(ac, county_s, "/cvr-to-audit-list?round=%d" % round)
+    if r.status_code != 200 :
+        logging.error(r.reason.join(" requesting /cvr-to-audit-list"))
+        return(False)
     selected = r.json()
 
     logging.info("Retrieved ballots_to_audit, got %d" % len(selected))
@@ -769,16 +771,17 @@ def county_audit(ac, county_id):
     #   make it into a matching acvr and upload it, watching progress
     # TODO: upload the right number of them....
 
-    if len(selected) < 1:
+    # if db_id is not present, that means it is not a response body we can use(error response?)
+    if len(selected) < 1 or selected[0].get('db_id') == None:
         logging.warn("No ballots_to_audit")
-        #return(False) ?
+        return(False)
 
     for i in range(len(selected)):
         if ac.args.debuglevel >= logging.INFO:
             r = test_endpoint_get(ac, ac.state_s, "/dos-dashboard", show=False)
             discrepancies = ""
             contest_discrepancies = r.json().get('discrepancy_count', {})
-            for contest_id, d in contest_discrepancies.iteritems():
+            for contest_id, d in contest_discrepancies.items():
                 discrepancies += "%s %2d %2d %2d %2d %2d  " % (contest_id, d["2"], d["1"], d["0"], d["-1"], d["-2"])
             logging.debug(discrepancies)
 
@@ -1009,11 +1012,7 @@ def check_audit_size(ac):
                       (r['audited_sample_count'], nmin_size))
 
 def main():
-    # Get unbuffered output
-    sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
-    sys.stdout = codecs.getwriter('utf8')(sys.stdout)
-
-    # Establist an "audit context", abbreviated ac, for passing state around.
+    # Establish an "audit context", abbreviated ac, for passing state around.
     ac = Namespace()
 
     ac.args = parser.parse_args()
