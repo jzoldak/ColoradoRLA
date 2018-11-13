@@ -138,6 +138,17 @@ https://github.com/jjyr/zerotest/issues/12
 TODO: to help human testers using web client, display CVRs corresponding to selected ACVRs for a given county
 """
 
+# these functions impact python 2 even though they aren't called out
+from __future__ import (print_function, division,
+                        absolute_import, unicode_literals)
+try:
+    # Python 3
+    import builtins
+except ImportError:
+    # Python 2
+    import __builtin__ as builtins
+
+
 import sys
 import codecs
 import os
@@ -151,7 +162,6 @@ import logging
 import hashlib
 
 import requests
-
 
 __author__ = "Neal McBurnett <http://neal.mcburnett.org/>"
 __license__ = "GPLv3+"
@@ -249,6 +259,16 @@ parser.add_argument('-X','--contest-names', dest='contestNames', default="../con
 parser.add_argument('commands', metavar="COMMAND", nargs='*',
                     help='audit commands to run. May be specified multiple times. '
                     'Possibilities: reset dos_init county_setup dos_start county_audit dos_wrapup')
+
+# for unbuffered stdout - thanks https://stackoverflow.com/a/27991478
+def print(*args, **kwargs):
+    sep, end = kwargs.pop('sep', ' '), kwargs.pop('end', '\n')
+    file, flush = kwargs.pop('file', sys.stdout), kwargs.pop('flush', True) #True is unbuffered
+    if kwargs:
+        raise TypeError('print() got an unexpected keyword argument {!r}'.format(next(iter(kwargs))))
+    builtins.print(*args, sep=sep, end=end, file=file)
+    if flush:
+        file.flush()
 
 
 class Pause(object):
@@ -1012,7 +1032,7 @@ def check_audit_size(ac):
                       (r['audited_sample_count'], nmin_size))
 
 def main():
-    # Establish an "audit context", abbreviated ac, for passing state around.
+    # Establist an "audit context", abbreviated ac, for passing state around.
     ac = Namespace()
 
     ac.args = parser.parse_args()
