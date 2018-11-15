@@ -164,7 +164,10 @@ public class CountyContestResult implements PersistentEntity, Serializable {
    * The total number of ballots cast in this county that contain this contest.
    */
   private Integer my_contest_ballot_count = 0;
-  
+
+  /** tracker **/
+  private Boolean counted = false;
+
   /**
    * Constructs a new empty CountyContestResult (solely for persistence).
    */
@@ -242,7 +245,17 @@ public class CountyContestResult implements PersistentEntity, Serializable {
   public Set<String> losers() {
     return Collections.unmodifiableSet(my_losers);
   }
-  
+
+  /** tracker **/
+  public Boolean isCounted() {
+    return this.counted;
+  }
+
+  public CountyContestResult setCounted(Boolean b) {
+    this.counted = b;
+    return this;
+  }
+
   /**
    * @return a map from choices to vote totals.
    */

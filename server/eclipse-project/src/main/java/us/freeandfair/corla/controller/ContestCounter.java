@@ -40,15 +40,28 @@ public final class ContestCounter {
    * @return List<ContestResult> A high level view of contests and their
    * participants.
    */
-  public static List<ContestResult> countAllContests() {
-    return
-      Persistence.getAll(CountyContestResult.class)
-      .stream()
-      .collect(Collectors.groupingBy(x -> x.contest().name()))
+  public static List<ContestResult> countAllContests(final Boolean force) {
+    List<CountyContestResult> ccrs =
+      Persistence.getAll(CountyContestResult.class);
+
+    if (force == false) {
+      ccrs = ccrs.stream()
+        .filter(ccr -> !ccr.isCounted())
+        .collect(Collectors.toList());
+    }
+
+    return ccrs.stream()
+      .map(ccr -> ccr.setCounted(true))
+      .collect(Collectors.groupingBy((CountyContestResult x) -> x.contest().name()))
       .entrySet()
       .stream()
       .map(ContestCounter::countContest)
       .collect(Collectors.toList());
+  }
+
+  /** see above **/
+  public static List<ContestResult> countAllContests() {
+    return countAllContests(false);
   }
 
   /**

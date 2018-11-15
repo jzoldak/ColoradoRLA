@@ -457,7 +457,11 @@ public class ContestResult implements PersistentEntity, Serializable {
    */
   @Override
   public String toString() {
-    return "ContestResult [id=" + id() + " contestName=" + getContestName() +  " contestCVRIds=" + getContestCVRIds() + "]";
+    return String.format("ContestResult [id=%s contestName=%s winnersAllowed=%s voteTotals=%s]",
+                         id(),
+                         getContestName(),
+                         winnersAllowed(),
+                         getVoteTotals());
   }
 
   /**
