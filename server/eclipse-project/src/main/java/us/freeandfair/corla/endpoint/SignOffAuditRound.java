@@ -233,10 +233,13 @@ public class SignOffAuditRound extends AbstractAuditBoardDashboardEndpoint {
           }
 
           if (auditComplete) {
-            LOGGER.debug(String.format("[signoff: audit complete in %s County]", cdb.county().name()));
+            LOGGER.info(String.format("[signoff: round complete in %s County]", cdb.county().name()));
+            notifyRoundComplete(cdb.id());
+
+            LOGGER.info(String.format("[signoff: audit complete in %s County]", cdb.county().name()));
             notifyAuditComplete();
           } else {
-            LOGGER.debug(String.format("[signoff: round complete in %s County]", cdb.county().name()));
+            LOGGER.info(String.format("[signoff: round complete in %s County]", cdb.county().name()));
             notifyRoundComplete(cdb.id());
           }
         }
@@ -265,6 +268,10 @@ public class SignOffAuditRound extends AbstractAuditBoardDashboardEndpoint {
   private void notifyRoundComplete(final Long the_id) {
     boolean finished = true;
     for (final CountyDashboard cdb : Persistence.getAll(CountyDashboard.class)) {
+      if (cdb.id().equals(the_id)) {
+        continue; // <- sneaky filter for all but this county
+      }
+
       if (!cdb.id().equals(the_id)) {
         finished &= cdb.currentRound() == null;
       }

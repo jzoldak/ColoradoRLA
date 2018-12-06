@@ -1224,16 +1224,20 @@ def main():
             elif current_state != "DOS_AUDIT_ONGOING":
                 print("Not in DOS_AUDIT_ONGOING state, can't audit")
                 break
+
             round += 1
-            print("Start Round %d" % round)
             for county_id in ac.args.counties:
                 # TODO: really needs to track each individual county for being done....
                 remaining = county_audit(ac, county_id)
 
             print()
-            ac.round += 1
-            # Note, may get Illegal transition on ASM... (DOS_AUDIT_COMPLETE, DOS_START_ROUND_EVENT)
-            r = test_endpoint_json(ac, ac.state_s, "/start-audit-round",
+
+            if ac.args.rounds != 1:
+                # then keep going, this allows us to call county_audit in a loop
+                print("Starting Round %d" % round)
+                ac.round += 1
+                # Note, may get Illegal transition on ASM... (DOS_AUDIT_COMPLETE, DOS_START_ROUND_EVENT)
+                r = test_endpoint_json(ac, ac.state_s, "/start-audit-round",
                                    { "multiplier": 1.0, "use_estimates": True})
 
         if alldone:
