@@ -214,6 +214,17 @@ public class DoSDashboard implements PersistentEntity, Serializable {
                                    .collect(Collectors.toList()));
   }
 
+  /** remove a contest by name, supports the hand count button **/
+  public void removeContestsToAuditByName(String contestName){
+    final Set<ContestToAudit> contests_to_remove = new HashSet<>();
+    for (final ContestToAudit c : my_contests_to_audit) {
+      if (c.contest().name().equals(contestName)) {
+        contests_to_remove.add(c);
+      }
+    }
+    my_contests_to_audit.removeAll(contests_to_remove);
+  }
+
   /**
    * Update the audit status of a contest.
    *

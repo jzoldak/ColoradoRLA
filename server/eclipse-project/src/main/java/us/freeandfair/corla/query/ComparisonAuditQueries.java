@@ -24,6 +24,7 @@ import org.hibernate.Session;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+import us.freeandfair.corla.model.AuditStatus;
 import us.freeandfair.corla.model.ContestResult;
 import us.freeandfair.corla.model.ComparisonAudit;
 import us.freeandfair.corla.persistence.Persistence;
@@ -87,4 +88,11 @@ public final class ComparisonAuditQueries {
     return ((Long)q.uniqueResult()).intValue();
   }
 
+  /** setAuditStatus on matching contestName **/
+  public static void updateStatus(String contestName, AuditStatus auditStatus) {
+    final List<ComparisonAudit> cas = matching(contestName);
+    for (ComparisonAudit ca: cas) { //there will only be one
+      ca.setAuditStatus(auditStatus);
+    }
+  }
 }

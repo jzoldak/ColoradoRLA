@@ -47,6 +47,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import us.freeandfair.corla.math.Audit;
+import us.freeandfair.corla.model.AuditStatus;
 import us.freeandfair.corla.model.CVRContestInfo.ConsensusValue;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 import us.freeandfair.corla.persistence.PersistentEntity;
@@ -354,6 +355,10 @@ public class ComparisonAudit implements PersistentEntity {
     return my_audit_status;
   }
 
+  public void setAuditStatus(AuditStatus auditStatus) {
+    my_audit_status = auditStatus;
+  }
+
   /** see if the county is participating in this audit(contest) **/
   public boolean isForCounty(final Long countyId) {
     return getCounties().stream()
@@ -377,6 +382,7 @@ public class ComparisonAudit implements PersistentEntity {
    */
   public void updateAuditStatus() {
     if (my_audit_status == AuditStatus.ENDED ||
+        my_audit_status == AuditStatus.HAND_COUNT ||
         my_audit_status == AuditStatus.NOT_AUDITABLE) {
       return;
     }
@@ -672,6 +678,7 @@ public class ComparisonAudit implements PersistentEntity {
     return
       this.auditStatus().equals(AuditStatus.NOT_AUDITABLE) ||
       this.auditStatus().equals(AuditStatus.RISK_LIMIT_ACHIEVED) ||
+      this.auditStatus().equals(AuditStatus.HAND_COUNT) ||
       this.auditStatus().equals(AuditStatus.ENDED);
   }
 
