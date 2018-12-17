@@ -5,7 +5,7 @@ import { History } from 'history';
 
 import withDOSState from 'corla/component/withDOSState';
 import withSync from 'corla/component/withSync';
-
+import * as corlaDate from 'corla/date';
 import SeedPage from './SeedPage';
 
 import uploadRandomSeed from 'corla/action/dos/uploadRandomSeed';
@@ -20,6 +20,7 @@ interface ContainerProps {
 
 
 class SeedPageContainer extends React.Component<ContainerProps> {
+
     public render() {
         const { history, publicMeetingDate, seed, dosState } = this.props;
 
@@ -38,7 +39,7 @@ class SeedPageContainer extends React.Component<ContainerProps> {
         const props = {
             back: () => history.push('/sos/audit/select-contests'),
             nextPage: () => history.push('/sos/audit/review'),
-            publicMeetingDate,
+            formattedPublicMeetingDate: corlaDate.format(publicMeetingDate),
             seed,
             uploadRandomSeed,
         };

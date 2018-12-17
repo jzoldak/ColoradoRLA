@@ -30,49 +30,63 @@ const Breadcrumb = () => (
 interface PageProps {
     back: OnClick;
     nextPage: OnClick;
-    publicMeetingDate: Date;
+    formattedPublicMeetingDate: string;
     seed: string;
     uploadRandomSeed: OnClick;
 }
 
-const AuditSeedPage = (props: PageProps) => {
-    const { back, nextPage, publicMeetingDate, seed, uploadRandomSeed } = props;
 
-    const forms: DOS.Form.Seed.Ref = {};
+class AuditSeedPage extends React.Component<PageProps> {
+    /* const AuditSeedPage = (props: PageProps) => { */
+    /* const { back, nextPage, publicMeetingDate, seed, valid, uploadRandomSeed } = props; */
 
-    const onSaveAndNext = () => {
-        if (forms.seedForm) {
-            uploadRandomSeed(forms.seedForm.seed);
+    state: any;
+
+    constructor (props: PageProps) {
+        super(props);
+        this.props = props;
+        this.state = {
+            formValid: false,
+            form: {seed: props.seed}
         }
+    }
 
-        nextPage();
+    public setValid (valid: boolean)  {
+        this.setState({formValid: valid});
+    }
+
+    private onSaveAndNext = () => {
+        this.props.uploadRandomSeed(this.state.form.seed);
+        this.props.nextPage();
     };
 
-    const formattedPublicMeetingDate = corlaDate.format(publicMeetingDate);
-
-    return (
-        <div>
-            <Nav />
-            <Breadcrumb />
-            <div className='pt-card'>
-                <h3>Audit Definition - Enter Random Seed</h3>
-                <div className='pt-card'>
-                    Enter the random seed generated from the public meeting on { formattedPublicMeetingDate }.
-                </div>
-                <div className='pt-card'>
-                    <SeedForm forms={ forms } initSeed={ seed } />
-                </div>
-            </div>
+    public render () {
+        return (
             <div>
-                <button onClick={ back } className='pt-button pt-breadcrumb'>
-                    Back
-                </button>
-                <button onClick={ onSaveAndNext } className='pt-button pt-intent-primary pt-breadcrumb'>
-                    Save & Next
-                </button>
+                <Nav />
+                <Breadcrumb />
+                <div className='pt-card'>
+                    <h3>Audit Definition - Enter Random Seed</h3>
+                    <div className='pt-card'>
+                        Enter the random seed generated from the public meeting on { this.props.formattedPublicMeetingDate }.
+                    </div>
+                    <div className='pt-card'>
+                        <SeedForm initSeed={ this.state.form.seed }
+                                  updateForm={ (seed: string) => { this.state.form.seed = seed; } }
+                                  setValid={ (v: boolean) => {this.setValid(v)} } />
+                    </div>
+                </div>
+                <div>
+                    <button onClick={ this.props.back } className='pt-button pt-breadcrumb'>
+                        Back
+                    </button>
+                    <button onClick={ this.onSaveAndNext } disabled={!this.state.formValid} className='pt-button pt-intent-primary pt-breadcrumb'>
+                        Save & Next
+                    </button>
+                </div>
             </div>
-        </div>
-    );
+        );
+    }
 };
 
 
