@@ -180,15 +180,13 @@ public class DoSDashboardRefreshResponse {
       switch (cta.audit()) {
         case COMPARISON:
           final Map<Integer, Integer> discrepancy = new HashMap<>();
-          int optimistic = Integer.MIN_VALUE;
-          int estimated = Integer.MIN_VALUE;
+          int optimistic = 0;
+          int estimated = 0;
           audited_contests.put(cta.contest().id(), cta.reason());
 
-          // FIXME does looking up the ComparisonAudit by name make sense?
           for (final ComparisonAudit ca : ComparisonAuditQueries.matching(cta.contest().name())) {
-            // FIXME The dashboard looks funny here.
-            optimistic = Math.max(optimistic, Math.max(0, ca.optimisticSamplesToAudit() - ca.getAuditedSampleCount()));
-            estimated = Math.max(estimated, Math.max(0, ca.estimatedSamplesToAudit() - ca.getAuditedSampleCount()));
+            optimistic = ca.optimisticRemaining();
+            estimated = ca.estimatedRemaining();
 
             LOGGER.debug(String.format("[createResponse: optimistic=%d, estimated = %d, ca.optimisticSamplesToAudit()=%d, ca.estimatedSamplesToAudit()=%d, ca.getAuditedSampleCount()=%d]",
                                        optimistic, estimated, ca.optimisticSamplesToAudit(), ca.estimatedSamplesToAudit(), ca.getAuditedSampleCount()));
@@ -203,13 +201,6 @@ public class DoSDashboardRefreshResponse {
             }
           }
 
-          // FIXME Should we return the ContestResult that is the
-          // aggregate of many Contests? Doing so would take us in the
-          // direction of being able to clean up the UI; otherwise,
-          // we'll have 64 - minus 2 or 3 - Governor contests littering
-          // the screen. A similar thing would happen for smaller
-          // cardinality contests, like a Congressional District race
-          // which might affect 4 or 5 counties.
           estimated_ballots_to_audit.put(cta.contest().id(), optimistic);
           optimistic_ballots_to_audit.put(cta.contest().id(), estimated);
           discrepancy_count.put(cta.contest().id(), discrepancy);

@@ -436,7 +436,12 @@ public class ComparisonAudit implements PersistentEntity {
 
   /** estimatedSamplesToAudit minus getAuditedSampleCount **/
   public final Integer estimatedRemaining() {
-    return estimatedSamplesToAudit() - getAuditedSampleCount();
+    return Math.max(0, estimatedSamplesToAudit() - getAuditedSampleCount());
+  }
+
+  /** optimisticSamplesToAudit minus getAuditedSampleCount **/
+  public final Integer optimisticRemaining() {
+    return Math.max(0, optimisticSamplesToAudit() - getAuditedSampleCount());
   }
 
   /**

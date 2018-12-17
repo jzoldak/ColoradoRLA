@@ -12,7 +12,10 @@ with the following tags indicating the components affected:
 
 ## 2.0.12 - SNAPSHOT - In development
 
+- [API - Don't show negative numbers of estimated samples][pr106]
+
 ## 2.0.11 - Bugfix release
+
 - [INFRA - smoketest to use python3][cma60b5]
 - [API - some debug logging removed][cm506cf]
 - [UI - update instruction text][pr101]
@@ -186,3 +189,4 @@ This is [FreeAndFair's most recent tag][1.1.0.3].
 [pr101]: https://github.com/democracyworks/ColoradoRLA/pull/101
 [cm506cf]: https://github.com/democracyworks/ColoradoRLA/commit/506cf568901ce6f1ba8e2085369444d88f802ff6
 [cma60b5]: https://github.com/democracyworks/ColoradoRLA/commit/a60b5972b9f6b1a68d4b22cf06721dd41e5a7374
+[pr106]: https://github.com/democracyworks/ColoradoRLA/pull/106
