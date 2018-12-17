@@ -215,7 +215,7 @@ public class DoSDashboard implements PersistentEntity, Serializable {
   }
 
   /** remove a contest by name, supports the hand count button **/
-  public void removeContestsToAuditByName(String contestName){
+  public void removeContestsToAuditByName(final String contestName){
     final Set<ContestToAudit> contests_to_remove = new HashSet<>();
     for (final ContestToAudit c : my_contests_to_audit) {
       if (c.contest().name().equals(contestName)) {

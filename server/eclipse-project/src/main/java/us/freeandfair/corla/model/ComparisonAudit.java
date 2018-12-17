@@ -47,7 +47,6 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 import us.freeandfair.corla.math.Audit;
-import us.freeandfair.corla.model.AuditStatus;
 import us.freeandfair.corla.model.CVRContestInfo.ConsensusValue;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 import us.freeandfair.corla.persistence.PersistentEntity;
@@ -355,7 +354,8 @@ public class ComparisonAudit implements PersistentEntity {
     return my_audit_status;
   }
 
-  public void setAuditStatus(AuditStatus auditStatus) {
+  /** set audit status **/
+  public void setAuditStatus(final AuditStatus auditStatus) {
     my_audit_status = auditStatus;
   }
 

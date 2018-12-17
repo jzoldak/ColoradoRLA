@@ -38,8 +38,8 @@ class SeedPageContainer extends React.Component<ContainerProps> {
 
         const props = {
             back: () => history.push('/sos/audit/select-contests'),
-            nextPage: () => history.push('/sos/audit/review'),
             formattedPublicMeetingDate: corlaDate.format(publicMeetingDate),
+            nextPage: () => history.push('/sos/audit/review'),
             seed,
             uploadRandomSeed,
         };

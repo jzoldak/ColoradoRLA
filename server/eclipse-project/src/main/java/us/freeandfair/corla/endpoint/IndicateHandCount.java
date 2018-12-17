@@ -11,10 +11,6 @@
 
 package us.freeandfair.corla.endpoint;
 
-import static us.freeandfair.corla.asm.ASMEvent.AuditBoardDashboardEvent.ABORT_AUDIT_EVENT;
-import static us.freeandfair.corla.asm.ASMEvent.CountyDashboardEvent.COUNTY_AUDIT_COMPLETE_EVENT;
-import static us.freeandfair.corla.asm.ASMEvent.DoSDashboardEvent.*;
-import static us.freeandfair.corla.asm.ASMState.CountyDashboardState.COUNTY_AUDIT_UNDERWAY;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,16 +26,10 @@ import spark.Response;
 
 import us.freeandfair.corla.Main;
 import us.freeandfair.corla.asm.ASMEvent;
-import us.freeandfair.corla.asm.ASMUtilities;
-import us.freeandfair.corla.asm.AbstractStateMachine;
-import us.freeandfair.corla.asm.AuditBoardDashboardASM;
-import us.freeandfair.corla.asm.CountyDashboardASM;
 import us.freeandfair.corla.model.AuditType;
 import us.freeandfair.corla.model.AuditStatus;
 import us.freeandfair.corla.model.Contest;
 import us.freeandfair.corla.model.ContestToAudit;
-import us.freeandfair.corla.model.County;
-import us.freeandfair.corla.model.CountyDashboard;
 import us.freeandfair.corla.model.DoSDashboard;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.ComparisonAuditQueries;
@@ -174,7 +164,7 @@ public class IndicateHandCount extends AbstractDoSDashboardEndpoint {
 
   private void unTargetContests(final DoSDashboard dosdb,
                                 final Set<String> hand_count_contests) {
-    for(String contestName: hand_count_contests) {
+    for(final String contestName: hand_count_contests) {
       dosdb.removeContestsToAuditByName(contestName);
       ComparisonAuditQueries.updateStatus(contestName, AuditStatus.HAND_COUNT);
     }

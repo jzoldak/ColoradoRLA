@@ -40,27 +40,22 @@ class AuditSeedPage extends React.Component<PageProps> {
     /* const AuditSeedPage = (props: PageProps) => { */
     /* const { back, nextPage, publicMeetingDate, seed, valid, uploadRandomSeed } = props; */
 
-    state: any;
+    public state: any;
 
-    constructor (props: PageProps) {
+    constructor(props: PageProps) {
         super(props);
         this.props = props;
         this.state = {
+            form: {seed: props.seed},
             formValid: false,
-            form: {seed: props.seed}
-        }
+        };
     }
 
-    public setValid (valid: boolean)  {
+    public setValid(valid: boolean)  {
         this.setState({formValid: valid});
     }
 
-    private onSaveAndNext = () => {
-        this.props.uploadRandomSeed(this.state.form.seed);
-        this.props.nextPage();
-    };
-
-    public render () {
+    public render() {
         return (
             <div>
                 <Nav />
@@ -73,7 +68,7 @@ class AuditSeedPage extends React.Component<PageProps> {
                     <div className='pt-card'>
                         <SeedForm initSeed={ this.state.form.seed }
                                   updateForm={ (seed: string) => { this.state.form.seed = seed; } }
-                                  setValid={ (v: boolean) => {this.setValid(v)} } />
+                                  setValid={ (v: boolean) => { this.setValid(v); } } />
                     </div>
                 </div>
                 <div>
@@ -87,7 +82,13 @@ class AuditSeedPage extends React.Component<PageProps> {
             </div>
         );
     }
-};
+
+    private onSaveAndNext = () => {
+        this.props.uploadRandomSeed(this.state.form.seed);
+        this.props.nextPage();
+    }
+
+}
 
 
 export default AuditSeedPage;

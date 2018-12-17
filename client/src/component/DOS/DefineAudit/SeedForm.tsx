@@ -40,7 +40,7 @@ class SeedForm extends React.Component<FormProps, FormState> {
     }
 
     private onSeedChange = (seed: string) => {
-        this.setState({ seed: seed }, () => {
+        this.setState({ seed }, () => {
             this.props.updateForm(seed);
             this.props.setValid(this.isValid());
         });

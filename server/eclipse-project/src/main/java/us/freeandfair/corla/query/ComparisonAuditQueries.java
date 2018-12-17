@@ -89,9 +89,9 @@ public final class ComparisonAuditQueries {
   }
 
   /** setAuditStatus on matching contestName **/
-  public static void updateStatus(String contestName, AuditStatus auditStatus) {
+  public static void updateStatus(final String contestName, final AuditStatus auditStatus) {
     final List<ComparisonAudit> cas = matching(contestName);
-    for (ComparisonAudit ca: cas) { //there will only be one
+    for (final ComparisonAudit ca: cas) { //there will only be one
       ca.setAuditStatus(auditStatus);
     }
   }
