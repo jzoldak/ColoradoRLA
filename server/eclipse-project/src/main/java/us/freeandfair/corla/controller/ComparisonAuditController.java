@@ -187,6 +187,35 @@ public final class ComparisonAuditController {
     return cdb.ballotsRemainingInCurrentRound() > 0;
   }
 
+
+  /** unaudit and audit a submitted ACVR **/
+  public static boolean reaudit(final CountyDashboard cdb,
+                                final CastVoteRecord cvr,
+                                final CastVoteRecord newAcvr) {
+    final CVRAuditInfo oldInfo =
+      Persistence.getByID(cvr.id(), CVRAuditInfo.class);
+    if (null == oldInfo.acvr()) {
+      LOGGER.error("can't reaudit a cvr that hasn't been audited");
+      return false;
+    } else {
+      CastVoteRecord oldAcvr = oldInfo.acvr();
+      oldAcvr.setToEdited();
+      Long revision = CastVoteRecordQueries.maxRevision(cvr);
+      oldAcvr.setRevision(revision);
+    }
+    final CVRAuditInfo newInfo = new CVRAuditInfo(cvr);
+    newInfo.setACVR(newAcvr);
+
+    LOGGER.info("[reaudit] unauditing CVRAuditInfo: " + oldInfo.toString());
+    final Integer former_count = unaudit(cdb, oldInfo);
+    LOGGER.debug("[reaudit] former_count: " + former_count.toString());
+    Persistence.delete(oldInfo);
+    final Integer new_count = audit(cdb, newInfo, true);
+    LOGGER.debug("[reaudit] new_count: " + new_count.toString());
+    return true;
+  }
+
+
   /**
    * Submit an audit CVR for a CVR under audit to the specified county dashboard.
    *
@@ -544,7 +573,7 @@ public final class ComparisonAuditController {
 
           final CVRAuditInfo cai = Persistence.getByID(cvr_id, CVRAuditInfo.class);
 
-          if (cai.acvr() == null) {
+          if (cai == null || cai.acvr() == null) {
             break;              // ok, so this hasn't been audited yet.
           } else {
             final int audit_count = audit(cdb, cai, false);

@@ -30,6 +30,12 @@ public class SubmittedAuditCVR {
    */
   private final CastVoteRecord my_audit_cvr;
 
+
+  /** flag to indicate whether this is a review-and-reaudit submission
+   * - needs to not be final so it can be optional and have a default
+   **/
+  private final Boolean reaudit;
+
   /**
    * Constructs a new SubmittedAuditCVR.
    *
@@ -39,7 +45,17 @@ public class SubmittedAuditCVR {
   public SubmittedAuditCVR(final Long the_cvr_id, final CastVoteRecord the_audit_cvr) {
     my_cvr_id = the_cvr_id;
     my_audit_cvr = the_audit_cvr;
+    this.reaudit = false;
   }
+
+  public SubmittedAuditCVR(final Long the_cvr_id,
+                           final CastVoteRecord the_audit_cvr,
+                           final Boolean reaudit) {
+    my_cvr_id = the_cvr_id;
+    my_audit_cvr = the_audit_cvr;
+    this.reaudit = reaudit;
+  }
+
 
   /**
    * @return the original CVR ID.
@@ -53,5 +69,10 @@ public class SubmittedAuditCVR {
    */
   public CastVoteRecord auditCVR() {
     return my_audit_cvr;
+  }
+
+  /** reaudit can be null because it is optional **/
+  public Boolean isReaudit() {
+    return this.reaudit != null && this.reaudit;
   }
 }

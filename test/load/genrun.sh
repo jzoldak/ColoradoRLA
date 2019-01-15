@@ -96,8 +96,8 @@ function import() {
 
 function init() {
     echo "defining audit partially";
-    # ../smoketest/main.py dos_init -r 0.01;
-    ../smoketest/main.py dos_init;
+    ../smoketest/main.py dos_init -r 0.01;
+    # ../smoketest/main.py dos_init;
 }
 
 function reset() {
