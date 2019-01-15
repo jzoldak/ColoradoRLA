@@ -103,6 +103,18 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
         if (cdb == null) {
           LOGGER.error("could not get audit board dashboard");
           serverError(the_response, "Could not save ACVR to dashboard");
+        } else if (submission.isReaudit()) {
+
+          final CastVoteRecord cvr = Persistence.getByID(submission.cvrID(),
+                                                         CastVoteRecord.class);
+          final CastVoteRecord newAcvr = submission.auditCVR();
+
+          if (ComparisonAuditController.reaudit(cdb,cvr,newAcvr)) {
+            ok(the_response, "ACVR reaudited");
+          } else {
+            invariantViolation(the_response, "CVR has not previously been audited");
+          }
+
         } else if (cdb.ballotsRemainingInCurrentRound() > 0) {
           // FIXME extract-fn: setupACVR
           final CastVoteRecord acvr = submission.auditCVR();
