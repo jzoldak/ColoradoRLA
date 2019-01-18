@@ -90,6 +90,14 @@ public class AuditInfo implements Serializable {
   private Map<String, Set<String>>
     canonicalContests = new TreeMap<String, Set<String>>();
 
+  /** map of contestName to choices **/
+  @Convert(converter = CountyCanonicalContestsMapConverter.class)
+  @Column(name = "canonical_choices", columnDefinition = "text")
+  // @MapKey(name = "my_id") // not sure this is needed
+  private Map<String, Set<String>>
+    canonicalChoices = new TreeMap<String, Set<String>>();
+
+
   /**
    * Constructs an empty AuditInfo using defaults
    */
@@ -199,7 +207,6 @@ public class AuditInfo implements Serializable {
   /**
    * @return some kind of canonical contests thingy
    */
-
   public Map<String, Set<String>> canonicalContests() {
     return this.canonicalContests;
   }
@@ -211,6 +218,24 @@ public class AuditInfo implements Serializable {
   public void setCanonicalContests(final Map<String, Set<String>> m) {
     this.canonicalContests = m;
   }
+
+  /**
+   * setter of contest-choices mapping
+   * @param m The map you want to set
+   */
+  public void setCanonicalChoices(final Map<String, Set<String>> m) {
+    this.canonicalChoices = m;
+  }
+
+  /**
+   * getter of canonicalChoices
+   * @return map of contestNames to choices
+   */
+  public Map<String, Set<String>> getCanonicalChoices() {
+    return this.canonicalChoices;
+  }
+
+
 
   /**
    * Updates this AuditInfo with information from the specified one.

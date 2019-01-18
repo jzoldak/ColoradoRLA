@@ -137,6 +137,7 @@ public class UpdateAuditInfo extends AbstractDoSDashboardEndpoint {
         final ContestNameParser p = new ContestNameParser(contests);
         if (p.parse()) {
           info.setCanonicalContests(p.contests());
+          info.setCanonicalChoices(p.getChoices());
         } else {
           badDataContents(response,
                           String.format("[duplicates=%s; errors=%s]",
