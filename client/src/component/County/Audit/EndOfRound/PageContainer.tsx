@@ -32,6 +32,7 @@ interface ContainerProps {
     currentRoundNumber: number;
     election: Election;
     estimatedBallotsToAudit: number;
+    finalReviewComplete: boolean;
     previousRound: Round;
     previousRoundSignedOff: boolean;
 }
@@ -57,6 +58,7 @@ function select(countyState: County.AppState) {
         currentRoundNumber: currentRoundNumberSelector(countyState),
         election: countyState.election,
         estimatedBallotsToAudit: countyState.estimatedBallotsToAudit,
+        finalReviewComplete: countyState.finalReviewComplete && countyState.finalReviewComplete[auditBoardIndex],
         previousRound: previousRound || {},
         previousRoundSignedOff: previousRound ? signedOff(auditBoardIndex, previousRound) : false,
     };

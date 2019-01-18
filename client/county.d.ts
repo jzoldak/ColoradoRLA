@@ -29,6 +29,7 @@ declare namespace County {
         election?: Election;
         estimatedBallotsToAudit?: number;
         fileName?: string;  // TODO: remove
+        finalReviewComplete?: FinalReviewComplete;
         hash?: string;  // TODO: remove
         id?: number;
         riskLimit?: number;
@@ -36,6 +37,10 @@ declare namespace County {
         type: 'County';
         uploadingBallotManifest?: boolean;
         uploadingCVRExport?: boolean;
+    }
+
+    interface FinalReviewComplete {
+        [auditBoardId: number]: boolean;
     }
 
     interface CurrentBallot extends CVR {

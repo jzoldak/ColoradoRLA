@@ -22,6 +22,7 @@ declare namespace Action {
         | FetchCountyASMStateOk
         | FetchCvrsToAuditOk
         | FetchDOSASMStateOk
+        | FinalReviewComplete
         | ImportCvrExportOk
         | Login1FOk
         | SelectContestsForAuditOk
@@ -119,6 +120,11 @@ declare namespace Action {
     interface FetchDOSASMStateOk {
         type: 'FETCH_DOS_ASM_STATE_OK';
         data: any;
+    }
+
+    interface FinalReviewComplete {
+        type: 'FINAL_REVIEW_COMPLETE',
+        data: any,
     }
 
     interface ImportCvrExportOk {
