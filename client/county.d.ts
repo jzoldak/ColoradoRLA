@@ -2,7 +2,6 @@ declare namespace County {
     interface AppState {
         acvrs: ACVRs;
         asm: ASMStates;
-        // XXX: Audit board index hack
         auditBoardIndex?: number;
         auditBoards: AuditBoards;
         auditBoardCount?: number;

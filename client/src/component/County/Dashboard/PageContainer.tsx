@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { History } from 'history';
+import { RouteComponentProps } from 'react-router-dom';
 
 import withCountyState from 'corla/component/withCountyState';
 import withPoll from 'corla/component/withPoll';
@@ -22,7 +22,11 @@ import currentRoundNumberSelector from 'corla/selector/county/currentRoundNumber
 import missedDeadlineSelector from 'corla/selector/county/missedDeadline';
 
 
-interface DashboardProps {
+interface MatchParams {
+    id: string;
+}
+
+interface DashboardProps extends RouteComponentProps<MatchParams> {
     allRoundsComplete: boolean;
     auditComplete: boolean;
     auditStarted: boolean;
@@ -32,8 +36,6 @@ interface DashboardProps {
     contests: County.ContestDefs;
     countyState: County.AppState;
     currentRoundNumber: number;
-    history: History;
-    match: any;
     missedDeadline: boolean;
 }
 

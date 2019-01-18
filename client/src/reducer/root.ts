@@ -103,6 +103,16 @@ export default function root(state: AppState, action: Action.App) {
         return login1FOk(state as LoginAppState, action);
     }
 
+    case 'SET_AUDIT_BOARD': {
+        const nextState = { ...state } as County.AppState;
+
+        const { auditBoardIndex } = action.data;
+
+        nextState.auditBoardIndex = auditBoardIndex;
+
+        return nextState;
+    }
+
     case 'UPDATE_ACVR_FORM': {
         return updateAcvrForm(state as County.AppState, action);
     }

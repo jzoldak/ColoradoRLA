@@ -4,6 +4,8 @@ import * as React from 'react';
 
 import { History } from 'history';
 
+import action from 'corla/action';
+
 import AuditBoardNumberSelector from 'corla/component/County/Dashboard/AuditBoardNumberSelector';
 
 import FileUploadContainer from './FileUploadContainer';
@@ -41,7 +43,8 @@ const AuditBoardButtons = (props: AuditBoardButtonsProps) => {
         }
 
         if (canRedirect) {
-          history.push('/county/board/' + boardIndex);
+            action('SET_AUDIT_BOARD', { auditBoardIndex: boardIndex });
+            history.push('/county/board/' + boardIndex);
         }
     };
 
