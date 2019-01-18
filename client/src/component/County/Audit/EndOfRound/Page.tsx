@@ -7,6 +7,7 @@ import CountyNav from 'corla/component/County/Nav';
 import notice from 'corla/notice';
 
 import SignOffFormContainer from './SignOffFormContainer';
+import FinalReviewPage from './FinalReviewPage';
 
 import finishAudit from 'corla/action/county/finishAudit';
 
@@ -62,6 +63,7 @@ interface PageProps {
     currentRoundNumber: number;
     election: Election;
     estimatedBallotsToAudit: number;
+    finalReviewComplete: boolean;
     previousRound: Round;
     previousRoundSignedOff: boolean;
 }
@@ -74,12 +76,17 @@ const EndOfRoundPage = (props: PageProps) => {
         currentRoundNumber,
         election,
         estimatedBallotsToAudit,
+        finalReviewComplete,
         previousRound,
         previousRoundSignedOff,
     } = props;
 
     const countyName = countyInfo.name;
     const roundNumber = previousRound.number;
+
+    if (!finalReviewComplete) {
+        return <FinalReviewPage auditBoardIndex={ auditBoardIndex } />;
+    }
 
     if (allRoundsComplete && estimatedBallotsToAudit <= 0) {
         return <LastRoundComplete />;

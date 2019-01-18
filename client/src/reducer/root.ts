@@ -175,6 +175,14 @@ export default function root(state: AppState, action: Action.App) {
         return nextState;
     }
 
+    case 'FINAL_REVIEW_COMPLETE': {
+        const nextState = { ...state } as County.AppState;
+        if (nextState.finalReviewComplete) {
+            nextState.finalReviewComplete[action.data.auditBoardIndex] = true;
+        }
+        return nextState;
+    }
+
     default:
         return state;
     }
