@@ -30,6 +30,7 @@ interface ContainerProps {
     auditBoardIndex: number;
     countyInfo: CountyInfo;
     currentRoundNumber: number;
+    cvrsToAudit: JSON.CVR[];
     election: Election;
     estimatedBallotsToAudit: number;
     finalReviewComplete: boolean;
@@ -56,6 +57,7 @@ function select(countyState: County.AppState) {
         auditBoardIndex,
         countyInfo: countyInfoSelector(countyState),
         currentRoundNumber: currentRoundNumberSelector(countyState),
+        cvrsToAudit: countyState.cvrsToAudit,
         election: countyState.election,
         estimatedBallotsToAudit: countyState.estimatedBallotsToAudit,
         finalReviewComplete: countyState.finalReviewComplete && countyState.finalReviewComplete[auditBoardIndex],

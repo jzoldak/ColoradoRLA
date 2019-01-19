@@ -61,6 +61,7 @@ interface PageProps {
     auditBoardIndex: number;
     countyInfo: CountyInfo;
     currentRoundNumber: number;
+    cvrsToAudit: JSON.CVR[];
     election: Election;
     estimatedBallotsToAudit: number;
     finalReviewComplete: boolean;
@@ -74,6 +75,7 @@ const EndOfRoundPage = (props: PageProps) => {
         auditBoardIndex,
         countyInfo,
         currentRoundNumber,
+        cvrsToAudit,
         election,
         estimatedBallotsToAudit,
         finalReviewComplete,
@@ -85,7 +87,7 @@ const EndOfRoundPage = (props: PageProps) => {
     const roundNumber = previousRound.number;
 
     if (!finalReviewComplete) {
-        return <FinalReviewPage auditBoardIndex={ auditBoardIndex } />;
+        return <FinalReviewPage auditBoardIndex={ auditBoardIndex } cvrsToAudit={ cvrsToAudit } />;
     }
 
     if (allRoundsComplete && estimatedBallotsToAudit <= 0) {
