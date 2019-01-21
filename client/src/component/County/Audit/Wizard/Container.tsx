@@ -30,7 +30,7 @@ function select(countyState: County.AppState) {
     return {
       countyState,
       currentBallotNumber: currentBallotNumber(countyState),
-      totalBallotsForBoard: currentBallotNumber(countyState),
+      totalBallotsForBoard: totalBallotsForBoard(countyState),
     };
 }
 
