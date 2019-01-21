@@ -1,4 +1,5 @@
 import * as React from 'react';
+import * as _ from 'lodash';
 
 import { Redirect } from 'react-router-dom';
 
@@ -59,9 +60,10 @@ const LastRoundComplete = () => {
 interface PageProps {
     allRoundsComplete: boolean;
     auditBoardIndex: number;
+    ballotSequenceAssignment: object[];
     countyInfo: CountyInfo;
     currentRoundNumber: number;
-    cvrsToAudit: JSON.CVR[];
+    cvrsToAudit: object[];
     election: Election;
     estimatedBallotsToAudit: number;
     finalReviewComplete: boolean;
@@ -73,6 +75,7 @@ const EndOfRoundPage = (props: PageProps) => {
     const {
         allRoundsComplete,
         auditBoardIndex,
+        ballotSequenceAssignment,
         countyInfo,
         currentRoundNumber,
         cvrsToAudit,
@@ -85,9 +88,12 @@ const EndOfRoundPage = (props: PageProps) => {
 
     const countyName = countyInfo.name;
     const roundNumber = previousRound.number;
+    const slicer: any = _.nth(ballotSequenceAssignment, auditBoardIndex);
+    const cvrsForBoard = _.slice(cvrsToAudit, slicer.index, slicer.index + slicer["count"]) as JSON.CVR[];
 
     if (!finalReviewComplete) {
-        return <FinalReviewPage auditBoardIndex={ auditBoardIndex } cvrsToAudit={ cvrsToAudit } />;
+        return <FinalReviewPage auditBoardIndex={ auditBoardIndex }
+                                cvrsToAudit={ cvrsForBoard } />;
     }
 
     if (allRoundsComplete && estimatedBallotsToAudit <= 0) {

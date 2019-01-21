@@ -28,6 +28,7 @@ function signedOff(auditBoardIndex: number, round: Round): boolean {
 interface ContainerProps {
     allRoundsComplete: boolean;
     auditBoardIndex: number;
+    ballotSequenceAssignment: object[];
     countyInfo: CountyInfo;
     currentRoundNumber: number;
     cvrsToAudit: JSON.CVR[];
@@ -57,7 +58,8 @@ function select(countyState: County.AppState) {
         auditBoardIndex,
         countyInfo: countyInfoSelector(countyState),
         currentRoundNumber: currentRoundNumberSelector(countyState),
-        cvrsToAudit: countyState.cvrsToAudit,
+        cvrsToAudit: countyState.cvrsToAudit as JSON.CVR[],
+        ballotSequenceAssignment: countyState.ballotSequenceAssignment,
         election: countyState.election,
         estimatedBallotsToAudit: countyState.estimatedBallotsToAudit,
         finalReviewComplete: countyState.finalReviewComplete && countyState.finalReviewComplete[auditBoardIndex],

@@ -15,6 +15,7 @@ export function countyState(): County.AppState {
             state: 'NOT_ATTEMPTED',
             timestamp: new Date(),
         },
+        cvrsToAudit: [],
         finalReviewComplete: {},
         rounds: [],
         type: 'County',
