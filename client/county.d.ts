@@ -12,6 +12,7 @@ declare namespace County {
         ballotSequenceAssignment?: object[];
         ballotsRemainingInRound?: number;
         ballotUnderAuditIds?: number[];
+        ballotUnderReviewId?: number;
         contests?: Contest[];
         contestDefs?: ContestDefs;
         contestsUnderAudit?: Contest[];

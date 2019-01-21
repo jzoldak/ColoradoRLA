@@ -10,7 +10,6 @@ import WaitingForNextBallot from './WaitingForNextBallot';
 import CommentIcon from '../../../CommentIcon';
 
 import ballotNotFound from 'corla/action/county/ballotNotFound';
-import countyFetchCvr from 'corla/action/county/fetchCvr';
 
 
 interface NotFoundProps {

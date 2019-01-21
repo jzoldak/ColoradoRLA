@@ -17,18 +17,18 @@ import roundInProgressSelector from 'corla/selector/county/roundInProgress';
 
 
 interface ContainerProps {
-    auditBoardIndex: number;
     auditComplete: boolean;
     canAudit: boolean;
-    isAuditBoardDone: boolean;
     showEndOfRoundPage: boolean;
 }
 
-class CountyAuditContainer extends React.Component<ContainerProps> {
+class CountyAuditPageContainer extends React.Component<ContainerProps> {
     public render() {
-        const { auditComplete,
-                canAudit,
-                showEndOfRoundPage } = this.props;
+        const {
+            auditComplete,
+            canAudit,
+            showEndOfRoundPage
+        } = this.props;
 
         if (auditComplete) {
             notice.ok('The audit is complete.');
@@ -55,17 +55,15 @@ function select(countyState: County.AppState) {
         || isAuditBoardDone;
 
     return {
-        auditBoardIndex: countyState.auditBoardIndex,
         auditComplete: auditCompleteSelector(countyState),
         canAudit: canAuditSelector(countyState),
-        isAuditBoardDone: isAuditBoardDoneSelector(countyState),
         showEndOfRoundPage,
     };
 }
 
 
 export default withPoll(
-    withCountyState(CountyAuditContainer),
+    withCountyState(CountyAuditPageContainer),
     'COUNTY_AUDIT_POLL_START',
     'COUNTY_AUDIT_POLL_STOP',
     select,

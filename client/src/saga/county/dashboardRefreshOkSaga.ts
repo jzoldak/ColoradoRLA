@@ -15,6 +15,22 @@ import fetchCvrsToAudit from 'corla/action/county/fetchCvrsToAudit';
 import { parse } from 'corla/adapter/countyDashboardRefresh';
 
 
+function nextBallotId(state: County.AppState): number | undefined {
+    if (!state.ballotUnderAuditIds) {
+        return;
+    }
+
+    if (state.ballotUnderReviewId != null) {
+        return state.ballotUnderAuditIds[state.ballotUnderReviewId];
+    }
+
+    if (state.auditBoardIndex != null) {
+        return state.ballotUnderAuditIds[state.auditBoardIndex];
+    }
+
+    return;
+}
+
 function* countyRefreshOk({ data }: any): any {
     const state = yield select();
 
@@ -41,7 +57,7 @@ function* countyRefreshOk({ data }: any): any {
         return;
     }
 
-    const nextId = state.ballotUnderAuditIds[state.auditBoardIndex];
+    const nextId = nextBallotId(state);
 
     if (!nextId) {
         return;
