@@ -29,11 +29,12 @@ function row(cvr: JSON.CVR) {
 
 interface IDialogExampleState {
     isOpen: boolean;
+    comment: string;
 }
 
 
 class DialogExample extends React.Component<{}, IDialogExampleState> {
-    public state = { isOpen: false };
+    public state = { isOpen: false, comment: "" };
 
     public render() {
         return (
@@ -45,21 +46,30 @@ class DialogExample extends React.Component<{}, IDialogExampleState> {
                     onClose={this.toggleDialog}
                     title="Dialog header">
                     <div className="pt-dialog-body">
-                        Some content
+                       <textarea value={this.state.comment} onChange={this.updateComment}/>
                     </div>
                     <div className="pt-dialog-footer">
                         <div className="pt-dialog-footer-actions">
-                            <Button text="Secondary" />
+                            <Button text="Cancel" onClick={this.toggleDialog} />
                             <Button
                                 intent={Intent.PRIMARY}
-                                onClick={this.toggleDialog}
-                                text="Primary" />
+                                onClick={this.reaudit}
+                                text="Reaudit" />
                         </div>
                     </div>
                 </Dialog>
             </div>
         );
     }
+
+    private updateComment(event: any){
+        this.setState({ comment: event.target.value});
+    }
+
+    private reaudit() {
+        this.toggleDialog();
+    }
+
 
     private toggleDialog = () => this.setState({ isOpen: !this.state.isOpen });
 }
