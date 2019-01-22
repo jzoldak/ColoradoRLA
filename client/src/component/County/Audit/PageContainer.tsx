@@ -50,9 +50,13 @@ class CountyAuditPageContainer extends React.Component<ContainerProps> {
 
 function select(countyState: County.AppState) {
     const isAuditBoardDone = isAuditBoardDoneSelector(countyState);
-    const showEndOfRoundPage = allRoundsCompleteSelector(countyState)
+    const showEndOfRoundPage = true;
+    // XXX: RESTORE
+    /*
+    allRoundsCompleteSelector(countyState)
         || !roundInProgressSelector(countyState)
         || isAuditBoardDone;
+    */
 
     return {
         auditComplete: auditCompleteSelector(countyState),
