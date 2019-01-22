@@ -15,7 +15,7 @@
     "author": "Free & Fair",
     "license": "UNLICENSED",
     "dependencies": {
-        "@blueprintjs/core": "^1.23.0",
+        "@blueprintjs/core": "^1.39.0",
         "@blueprintjs/datetime": "^1.19.0",
         "@blueprintjs/labs": "^0.5.0",
         "@types/enzyme": "^2.8.1",

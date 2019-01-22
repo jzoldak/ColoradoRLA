@@ -1,12 +1,12 @@
 import * as React from 'react';
 
-import { Menu, MenuDivider, MenuItem } from '@blueprintjs/core';
+import { IconName, Menu, MenuDivider, MenuItem, } from '@blueprintjs/core';
 import { Link } from 'react-router-dom';
 
 
 interface NavItemProps {
     path: string;
-    iconName: string;
+    iconName: IconName;
     text: string;
 }
 
