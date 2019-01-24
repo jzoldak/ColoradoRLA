@@ -37,6 +37,8 @@ declare namespace JSON {
     interface ACVR {
         audit_cvr: JSON.CVR;
         cvr_id: number;
+        reaudit?: boolean;
+        comment?: string;
     }
 
     interface Round {

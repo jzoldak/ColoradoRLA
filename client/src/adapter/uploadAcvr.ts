@@ -12,19 +12,32 @@ const formatContestInfo = (mark: County.ACVRContest, contestId: number): JSON.Co
 };
 
 
-export const format = (marks: County.ACVR, cvr: CVR): JSON.ACVR => ({
-    audit_cvr: {
-        ballot_type: cvr.ballotType,
-        batch_id: cvr.batchId,
-        contest_info: _.map(marks, formatContestInfo),
-        county_id: cvr.countyId,
-        cvr_number: cvr.cvrNumber,
-        id: cvr.id,
-        imprinted_id: cvr.imprintedId,
-        record_id: cvr.recordId,
-        record_type: cvr.recordType,
-        scanner_id: cvr.scannerId,
-        timestamp: new Date(),
-    },
-    cvr_id: cvr.id,
-});
+export const format = (
+    acvr: County.ACVR,
+    cvr: CVR,
+    reAudit: boolean,
+    comment: string): JSON.ACVR => {
+    const payload: JSON.ACVR = {
+        audit_cvr: {
+            ballot_type: cvr.ballotType,
+            batch_id: cvr.batchId,
+            contest_info: _.map(acvr, formatContestInfo),
+            county_id: cvr.countyId,
+            cvr_number: cvr.cvrNumber,
+            id: cvr.id,
+            imprinted_id: cvr.imprintedId,
+            record_id: cvr.recordId,
+            record_type: cvr.recordType,
+            scanner_id: cvr.scannerId,
+            timestamp: new Date(),
+        },
+        cvr_id: cvr.id,
+    };
+
+    if (reAudit) {
+        payload.reaudit = true;
+        payload.comment = comment;
+    }
+
+    return payload;
+};

@@ -10,9 +10,11 @@ import totalBallotsForBoard from 'corla/selector/county/totalBallotsForBoard';
 
 
 interface ContainerProps {
+    comment?: string;
     countyState: County.AppState;
     currentBallot?: County.CurrentBallot;
     currentBallotNumber?: number;
+    isReAuditing?: boolean;
     marks?: County.ACVR;
     nextStage: OnClick;
     prevStage: OnClick;
@@ -53,6 +55,9 @@ class ReviewStageContainer extends React.Component<ContainerProps> {
 function select(countyState: County.AppState) {
     const { currentBallot } = countyState;
 
+    const comment = countyState.finalReview.comment;
+    const isReAuditing = !!comment;
+
     if (!currentBallot) {
         return { countyState };
     }
@@ -60,11 +65,13 @@ function select(countyState: County.AppState) {
     const marks = countyState.acvrs[currentBallot.id];
 
     return {
-      countyState,
-      currentBallot,
-      currentBallotNumber: currentBallotNumber(countyState),
-      marks,
-      totalBallotsForBoard: totalBallotsForBoard(countyState),
+        comment,
+        countyState,
+        currentBallot,
+        currentBallotNumber: currentBallotNumber(countyState),
+        isReAuditing,
+        marks,
+        totalBallotsForBoard: totalBallotsForBoard(countyState),
     };
 }
 
