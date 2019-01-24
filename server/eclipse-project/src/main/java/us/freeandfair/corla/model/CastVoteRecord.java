@@ -186,6 +186,10 @@ final public class CastVoteRecord implements Comparable<CastVoteRecord>,
                                              referencedColumnName = "my_id"))
   private List<CVRContestInfo> my_contest_info = new ArrayList<>();
 
+  /**
+   * ACVR level comments, used for explaining why reaudit is happening
+   **/
+  private String comment;
 
   /**
    * A transient flag that indicates whether this CVR was audited; this is only
@@ -308,6 +312,19 @@ final public class CastVoteRecord implements Comparable<CastVoteRecord>,
   public void setToEdited() {
     this.my_record_type = RecordType.REAUDITED;
     this.setUri();
+  }
+
+  /**
+   * set the comment
+   * A comment is required to explain why a reaudit happens
+   **/
+  public void setComment(final String comment) {
+    this.comment = comment;
+  }
+
+  /** get comment **/
+  public String getComment() {
+    return this.comment;
   }
 
   /**
