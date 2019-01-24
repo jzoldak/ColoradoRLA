@@ -36,6 +36,9 @@ public class SubmittedAuditCVR {
    **/
   private final Boolean reaudit;
 
+  /** a comment is required to explain why a reaudit is happening **/
+  private final String comment;
+
   /**
    * Constructs a new SubmittedAuditCVR.
    *
@@ -46,14 +49,17 @@ public class SubmittedAuditCVR {
     my_cvr_id = the_cvr_id;
     my_audit_cvr = the_audit_cvr;
     this.reaudit = false;
+    this.comment = "";
   }
 
   public SubmittedAuditCVR(final Long the_cvr_id,
                            final CastVoteRecord the_audit_cvr,
-                           final Boolean reaudit) {
+                           final Boolean reaudit,
+                           final String comment) {
     my_cvr_id = the_cvr_id;
     my_audit_cvr = the_audit_cvr;
     this.reaudit = reaudit;
+    this.comment = comment;
   }
 
 
@@ -74,5 +80,10 @@ public class SubmittedAuditCVR {
   /** reaudit can be null because it is optional **/
   public Boolean isReaudit() {
     return this.reaudit != null && this.reaudit;
+  }
+
+  /** get the comment **/
+  public String getComment() {
+    return this.comment;
   }
 }
