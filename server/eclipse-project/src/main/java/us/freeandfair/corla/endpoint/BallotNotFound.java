@@ -127,6 +127,7 @@ public class BallotNotFound extends AbstractAuditBoardDashboardEndpoint {
       if (matching == null) {
         badDataContents(the_response, "specified CVR not under audit");
       }
+
       // construct a phantom ballot ACVR
       final List<CVRContestInfo> contest_info = new ArrayList<>();
       for (final CVRContestInfo ci : cvr.contestInfo()) {
@@ -139,9 +140,16 @@ public class BallotNotFound extends AbstractAuditBoardDashboardEndpoint {
                              cvr.scannerID(), cvr.batchID(), cvr.recordID(),
                              cvr.imprintedID(), cvr.ballotType(),
                              contest_info);
-      
-      Persistence.saveOrUpdate(acvr);
-      if (ComparisonAuditController.submitAuditCVR(cdb, cvr, acvr)) {
+
+      boolean result;
+      if (sbnf.isReaudit()) {
+        result = ComparisonAuditController.reaudit(cdb,cvr,acvr);
+      } else {
+        Persistence.saveOrUpdate(acvr);
+        result = ComparisonAuditController.submitAuditCVR(cdb, cvr, acvr);
+      }
+
+      if (result) {
         ok(the_response, "audit CVR submitted");
       }
       if (cdb.ballotsRemainingInCurrentRound() == 0) {
