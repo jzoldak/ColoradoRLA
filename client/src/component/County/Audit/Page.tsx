@@ -4,12 +4,17 @@ import CountyNav from '../Nav';
 
 import CountyAuditWizardContainer from './Wizard/Container';
 
+interface Props {
+    reviewingBallotId?: number;
+}
 
-const CountyAuditPage = () => {
+const CountyAuditPage = (props: Props) => {
+    const { reviewingBallotId } = props;
+
     return (
         <div>
             <CountyNav />
-            <CountyAuditWizardContainer />
+            <CountyAuditWizardContainer reviewingBallotId={ reviewingBallotId } />
         </div>
     );
 };

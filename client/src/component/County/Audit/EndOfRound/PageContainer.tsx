@@ -9,22 +9,6 @@ import currentRoundNumberSelector from 'corla/selector/county/currentRoundNumber
 import previousRoundSelector from 'corla/selector/county/previousRound';
 
 
-function signedOff(auditBoardIndex: number, round: Round): boolean {
-    if (!round.signatories) {
-        return false;
-    }
-
-    if (!round.signatories[auditBoardIndex]) {
-        return false;
-    }
-
-    if (round.signatories[auditBoardIndex].length < 2) {
-        return false;
-    }
-
-    return true;
-}
-
 interface ContainerProps {
     allRoundsComplete: boolean;
     auditBoardIndex: number;
@@ -33,9 +17,7 @@ interface ContainerProps {
     cvrsToAudit: JSON.CVR[];
     election: Election;
     estimatedBallotsToAudit: number;
-    finalReviewComplete: boolean;
     previousRound: Round;
-    previousRoundSignedOff: boolean;
 }
 
 class EndOfRoundPageContainer extends React.Component<ContainerProps> {
@@ -45,12 +27,8 @@ class EndOfRoundPageContainer extends React.Component<ContainerProps> {
 }
 
 function select(countyState: County.AppState) {
-    // TODO: No great way to handle this error.
-    // Note that 0 is falsey in JS, so this still works for a valid audit board
-    // index of 0.
     const auditBoardIndex = countyState.auditBoardIndex || 0;
     const previousRound = previousRoundSelector(countyState);
-    const previousRoundSignedOff = previousRound && signedOff(auditBoardIndex, previousRound);
 
     return {
         allRoundsComplete: allRoundsCompleteSelector(countyState),
@@ -60,9 +38,7 @@ function select(countyState: County.AppState) {
         cvrsToAudit: countyState.cvrsToAudit,
         election: countyState.election,
         estimatedBallotsToAudit: countyState.estimatedBallotsToAudit,
-        finalReviewComplete: countyState.finalReviewComplete && countyState.finalReviewComplete[auditBoardIndex],
         previousRound: previousRound || {},
-        previousRoundSignedOff: previousRound ? signedOff(auditBoardIndex, previousRound) : false,
     };
 }
 

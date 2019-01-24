@@ -1,86 +1,33 @@
 import * as _ from 'lodash';
 import * as React from 'react';
 
-import {
-    Button,
-    Dialog,
-    IButtonProps,
-    IDialogProps,
-    Intent,
-    FormGroup,
-    TextArea,
-} from '@blueprintjs/core';
+import CountyNav from 'corla/component/County/Nav';
+
+import FinalReviewDialog from './FinalReviewDialog';
+
+import { Button, IButtonProps } from '@blueprintjs/core';
 
 import action from 'corla/action/';
 
-interface ReviewDialogProps {
-    close: () => void;
-    isOpen: boolean;
-    onClose: IDialogProps['onClose'];
-}
-
-interface ReviewDialogState {
-    comment: string;
-}
-
-class ReviewDialog extends React.Component<ReviewDialogProps, ReviewDialogState> {
-    constructor(props: ReviewDialogProps) {
-        super(props);
-
-        this.state = { comment: "" };
-    }
-
-    private handleClick: IButtonProps['onClick'] = () => {
-        this.props.close();
-    }
-
-    private handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        this.setState({ comment: e.target.value });
-    };
-
-    render() {
-        return (
-            <Dialog iconName="confirm"
-                    isOpen={ this.props.isOpen }
-                    onClose={ this.props.onClose }
-                    title="Final review">
-                <div className='pt-dialog-body'>
-                    <FormGroup label='Why are you re-auditing this ballot?'
-                               labelFor='review-dialog-input'>
-                        <TextArea id='review-dialog-input'
-                                  className='pt-fill'
-                                  value={ this.state.comment }
-                                  onChange={ this.handleCommentChange } />
-                    </FormGroup>
-                </div>
-                <div className="pt-dialog-footer">
-                    <div className="pt-dialog-footer-actions">
-                        <Button text="Cancel"
-                                onClick={ this.handleClick } />
-                        <Button intent={ Intent.PRIMARY }
-                                text="Re-audit" />
-                    </div>
-                </div>
-            </Dialog>
-        );
-    }
-}
-
 interface ReviewButtonProps {
-    cvrId: number;
-    openDialog: () => void;
+    cvr: JSON.CVR;
+    open: (cvr: JSON.CVR) => void;
 }
 
 const ReviewButton = (props: ReviewButtonProps) => {
     const handler: IButtonProps['onClick'] = () => {
-        props.openDialog();
+        if (props.cvr.db_id != null) {
+            props.open(props.cvr);
+        } else {
+            alert('Sorry, this ballot cannot be re-audited.');
+        }
     };
 
     return (
-        <Button text="Re-audit"
+        <Button text='Re-audit'
                 onClick={ handler }  />
     );
-}
+};
 
 interface FinalReviewPageProps {
     auditBoardIndex: number;
@@ -89,63 +36,95 @@ interface FinalReviewPageProps {
 
 interface FinalReviewPageState {
     dialogIsOpen: boolean;
+    cvr?: JSON.CVR;
 }
 
 const reviewCompleteHandler = (auditBoardIndex: number) => {
     return () => {
         action('FINAL_REVIEW_COMPLETE', auditBoardIndex);
-    }
+    };
 };
 
-const rowRenderer = (openDialog: () => void) => {
+const rowRenderer = (open: (cvr: JSON.CVR) => void) => {
     return (cvr: JSON.CVR) => {
         return (
-            <tr key={ cvr.cvr_number }>
+            <tr key={ cvr.db_id }>
                 <td>{ cvr.storage_location }</td>
                 <td>{ cvr.scanner_id }</td>
                 <td>{ cvr.batch_id }</td>
                 <td>{ cvr.record_id }</td>
                 <td>{ cvr.ballot_type }</td>
-                <td><ReviewButton cvrId={ cvr.cvr_number }
-                                  openDialog={ openDialog } /></td>
+                <td><ReviewButton cvr={ cvr }
+                                  open={ open } /></td>
             </tr>
         );
-    }
+    };
 };
 
 class FinalReviewPage extends React.Component<FinalReviewPageProps, FinalReviewPageState> {
     constructor(props: FinalReviewPageProps) {
         super(props);
-        this.state = { dialogIsOpen: false };
+        this.state = { dialogIsOpen: false, cvr: undefined };
     }
 
-    private closeDialog: () => void = () => {
-        this.setState({ dialogIsOpen: false });
-    }
-
-    private openDialog: () => void = () => {
-        this.setState({ dialogIsOpen: true });
-    }
-
-    render() {
+    public render() {
         const { auditBoardIndex, cvrsToAudit } = this.props;
 
-        const row = rowRenderer(this.openDialog);
+        const renderRow = rowRenderer(this.openDialog);
 
         return (
-            <div className='pt-card'>
-                <h3>Final Review</h3>
-
+            <div>
+                <CountyNav />
                 <div className='pt-card'>
-                    <p>Hello</p>
-                </div>
+                    <FinalReviewDialog cvr={ this.state.cvr }
+                                       isOpen={ this.state.dialogIsOpen }
+                                       onClose={ this.closeDialog } />
 
-                <Button onClick={ reviewCompleteHandler(auditBoardIndex) }>
-                    Continue
-                </Button>
+                    <h3>Audit Board { auditBoardIndex + 1 }: Final Review</h3>
 
-                <div className='pt-card'>
-                    <table className='pt-table pt-bordered pt-condensed'>
+                    <div className='pt-card'>
+                        <p>
+                            This screen allows you to re-audit ballots previously audited in
+                            this round. If you choose to re-audit a ballot, you will be
+                            presented with blank data entry and review screens for that ballot -
+                            data from the previous audit will not be prefilled. Once you submit
+                            a re-audited ballot, the most recent data will replace older
+                            entries. You will be able to re-audit multiple ballots if you wish.
+                        </p>
+
+                        <p>
+                            <b>
+                                If you are satisfied with your initial data entry and
+                                wish to complete the round:
+                            </b>
+                        </p>
+
+                        <ul>
+                            <li><b>Click the button below labeled "Review Complete - Finish Round"</b></li>
+                        </ul>
+
+                        <p>
+                            <b>
+                                If you wish to re-audit a ballot:
+                            </b>
+                        </p>
+
+                        <ul>
+                            <li><b>Click the "re-audit" button next to the appropriate ballot card in the list below</b></li>
+                        </ul>
+
+                        <p>
+                            When you are finished, click "Review Complete - Finish Round." Once clicked, ballot data from
+                            this round of the audit is no longer editable.
+                        </p>
+
+                        <Button onClick={ reviewCompleteHandler(auditBoardIndex) }>
+                            Review Complete - Finish Round
+                        </Button>
+                    </div>
+
+                    <table className='pt-table pt-bordered pt-condensed pt-interactive'
+                           style={{ marginLeft: 'auto', marginRight: 'auto' }}>
                         <thead>
                             <tr>
                                 <th>Storage bin</th>
@@ -156,17 +135,21 @@ class FinalReviewPage extends React.Component<FinalReviewPageProps, FinalReviewP
                                 <th>Actions</th>
                             </tr>
                         </thead>
-                        <tbody>{ _.map(cvrsToAudit, row) }</tbody>
+                        <tbody>{ _.map(cvrsToAudit, renderRow) }</tbody>
                     </table>
                 </div>
-
-                <ReviewDialog close={ this.closeDialog }
-                              isOpen={ this.state.dialogIsOpen }
-                              onClose={ this.closeDialog } />
             </div>
         );
     }
-};
+
+    private closeDialog: () => void = () => {
+        this.setState({ dialogIsOpen: false, cvr: undefined });
+    }
+
+    private openDialog: (cvr: JSON.CVR) => void = cvr => {
+        this.setState({ dialogIsOpen: true, cvr });
+    }
+}
 
 
 export default FinalReviewPage;

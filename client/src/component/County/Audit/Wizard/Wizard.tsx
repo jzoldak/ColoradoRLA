@@ -15,8 +15,9 @@ interface TransitionTable {
 
 interface WizardProps {
     countyState: County.AppState;
-    currentBallotNumber: number;
-    totalBallotsForBoard: number;
+    currentBallotNumber?: number;
+    reviewingBallotId?: number;
+    totalBallotsForBoard?: number;
 }
 
 interface WizardState {
@@ -27,16 +28,24 @@ class CountyAuditWizard extends React.Component<WizardProps, WizardState> {
     constructor(props: WizardProps) {
         super(props);
 
-        this.state = { stage: 'start' };
+        if (props.reviewingBallotId != null) {
+            this.state = { stage: 'ballot-audit' };
+
+            window.scrollTo(0, 0);
+        } else {
+            this.state = { stage: 'start' };
+        }
     }
 
     public render() {
         const { nextStage, prevStage } = this;
 
         const props = {
-            ...this.props,
+            countyState: this.props.countyState,
+            currentBallotNumber: this.props.currentBallotNumber,
             nextStage,
             prevStage,
+            totalBallotsForBoard: this.props.totalBallotsForBoard,
         };
 
         switch (this.state.stage) {

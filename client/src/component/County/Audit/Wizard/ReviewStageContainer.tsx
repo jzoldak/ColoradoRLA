@@ -12,11 +12,11 @@ import totalBallotsForBoard from 'corla/selector/county/totalBallotsForBoard';
 interface ContainerProps {
     countyState: County.AppState;
     currentBallot?: County.CurrentBallot;
-    currentBallotNumber: number;
+    currentBallotNumber?: number;
     marks?: County.ACVR;
     nextStage: OnClick;
     prevStage: OnClick;
-    totalBallotsForBoard: number;
+    totalBallotsForBoard?: number;
 }
 
 class ReviewStageContainer extends React.Component<ContainerProps> {

@@ -1,38 +1,36 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 
-import CountyAuditWizard from './Wizard';
+import Wizard from './Wizard';
 
 import currentBallotNumber from 'corla/selector/county/currentBallotNumber';
 import totalBallotsForBoard from 'corla/selector/county/totalBallotsForBoard';
 
-
-interface WizardContainerProps {
+interface WizardContainerStateProps {
     countyState: County.AppState;
-    currentBallotNumber: number;
-    totalBallotsForBoard: number;
+    currentBallotNumber?: number;
+    totalBallotsForBoard?: number;
 }
 
-class CountyAuditWizardContainer extends React.Component<WizardContainerProps> {
-    public render() {
-        const {
-          currentBallotNumber,
-          totalBallotsForBoard,
-        } = this.props;
-
-        return <CountyAuditWizard currentBallotNumber={ currentBallotNumber }
-                                  totalBallotsForBoard={ totalBallotsForBoard }
-                                  { ...this.props } />;
-    }
+interface WizardContainerOwnProps {
+    reviewingBallotId?: number;
 }
 
-function select(countyState: County.AppState) {
+interface WizardContainerProps extends
+    WizardContainerStateProps, WizardContainerOwnProps {}
+
+const WizardContainer = (props: WizardContainerProps) => {
+    return <Wizard { ...props } />;
+};
+
+function select(state: County.AppState, props: WizardContainerOwnProps) {
     return {
-      countyState,
-      currentBallotNumber: currentBallotNumber(countyState),
-      totalBallotsForBoard: totalBallotsForBoard(countyState),
+        countyState: state,
+        currentBallotNumber: currentBallotNumber(state),
+        reviewingBallotId: props.reviewingBallotId,
+        totalBallotsForBoard: totalBallotsForBoard(state),
     };
 }
 
 
-export default connect(select)(CountyAuditWizardContainer);
+export default connect(select)(WizardContainer);

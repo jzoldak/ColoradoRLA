@@ -7,6 +7,7 @@ import fetchCountyASMStateOk from './county/fetchCountyASMStateOk';
 import countyFetchCvrOk from './county/fetchCvrOk';
 import fetchCvrsToAuditOk from './county/fetchCvrsToAuditOk';
 import countyLoginOk from './county/loginOk';
+import reAuditCvr from './county/reAuditCvr';
 import updateAcvrForm from './county/updateAcvrForm';
 import uploadAcvrOk from './county/uploadAcvrOk';
 import uploadBallotManifestOk from './county/uploadBallotManifestOk';
@@ -103,10 +104,19 @@ export default function root(state: AppState, action: Action.App) {
         return login1FOk(state as LoginAppState, action);
     }
 
+    case 'RE_AUDIT_CVR': {
+        return reAuditCvr(state as County.AppState, action);
+    }
+
     case 'SET_AUDIT_BOARD': {
         const nextState = { ...state } as County.AppState;
 
         const { auditBoardIndex } = action.data;
+
+
+        // XXX: REMOVE BEFORE THIS GOES TO PRODUCTION
+        nextState.hack = true;
+
 
         nextState.auditBoardIndex = auditBoardIndex;
 
@@ -177,9 +187,9 @@ export default function root(state: AppState, action: Action.App) {
 
     case 'FINAL_REVIEW_COMPLETE': {
         const nextState = { ...state } as County.AppState;
-        if (nextState.finalReviewComplete) {
-            nextState.finalReviewComplete[action.data.auditBoardIndex] = true;
-        }
+
+        nextState.finalReview.complete = true;
+
         return nextState;
     }
 

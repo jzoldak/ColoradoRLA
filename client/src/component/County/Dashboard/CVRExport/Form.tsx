@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { EditableText } from '@blueprintjs/core';
+import { EditableText, FileUpload, FormGroup } from '@blueprintjs/core';
 
 
 interface FormProps {
@@ -42,26 +42,18 @@ const CVRExportForm = (props: FormProps) => {
     return (
         <div className='pt-card'>
             <div className='pt-card'>
-                <div className='pt-ui-text-large'>
-                   CVR Export
+                <div style={{ width: '600px' }}>
+                    <FormGroup label={ <span className='pt-ui-text-large'>CVR Export</span> }>
+                        <FileUpload fill={ true } text={ fileName } onInputChange={ onFileChange } />
+                    </FormGroup>
+                    <FormGroup label={ <span className='pt-ui-text-large'>SHA-256 hash for CVR Export</span> }>
+                        <EditableText className='pt-input'
+                                      minWidth={ 600 }
+                                      maxLength={ 64 }
+                                      value={ hash }
+                                      onChange={ onHashChange } />
+                    </FormGroup>
                 </div>
-                <label className='pt-file-upload truncate'>
-                    <input type='file' onChange={ onFileChange } />
-                    <span className='pt-file-upload-input'>{ fileName }</span>
-                </label>
-            </div>
-            <div className='pt-card'>
-                <div className='pt-ui-text-large'>
-                   SHA-256 hash for CVR Export
-                </div>
-                <label>
-                    <EditableText
-                        className='pt-input'
-                        minWidth={ 500 }
-                        maxLength={ 64 }
-                        value={ hash }
-                        onChange={ onHashChange } />
-                </label>
             </div>
             { renderedCancelButton }
             <button className='pt-button pt-intent-primary' onClick={ upload }>

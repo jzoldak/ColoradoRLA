@@ -12,7 +12,6 @@ declare namespace County {
         ballotSequenceAssignment?: object[];
         ballotsRemainingInRound?: number;
         ballotUnderAuditIds?: number[];
-        ballotUnderReviewId?: number;
         contests?: Contest[];
         contestDefs?: ContestDefs;
         contestsUnderAudit?: Contest[];
@@ -29,7 +28,7 @@ declare namespace County {
         election?: Election;
         estimatedBallotsToAudit?: number;
         fileName?: string;  // TODO: remove
-        finalReviewComplete?: FinalReviewComplete;
+        finalReview: FinalReview;
         hash?: string;  // TODO: remove
         id?: number;
         riskLimit?: number;
@@ -37,10 +36,9 @@ declare namespace County {
         type: 'County';
         uploadingBallotManifest?: boolean;
         uploadingCVRExport?: boolean;
-    }
 
-    interface FinalReviewComplete {
-        [auditBoardId: number]: boolean;
+        // XXX: REMOVE BEFORE GOING TO PRODUCTION
+        hack?: boolean;
     }
 
     interface CurrentBallot extends CVR {
@@ -104,4 +102,10 @@ declare namespace County {
         | 'COUNTY_AUDIT_UNDERWAY'
         | 'COUNTY_AUDIT_COMPLETE'
         | 'DEADLINE_MISSED';
+
+    interface FinalReview {
+        ballotId?: number;
+        comment?: string;
+        complete: boolean;
+    }
 }

@@ -25,6 +25,7 @@ declare namespace Action {
         | FinalReviewComplete
         | ImportCvrExportOk
         | Login1FOk
+        | ReAuditCvr
         | SelectContestsForAuditOk
         | SetAuditBoard
         | UpdateAcvrForm
@@ -148,6 +149,14 @@ declare namespace Action {
         data: {
             auditBoardIndex: number;
         };
+    }
+
+    interface ReAuditCvr {
+        type: 'RE_AUDIT_CVR';
+        data: {
+            comment: string;
+            cvrId: number;
+        }
     }
 
     interface UpdateAcvrForm {
