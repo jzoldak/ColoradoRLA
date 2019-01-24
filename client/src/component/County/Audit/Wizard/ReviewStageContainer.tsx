@@ -24,9 +24,11 @@ interface ContainerProps {
 class ReviewStageContainer extends React.Component<ContainerProps> {
     public render() {
         const {
+            comment,
             countyState,
             currentBallot,
             currentBallotNumber,
+            isReAuditing,
             marks,
             nextStage,
             prevStage,
@@ -41,9 +43,11 @@ class ReviewStageContainer extends React.Component<ContainerProps> {
             return null;
         }
 
-        return <ReviewStage countyState={ countyState }
+        return <ReviewStage comment={ comment }
+                            countyState={ countyState }
                             currentBallot={ currentBallot }
                             currentBallotNumber={ currentBallotNumber }
+                            isReAuditing={ isReAuditing }
                             marks={ marks }
                             nextStage={ nextStage }
                             prevStage={ prevStage }
