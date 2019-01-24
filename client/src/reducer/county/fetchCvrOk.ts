@@ -28,19 +28,21 @@ const parse = (data: JSON.CVR, state: AppState): County.CurrentBallot => ({
     submitted: false,
 });
 
-
-export default function fetchCvrOk(
+const fetchCvrOk = (
     state: County.AppState,
-    action: Action.CountyFetchCvrOk,
-): County.AppState {
+    action: Action.CountyFetchCvrOk
+): County.AppState => {
     const nextState = merge({}, state);
 
     const currentBallot = parse(action.data, state);
     nextState.currentBallot = currentBallot;
 
-    if (!nextState.acvrs[currentBallot.id]) {
-        nextState.acvrs[currentBallot.id] = createEmptyAcvr(currentBallot);
-    }
+    // Always overwrite the corresponding ACVR after a new CVR is fetched. We do
+    // not want an audit board to be influenced by a previous interpretation.
+    nextState.acvrs[currentBallot.id] = createEmptyAcvr(currentBallot);
 
     return nextState;
-}
+};
+
+
+export default fetchCvrOk;
