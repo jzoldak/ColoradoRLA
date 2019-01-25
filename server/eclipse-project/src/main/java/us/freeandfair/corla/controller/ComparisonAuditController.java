@@ -192,26 +192,39 @@ public final class ComparisonAuditController {
   public static boolean reaudit(final CountyDashboard cdb,
                                 final CastVoteRecord cvr,
                                 final CastVoteRecord newAcvr) {
+
+    LOGGER.info("[reaudit] cvr: " + cvr.toString());
+    LOGGER.info("[reaudit] newAcvr: " + newAcvr.toString());
     final CVRAuditInfo oldInfo =
       Persistence.getByID(cvr.id(), CVRAuditInfo.class);
+    CastVoteRecord oldAcvr = oldInfo.acvr();
+
     if (null == oldInfo.acvr()) {
       LOGGER.error("can't reaudit a cvr that hasn't been audited");
       return false;
     } else {
-      CastVoteRecord oldAcvr = oldInfo.acvr();
-      oldAcvr.setToEdited();
       Long revision = CastVoteRecordQueries.maxRevision(cvr);
-      oldAcvr.setRevision(revision);
+      oldAcvr.setToEdited(revision);
+      LOGGER.info("[reaudit] revision: " + oldAcvr.getRevision().toString());
+      LOGGER.debug("[reaudit] oldAcvr: " + oldAcvr.toString());
     }
+
     final CVRAuditInfo newInfo = new CVRAuditInfo(cvr);
     newInfo.setACVR(newAcvr);
 
-    LOGGER.info("[reaudit] unauditing CVRAuditInfo: " + oldInfo.toString());
+    LOGGER.debug("[reaudit] unauditing CVRAuditInfo: " + oldInfo.toString());
+
     final Integer former_count = unaudit(cdb, oldInfo);
     LOGGER.debug("[reaudit] former_count: " + former_count.toString());
+
     Persistence.delete(oldInfo);
+    Persistence.save(newInfo);
+    Persistence.update(oldAcvr);
+    Persistence.save(newAcvr);
+
     final Integer new_count = audit(cdb, newInfo, true);
     LOGGER.debug("[reaudit] new_count: " + new_count.toString());
+
     return true;
   }
 

@@ -107,7 +107,12 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
 
           final CastVoteRecord cvr = Persistence.getByID(submission.cvrID(),
                                                          CastVoteRecord.class);
-          final CastVoteRecord newAcvr = submission.auditCVR();
+          final CastVoteRecord s = submission.auditCVR();
+          final CastVoteRecord newAcvr =
+            new CastVoteRecord(RecordType.AUDITOR_ENTERED, Instant.now(),
+                               s.countyID(), s.cvrNumber(), null, s.scannerID(),
+                               s.batchID(), s.recordID(), s.imprintedID(),
+                               s.ballotType(), s.contestInfo());
           newAcvr.setComment(submission.getComment());
 
           if (ComparisonAuditController.reaudit(cdb,cvr,newAcvr)) {

@@ -551,9 +551,12 @@ public final class CastVoteRecordQueries {
                     " where uri = :uri ");
 
     q.setParameter("uri", cvr.getUri());
-
-    final OptionalLong result = OptionalLong.of((Long)q.getSingleResult());
-    return result.orElse(0L);
+    Long result = (Long)q.getSingleResult();
+    if (null == result) {
+      return 0L;
+    } else {
+      return result;
+    }
   }
 
 
