@@ -6,6 +6,7 @@ declare namespace DOS {
         contests: DOS.Contests;
         countyStatus: DOS.CountyStatuses;
         canonicalContests?: DOS.CanonicalContests;
+        canonicalChoices?: DOS.CanonicalChoices;
         discrepancyCounts?: DOS.DiscrepancyCounts;
         estimatedBallotsToAudit?: DOS.EstimatedBallotsToAudit;
         election?: Election;
@@ -36,7 +37,11 @@ declare namespace DOS {
     }
 
     interface CanonicalContests {
-        [countyId: string]: string[]
+        [countyId: string]: string[];
+    }
+
+    interface CanonicalChoices {
+        [contestName: string]: string[];
     }
 
     interface CountyStatuses {
@@ -167,13 +172,40 @@ declare namespace DOS {
             }
         }
 
-        namespace StandardizeContests {
-            interface ContestName {
+        namespace StandardizeChoices {
+            interface Choice {
                 name: string;
             }
 
+            interface Contest {
+                name: string;
+                choices: Choice[];
+            }
+
+            interface Contests {
+                [contestId: number]: Contest;
+            }
+
             interface FormData {
-                [contestId: number]: ContestName;
+                [contestId: number]: {
+                    [choiceIndex: number]: string;
+                };
+            }
+
+            interface Row {
+                choiceIndex: number;
+                choiceName: string;
+                contestId: number;
+                contestName: string;
+                choices: string[];
+            }
+        }
+
+        namespace StandardizeContests {
+            interface FormData {
+                [contestId: number]: {
+                    name: string;
+                }
             }
         }
     }

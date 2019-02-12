@@ -89,8 +89,10 @@ declare namespace JSON {
     }
 
     interface ContestChoice {
-        name: string;
         description: string;
+        fictitious: boolean;
+        name: string;
+        qualified_write_in: boolean;
     }
 
     interface CVR {
@@ -154,8 +156,9 @@ declare namespace JSON {
         reason: string;
     }
 
-    interface StandardizeContest {
+    interface Standardize {
         contest: number;
-        name: string;
+        name?: string;
+        choices?: string[];
     }
 }
