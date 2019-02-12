@@ -224,6 +224,24 @@ public final class CastVoteRecordQueries {
     return result;
   }
 
+  public static int updateCVRContestInfos(final Long countyId,
+                                          final String oldChoice,
+                                          final String newChoice) {
+    final Session s = Persistence.currentSession();
+    final Query q = s
+      // this will only fix the first match, which is what we want, because this
+      // will make it possible to fix mistakes that create duplicates
+      .createNativeQuery("update cvr_contest_info set choices = "
+                         + "regexp_replace(choices, :oldChoice, :newChoice) "
+                         + " where county_id = :county_id and choices like :oldChoiceLike")
+      .setParameter("oldChoice", oldChoice)
+      .setParameter("oldChoiceLike","%"+oldChoice+"%")
+      .setParameter("newChoice", newChoice)
+      .setParameter("county_id", countyId);
+
+    return q.executeUpdate();
+  }
+
   /**
    * CVRContestInfo has a required foreign key to CastVoteRecord so they must be
    * deleted first
