@@ -3,10 +3,12 @@ package us.freeandfair.corla.csv;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.Collections;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeMap;
@@ -18,6 +20,7 @@ import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BOMInputStream;
 import org.apache.commons.io.input.ReaderInputStream;
+
 
 /**
  * A simple CSV parser built atop commons.csv
@@ -36,13 +39,17 @@ public class ContestNameParser {
   private final CSVFormat csvFormat =
     CSVFormat
     .DEFAULT
-    .withHeader("CountyName", "ContestName")
-    .withSkipHeaderRecord(true);
+    .withHeader();
 
   /**
    * A mapping of county to contests
    */
   private final Map<String, Set<String>> contests = new TreeMap<String, Set<String>>();
+
+  /**
+   * A mapping of contest name to choices
+   */
+  private final Map<String, Set<String>> choices = new TreeMap<String, Set<String>>();
 
   /**
    * A mapping of county to those duplicate contests
@@ -107,6 +114,42 @@ public class ContestNameParser {
     return contests;
   }
 
+  /** add to the map **/
+  public void addContest(final String countyName, final String contestName) {
+    final Set v = this.contests.getOrDefault(countyName, new TreeSet());
+    final boolean newElement = v.add(contestName);
+    if (!newElement) {
+      addDuplicateContest(countyName, contestName);
+    }
+    this.contests.put(countyName, v);
+  }
+
+  /**
+   * @return Map<String, Set<String>> A map of contest name to set of choices
+   **/
+  public Map<String, Set<String>> getChoices() {
+    return this.choices;
+  }
+
+  /** add to the map **/
+  public void addChoices(final String contestName, final String... splitResult) {
+    final Set<String> choiceNames = new HashSet();
+    Collections.addAll(choiceNames, splitResult);
+
+    this.choices.merge(contestName, choiceNames,
+                       (s1,s2) -> {
+                         s1.addAll(s2);
+                         return s1;
+                       });
+  }
+
+  /** add to the map **/
+  public void addDuplicateContest(final String countyName, final String contestName) {
+    final Set v = this.duplicates.getOrDefault(countyName, new TreeSet());
+    v.add(contestName);
+    this.duplicates.put(countyName, v);
+  }
+
   /**
    * @return Map<String, Set<String>> A map of county to
    * duplicate-contests-within-county.
@@ -140,42 +183,22 @@ public class ContestNameParser {
     final Iterable<CSVRecord> records = parser;
 
     try {
-      for (final CSVRecord record : records) {
-        final String countyName = record.get("CountyName");
-        final String contestName = record.get("ContestName");
+      for (final CSVRecord r : records) {
+        final Map<String,String> record = r.toMap();
+        final String countyName = record.getOrDefault("CountyName", "");
+        final String contestName = record.getOrDefault("ContestName", "");
+        final String choiceNames = record.getOrDefault("ContestChoices", "");
+
+        if (!choiceNames.isEmpty()){
+          addChoices(contestName, choiceNames.split(","));
+        }
 
         if (countyName.isEmpty() || contestName.isEmpty()) {
           errors.add(new ParseError("malformed record: (" + record + ")",
                                     parser.getCurrentLineNumber()));
           break;
         } else {
-          // TODO extract-fn
-
-          // In Java 10+, we'd use TreeSet.of(contestName) and
-          // be happy. Until we leave Java 8, we're stuck with
-          // this idiom, right?
-          final Set<String> contest = new TreeSet<String>();
-          contest.add(contestName);
-
-          contests.merge(countyName, contest, (s1, s2) -> {
-              // Accumulate the contests
-              final Set<String> union = new TreeSet<String>(s1);
-              union.addAll(s2);
-
-              // Keep track up duplicates
-              final Set<String> intersection = new TreeSet<String>(s1);
-              intersection.retainAll(s2);
-
-              if (!intersection.isEmpty()) {
-                duplicates.merge(countyName, intersection, (d1, d2) -> {
-                    final Set<String> u2 = new TreeSet<String>(d1);
-                    u2.addAll(d2);
-                    return u2;
-                  });
-              }
-
-              return union;
-            });
+          addContest(countyName, contestName);
         }
       }
     } catch (final NoSuchElementException e) {

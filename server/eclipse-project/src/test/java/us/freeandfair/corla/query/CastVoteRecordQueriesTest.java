@@ -121,4 +121,15 @@ public class CastVoteRecordQueriesTest {
     assertEquals((int) result, (int) 1,
                  "a result of 1 means one thing was deleted");
   }
+
+  @Test()
+  public void canonicalChoicesTest() {
+    CastVoteRecord cvr = noisyCVRSetup(3);
+
+    Integer result = CastVoteRecordQueries.updateCVRContestInfos(1L,"why?","because.");
+    assertEquals((int) result, (int) 1,
+                 "a result of 1 means one choice was changed");
+    Persistence.currentSession().refresh(cvr);
+    assertEquals(cvr.contestInfo().toString().contains("choices=[because.]"), true);
+  }
 }

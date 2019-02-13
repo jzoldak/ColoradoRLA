@@ -18,6 +18,7 @@ public class ContestNameParserTest {
   private String simpleCSV;
   private String dupesInCSV;
   private String malformedCSV;
+  private String withChoicesCSV;
 
   @BeforeClass()
   public void ContestNameParserTest() {
@@ -36,6 +37,13 @@ public class ContestNameParserTest {
       "denver,IPA\ndenver,IPA\ndenver,coffee";
 
     malformedCSV = "County Name\",Contest Name\t\nboulder,\n";
+
+    withChoicesCSV = "CountyName,ContestName,ContestChoices\n" +
+      "boulder,IPA,\"Mojo,Moirai\"\nboulder,kombucha,\"happy leaf,Rowdy Mermaid\"\nboulder,coffee\n" +
+      "denver,IPA\ndenver,stout\ndenver,coffee";
+
+
+
   }
 
   @Test()
@@ -61,6 +69,16 @@ public class ContestNameParserTest {
       assertEquals(p.contestCount(),
                    OptionalInt.of(6),
                    "A Byte Order Mark isn't a dealbreaker");
+    } catch (IOException ioe) { fail("Edge case", ioe); }
+  }
+
+  @Test()
+  public void choicesTest() {
+    try {
+      ContestNameParser p = new ContestNameParser(withChoicesCSV);
+      p.parse();
+      assertEquals(p.getChoices().toString(),
+                   "{IPA=[Moirai, Mojo], kombucha=[Rowdy Mermaid, happy leaf]}");
     } catch (IOException ioe) { fail("Edge case", ioe); }
   }
 
@@ -100,7 +118,7 @@ public class ContestNameParserTest {
       assertFalse(p.errors().isEmpty(), "Parse failure results in errors");
 
       assertEquals(p.errors().first().toString(),
-                   "malformed record: (CSVRecord [comment=null, mapping={CountyName=0, ContestName=1}, recordNumber=1, values=[boulder, ]]) on line 2",
+                   "malformed record: ({Contest Name	=, County Name\"=boulder}) on line 2",
                    "Line two is missing a contest name value");
     } catch (Exception e) { fail("Edge case", e);}
   }
