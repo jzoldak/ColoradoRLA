@@ -240,7 +240,7 @@ class StandardizeContestsPage extends React.Component<PageProps> {
         if (_.isEmpty(name)) {
             delete this.formData[id];
         } else {
-            this.formData[id] = { name };
+            this.formData[id] = { name, contestId: id };
         }
     }
 }

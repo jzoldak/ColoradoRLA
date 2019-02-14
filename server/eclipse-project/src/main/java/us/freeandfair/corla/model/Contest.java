@@ -194,7 +194,12 @@ public class Contest implements PersistentEntity, Serializable {
   public String name() {
     return my_name;
   }
-  
+
+  /** set the name **/
+  public void setName(final String name) {
+    this.my_name = name;
+  }
+
   /**
    * @return the contest description.
    */
@@ -223,7 +228,22 @@ public class Contest implements PersistentEntity, Serializable {
     }
     return false;
   }
-  
+
+  /**
+   * Change a choice name as part of Canonicalization.
+   *
+   * @param the_choice The choice.
+   * @return true if the choice is valid, false otherwise.
+   */
+  public void updateChoiceName(final String oldName,
+                               final String newName) {
+    for (final Choice choice : my_choices) {
+      if (choice.name().equals(oldName)) {
+        choice.setName(newName);
+      }
+    }
+  }
+
   /**
    * @return the contest choices.
    */

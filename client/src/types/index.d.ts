@@ -135,6 +135,7 @@ interface Round {
 interface ContestChoice {
     name: string;
     description: string;
+    canonicalName: string;
 }
 
 interface Contest {

@@ -92,6 +92,7 @@ declare namespace JSON {
         description: string;
         fictitious: boolean;
         name: string;
+        canonicalName: string;
         qualified_write_in: boolean;
     }
 
@@ -156,9 +157,14 @@ declare namespace JSON {
         reason: string;
     }
 
+    interface ChoiceChange {
+        oldName?: string;
+        newName?: string;
+    }
+
     interface Standardize {
-        contest: number;
+        contestId: number;
         name?: string;
-        choices?: string[];
+        choices?: ChoiceChange[];
     }
 }

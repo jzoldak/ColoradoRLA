@@ -68,7 +68,8 @@ const mergeNewChoices = (
             contest.choices = _.map(contest.choices, (choice, idx) => {
                 const newChoice = newChoices[idx];
                 if (!_.isNil(newChoice)) {
-                    choice.name = newChoice;
+                    /* choice.name = newChoice; */
+                    choice.canonicalName = newChoice;
                 }
 
                 return choice;

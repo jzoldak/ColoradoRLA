@@ -175,6 +175,7 @@ declare namespace DOS {
         namespace StandardizeChoices {
             interface Choice {
                 name: string;
+                canonicalName: string;
             }
 
             interface Contest {
@@ -205,6 +206,7 @@ declare namespace DOS {
             interface FormData {
                 [contestId: number]: {
                     name: string;
+                    contestId: number;
                 }
             }
         }

@@ -31,8 +31,12 @@ import spark.Response;
 import us.freeandfair.corla.Main;
 import us.freeandfair.corla.asm.ASMEvent;
 import us.freeandfair.corla.model.AuditInfo;
+import us.freeandfair.corla.model.Contest;
 import us.freeandfair.corla.model.DoSDashboard;
+import us.freeandfair.corla.json.CanonicalUpdate;
+import us.freeandfair.corla.json.CanonicalUpdate.ChoiceChange;
 import us.freeandfair.corla.persistence.Persistence;
+import us.freeandfair.corla.query.CastVoteRecordQueries;
 
 /**
  * The endpoint for renaming contests.
@@ -90,10 +94,11 @@ public class SetContestNames extends AbstractDoSDashboardEndpoint {
   @Override
   public String endpointBody(final Request request, final Response response) {
     try {
-      final List<Map<String, String>> mappings =
-          Main.GSON.fromJson(request.body(), TYPE_TOKEN);
+      // final List<Map<String, String>> mappings =
+      //     Main.GSON.fromJson(request.body(), TYPE_TOKEN);
+      List<CanonicalUpdate> canons = Main.GSON.fromJson(request.body(), new TypeToken<List<CanonicalUpdate>>(){}.getType());
 
-      if (mappings == null) {
+      if (canons == null) {
         badDataContents(response, "malformed contest mappings");
       } else {
         final DoSDashboard dosdb = Persistence.getByID(DoSDashboard.ID, DoSDashboard.class);
@@ -105,18 +110,24 @@ public class SetContestNames extends AbstractDoSDashboardEndpoint {
         int updateCount = 0;
         final Session s = Persistence.currentSession();
 
-        final Query q = s.createQuery(
-            "update Contest set my_name = :name" +
-            " where my_id = :id");
+        for (final CanonicalUpdate canon : canons) {
+          final Long id = Long.parseLong(canon.contestId);
+          final Contest contest = Persistence.getByID(id, Contest.class);
+          // change contest name
+          if (null != canon.name) {
+            contest.setName(canon.name);
+          }
+          // change choice names
+          if (null != canon.choices) {
+            for (final ChoiceChange choiceChange: canon.choices) {
+              contest.updateChoiceName(choiceChange.oldName, choiceChange.newName);
+              CastVoteRecordQueries.updateCVRContestInfos(contest.county().id(),
+                                                          choiceChange.oldName,
+                                                          choiceChange.newName);
+            }
+          }
 
-        for (final Map<String, String> mapping : mappings) {
-          final Long id = Long.parseLong(mapping.get("contest"));
-          final String name = mapping.get("name");
-
-          q.setParameter("id", id);
-          q.setParameter("name", name);
-
-          updateCount += q.executeUpdate();
+          updateCount += 1;
         }
 
         asmEvent.set(nextEvent(dosdb));

@@ -271,6 +271,9 @@ public class AuditInfo implements Serializable {
     if (the_other_info.canonicalContests != null) {
       canonicalContests = the_other_info.canonicalContests;
     }
+    if (the_other_info.canonicalChoices != null) {
+      canonicalChoices = the_other_info.canonicalChoices;
+    }
   }
 
   /**
