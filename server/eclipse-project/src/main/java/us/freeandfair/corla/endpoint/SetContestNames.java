@@ -120,10 +120,14 @@ public class SetContestNames extends AbstractDoSDashboardEndpoint {
           // change choice names
           if (null != canon.choices) {
             for (final ChoiceChange choiceChange: canon.choices) {
+              if (null != choiceChange.oldName
+                  && null != choiceChange.newName
+                  && !choiceChange.oldName.equals(choiceChange.newName)) {
               contest.updateChoiceName(choiceChange.oldName, choiceChange.newName);
               CastVoteRecordQueries.updateCVRContestInfos(contest.county().id(),
                                                           choiceChange.oldName,
                                                           choiceChange.newName);
+              }
             }
           }
 

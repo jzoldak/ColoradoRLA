@@ -232,7 +232,7 @@ public final class CastVoteRecordQueries {
       // this will only fix the first match, which is what we want, because this
       // will make it possible to fix mistakes that create duplicates
       .createNativeQuery("update cvr_contest_info set choices = "
-                         + "regexp_replace(choices, :oldChoice, :newChoice) "
+                         + "regexp_replace(choices, cast( :oldChoice as varchar), cast( :newChoice as varchar)) "
                          + " where county_id = :county_id and choices like :oldChoiceLike")
       .setParameter("oldChoice", oldChoice)
       .setParameter("oldChoiceLike","%"+oldChoice+"%")
