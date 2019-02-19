@@ -136,6 +136,7 @@
 							<effort>Max</effort>
 							<threshold>Low</threshold>
 							<xmlOutput>false</xmlOutput>
+              <excludeFilterFile>findbugs-exclude.xml</excludeFilterFile>
 							<!-- this must be kept in sync with Eclipse plugin configuration -->
 							<omitVisitors>BadAppletConstructor,CheckExpectedWarnings,EmptyZipFileEntry,FindCircularDependencies</omitVisitors>
 						</configuration>
