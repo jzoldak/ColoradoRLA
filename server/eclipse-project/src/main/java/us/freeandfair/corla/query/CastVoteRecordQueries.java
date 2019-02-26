@@ -615,6 +615,19 @@ public final class CastVoteRecordQueries {
     return Long.valueOf(result);
   }
 
+  /** reporting **/
+  public static List<CastVoteRecord> report(List<Long> contestCVRIds) {
+    final Session s = Persistence.currentSession();
+    final Query q =
+      s.createQuery("select cvr from CastVoteRecord cvr "
+                    + " where cvr.my_id in (select cai.my_acvr from CVRAuditInfo cai "
+                    + "                where cai.my_cvr.my_id in (:cvrIds))"
+                    + " order by cvr.my_timestamp asc");
+
+    q.setParameter("cvrIds", contestCVRIds);
+
+    return q.getResultList();
+  }
 
 
   /** Utility function **/

@@ -115,6 +115,7 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
                                s.batchID(), s.recordID(), s.imprintedID(),
                                s.ballotType(), s.contestInfo());
           newAcvr.setComment(submission.getComment());
+          newAcvr.setAuditBoardIndex(submission.getAuditBoardIndex());
 
           if (ComparisonAuditController.reaudit(cdb,cvr,newAcvr)) {
             ok(the_response, "ACVR reaudited");
@@ -132,6 +133,7 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
                                  acvr.countyID(), acvr.cvrNumber(), null, acvr.scannerID(),
                                  acvr.batchID(), acvr.recordID(), acvr.imprintedID(),
                                  acvr.ballotType(), acvr.contestInfo());
+          real_acvr.setAuditBoardIndex(submission.getAuditBoardIndex());
           Persistence.saveOrUpdate(real_acvr);
           LOGGER.info("Audit CVR for CVR id " + submission.cvrID() +
                            " parsed and stored as id " + real_acvr.id());

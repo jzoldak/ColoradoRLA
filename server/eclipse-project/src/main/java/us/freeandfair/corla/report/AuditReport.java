@@ -31,11 +31,12 @@ public class AuditReport {
   }
 
   private Row addValue(final Row row, final String value) {
-    int nextCellNum;
-    if (row.getLastCellNum() == 0) {
-      nextCellNum = 0;
+    // getLastCellNum starts at -1, just to be fun
+    int nextCellNum = row.getLastCellNum() ;
+    if (row.getLastCellNum() == -1) {
+      nextCellNum = 0; // first row
     } else {
-      nextCellNum = row.getLastCellNum() + 1;
+      nextCellNum = row.getLastCellNum();
     }
 
     Cell cell = row.createCell(nextCellNum);
@@ -53,6 +54,7 @@ public class AuditReport {
   public Sheet addRows(Sheet sheet, final List<List<String>> rows) {
     rows.stream()
       .map(arr -> {
+          System.out.println(arr);
         Row row = addRow(sheet);
         addValues(row, arr);
         return row;

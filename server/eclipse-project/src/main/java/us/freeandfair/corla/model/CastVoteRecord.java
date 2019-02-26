@@ -195,6 +195,11 @@ final public class CastVoteRecord implements Comparable<CastVoteRecord>,
   private String comment;
 
   /**
+   * who is submitting this ACVR, used for reporting
+   **/
+  private Integer auditBoardIndex;
+
+  /**
    * A transient flag that indicates whether this CVR was audited; this is only
    * used for passing information around within the RLA tool and is not serialized
    * in the database; the authoritative source of information about whether a CVR
@@ -335,6 +340,18 @@ final public class CastVoteRecord implements Comparable<CastVoteRecord>,
   /** get comment **/
   public String getComment() {
     return this.comment;
+  }
+
+ /**
+   * set the auditBoardIndex
+   **/
+  public void setAuditBoardIndex(final Integer auditBoardIndex) {
+    this.auditBoardIndex = auditBoardIndex;
+  }
+
+  /** get auditBoardIndex **/
+  public Integer getAuditBoardIndex() {
+    return this.auditBoardIndex;
   }
 
   /**

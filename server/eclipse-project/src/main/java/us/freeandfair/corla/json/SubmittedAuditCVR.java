@@ -39,6 +39,9 @@ public class SubmittedAuditCVR {
   /** a comment is required to explain why a reaudit is happening **/
   private final String comment;
 
+  /** the audit board is used for reporting **/
+  private final Integer auditBoardIndex;
+
   /**
    * Constructs a new SubmittedAuditCVR.
    *
@@ -50,17 +53,20 @@ public class SubmittedAuditCVR {
     my_audit_cvr = the_audit_cvr;
     this.reaudit = false;
     this.comment = "";
+    this.auditBoardIndex = -1;
   }
 
   /** create the object with all the fields **/
   public SubmittedAuditCVR(final Long the_cvr_id,
                            final CastVoteRecord the_audit_cvr,
                            final Boolean reaudit,
-                           final String comment) {
+                           final String comment,
+                           final Integer auditBoardIndex) {
     my_cvr_id = the_cvr_id;
     my_audit_cvr = the_audit_cvr;
     this.reaudit = reaudit;
     this.comment = comment;
+    this.auditBoardIndex = auditBoardIndex;
   }
 
 
@@ -87,4 +93,9 @@ public class SubmittedAuditCVR {
   public String getComment() {
     return this.comment;
   }
+
+  public Integer getAuditBoardIndex() {
+    return this.auditBoardIndex;
+  }
+
 }

@@ -8,12 +8,14 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.AfterTest;
 import static org.testng.Assert.*;
 
+import java.time.Instant;
 
 import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.Contest;
 import us.freeandfair.corla.model.Choice;
 import us.freeandfair.corla.model.County;
 import us.freeandfair.corla.model.CVRContestInfo;
+import us.freeandfair.corla.model.CVRAuditInfo;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.Setup;
 
@@ -132,4 +134,27 @@ public class CastVoteRecordQueriesTest {
     Persistence.currentSession().refresh(cvr);
     assertEquals(cvr.contestInfo().toString().contains("choices=[because.]"), true);
   }
+
+
+  @Test()
+  public void reportTest() {
+    CastVoteRecord cvr = noisyCVRSetup(4);
+    CastVoteRecord acvr = new CastVoteRecord(CastVoteRecord.RecordType.AUDITOR_ENTERED, Instant.now(),
+                                             cvr.countyID(), cvr.cvrNumber(), null, cvr.scannerID(),
+                                             cvr.batchID(), cvr.recordID(), cvr.imprintedID(),
+                                             cvr.ballotType(), cvr.contestInfo());
+    acvr.setComment("testing");
+    acvr.setAuditBoardIndex(14);
+    CVRAuditInfo cai = new CVRAuditInfo(cvr);
+    cai.setACVR(acvr);
+
+    Persistence.save(acvr);
+    Persistence.save(cai);
+
+    List<CastVoteRecord> acvrs = new ArrayList(){{ add(acvr); }};
+    List<Long> contestCVRIds = new ArrayList(){{ add(cvr.id()); }};
+    List<CastVoteRecord> result = CastVoteRecordQueries.report(contestCVRIds);
+    assertEquals(acvrs, result);
+  }
+
 }

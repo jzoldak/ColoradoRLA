@@ -184,13 +184,6 @@ public class ContestResult implements PersistentEntity, Serializable {
   private AuditReason auditReason;
 
   /**
-   * The sequence of CastVoteRecord ids for this contest ordered by County id
-   */
-  @Column(name = "contest_cvr_ids", columnDefinition = TEXT)
-  @Convert(converter = LongListConverter.class)
-  private List<Long> contestCVRIds = new ArrayList<Long>();
-
-  /**
    * Constructs a new empty ContestResult (solely for persistence).
    */
   public ContestResult() {
@@ -279,29 +272,6 @@ public class ContestResult implements PersistentEntity, Serializable {
    **/
   public Set<Contest> getContests() {
     return Collections.unmodifiableSet(this.contests);
-  }
-
-  /**
-   * Sets the current collection of Contest CVR IDs to params
-   * @param contestCVRIds a list
-   */
-  public void setContestCVRIds (final List<Long> contestCVRIds) {
-    this.contestCVRIds = contestCVRIds;
-  }
-
-  /**
-   * Adds to the current collection of Contest CVR IDs
-   * @param contestCVRIds a list
-   */
-  public void addContestCVRIds (final List<Long> contestCVRIds) {
-    this.contestCVRIds.addAll(contestCVRIds);
-  }
-
-  /**
-   * getter
-   */
-  public List<Long> getContestCVRIds() {
-    return this.contestCVRIds;
   }
 
   /**
@@ -457,7 +427,7 @@ public class ContestResult implements PersistentEntity, Serializable {
    */
   @Override
   public String toString() {
-    return "ContestResult [id=" + id() + " contestName=" + getContestName() +  " contestCVRIds=" + getContestCVRIds() + "]";
+    return "ContestResult [id=" + id() + " contestName=" + getContestName() + "]";
   }
 
   /**

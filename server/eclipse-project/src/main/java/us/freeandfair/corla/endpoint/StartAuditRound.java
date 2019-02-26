@@ -278,7 +278,7 @@ public class StartAuditRound extends AbstractDoSDashboardEndpoint {
       final ContestResult contestResult = comparisonAudit.contestResult();
       // only make selection for targeted contests
       if (contestResult.getAuditReason().isTargeted()) {
-        final Integer startIndex = BallotSelection.auditedPrefixLength(contestResult.getContestCVRIds());
+        final Integer startIndex = BallotSelection.auditedPrefixLength(comparisonAudit.getContestCVRIds());
         final Integer endIndex = comparisonAudit.optimisticSamplesToAudit();
 
         final Selection selection =
@@ -289,11 +289,11 @@ public class StartAuditRound extends AbstractDoSDashboardEndpoint {
                                    + "contestResult.contestCVRIds=%s, selection=%s, "
                                    + "selection.contestCVRIds=%s, startIndex=%d, endIndex=%d]",
                                    contestResult.getContestName(),
-                                   contestResult.getContestCVRIds(),
+                                   comparisonAudit.getContestCVRIds(),
                                    selection, selection.contestCVRIds(),
                                    startIndex, endIndex));
 
-        contestResult.addContestCVRIds(selection.contestCVRIds());
+        comparisonAudit.addContestCVRIds(selection.contestCVRIds());
 
         selections.add(selection);
       }
