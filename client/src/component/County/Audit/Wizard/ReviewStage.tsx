@@ -182,11 +182,12 @@ const ReviewStage = (props: ReviewStageProps) => {
 
     const onClick = () => {
         const m = countyState!.acvrs![currentBallot.id];
+        const auditBoardIndex = countyState!.auditBoardIndex;
 
         if (isReAuditing) {
-            uploadAcvr(m, currentBallot, true, comment);
+            uploadAcvr(m, currentBallot, auditBoardIndex, true, comment);
         } else {
-            uploadAcvr(m, currentBallot);
+            uploadAcvr(m, currentBallot, auditBoardIndex);
         }
 
         nextStage();

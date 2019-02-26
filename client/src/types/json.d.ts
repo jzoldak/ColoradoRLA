@@ -39,6 +39,7 @@ declare namespace JSON {
         cvr_id: number;
         reaudit?: boolean;
         comment?: string;
+        auditBoardIndex: number;
     }
 
     interface Round {

@@ -10,10 +10,11 @@ const url = endpoint('upload-audit-cvr');
 const uploadAcvr = (
     acvr: County.ACVR,
     cvr: CVR,
+    auditBoardIndex: number,
     reAudit = false,
     comment = '',
 ) => {
-    const body = format(acvr, cvr, reAudit, comment);
+    const body = format(acvr, cvr, auditBoardIndex, reAudit, comment);
 
     const action = createSubmitAction({
         failType: 'UPLOAD_ACVR_FAIL',

@@ -15,6 +15,7 @@ const formatContestInfo = (mark: County.ACVRContest, contestId: number): JSON.Co
 export const format = (
     acvr: County.ACVR,
     cvr: CVR,
+    auditBoardIndex: number,
     reAudit: boolean,
     comment: string,
 ): JSON.ACVR => {
@@ -33,6 +34,7 @@ export const format = (
             timestamp: new Date(),
         },
         cvr_id: cvr.id,
+        auditBoardIndex: auditBoardIndex,
     };
 
     if (reAudit) {
