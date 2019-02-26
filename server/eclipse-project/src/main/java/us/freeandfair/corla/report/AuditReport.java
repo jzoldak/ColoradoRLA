@@ -13,26 +13,27 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Cell;
 
-
 public class AuditReport {
   private List<List<String>> rows;
+
   public AuditReport(List<List<String>> rows) {
     this.rows = rows;
   }
 
   private Row addRow(final Sheet sheet) {
     int nextRowNum;
-    if (sheet.getLastRowNum() == 0) {
+    if (sheet.getLastRowNum() == 0 && sheet.getPhysicalNumberOfRows() == 0) {
       nextRowNum = 0; // first row
     } else {
       nextRowNum = sheet.getLastRowNum() + 1;
     }
+
     return sheet.createRow(nextRowNum);
   }
 
   private Row addValue(final Row row, final String value) {
     // getLastCellNum starts at -1, just to be fun
-    int nextCellNum = row.getLastCellNum() ;
+    int nextCellNum = row.getLastCellNum();
     if (row.getLastCellNum() == -1) {
       nextCellNum = 0; // first row
     } else {
@@ -41,32 +42,29 @@ public class AuditReport {
 
     Cell cell = row.createCell(nextCellNum);
     cell.setCellValue(value);
+
     return row;
   }
 
   private Row addValues(final Row row, final List<String> values) {
     values.stream()
-      .map((s) -> addValue(row, s))
-      .collect(Collectors.toList());
+      .forEach(value -> this.addValue(row, value));
+
     return row;
   }
 
   public Sheet addRows(Sheet sheet, final List<List<String>> rows) {
     rows.stream()
-      .map(arr -> {
-          System.out.println(arr);
-        Row row = addRow(sheet);
-        addValues(row, arr);
-        return row;
-      })
-      .collect(Collectors.toList());
+      .forEach(row -> this.addValues(this.addRow(sheet), row));
+
     return sheet;
   }
 
   public Workbook generateExcelWorkbook() {
     final Workbook workbook = new XSSFWorkbook();
-    final Sheet summary_sheet = workbook.createSheet("Summary");
-    addRows(summary_sheet, this.rows);
+    final Sheet summary = workbook.createSheet("Summary");
+    this.addRows(summary, this.rows);
+
     return workbook;
   }
 
@@ -81,7 +79,7 @@ public class AuditReport {
     baos.flush();
     baos.close();
     workbook.close();
+
     return baos.toByteArray();
   }
-
 }
