@@ -793,6 +793,14 @@ public class ComparisonAudit implements PersistentEntity {
   }
 
   /**
+   * get the discrepancy value that was recorded for this ComparisonAudit(contest) on
+   * the given CVRAuditInfo(ballot). used for reporting.
+   **/
+  public Integer getDiscrepancy(CVRAuditInfo cai) {
+    return my_discrepancies.get(cai);
+  }
+
+  /**
    * Removes the specified over/understatement (the valid range is -2 .. 2:
    * -2 and -1 are understatements, 0 is a discrepancy that doesn't affect the
    * RLA calculations, and 1 and 2 are overstatements). This is typically done

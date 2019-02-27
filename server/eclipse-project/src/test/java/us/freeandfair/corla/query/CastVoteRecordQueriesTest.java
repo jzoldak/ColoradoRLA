@@ -151,10 +151,10 @@ public class CastVoteRecordQueriesTest {
     Persistence.save(acvr);
     Persistence.save(cai);
 
-    List<CastVoteRecord> acvrs = new ArrayList(){{ add(acvr); }};
+    List<CastVoteRecord> cais = new ArrayList(){{ add(cai); }};
     List<Long> contestCVRIds = new ArrayList(){{ add(cvr.id()); }};
-    List<CastVoteRecord> result = CastVoteRecordQueries.report(contestCVRIds);
-    assertEquals(acvrs, result);
+    List<CVRAuditInfo> result = CastVoteRecordQueries.report(contestCVRIds);
+    assertEquals(cais, result);
   }
 
 }

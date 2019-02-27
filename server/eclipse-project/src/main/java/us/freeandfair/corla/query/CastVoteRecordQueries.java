@@ -38,6 +38,7 @@ import org.hibernate.query.Query;
 
 import us.freeandfair.corla.Main;
 import us.freeandfair.corla.model.CastVoteRecord;
+import us.freeandfair.corla.model.CVRAuditInfo;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.controller.BallotSelection.Tribute;
@@ -616,12 +617,16 @@ public final class CastVoteRecordQueries {
   }
 
   /** reporting **/
-  public static List<CastVoteRecord> report(List<Long> contestCVRIds) {
+  public static List<CVRAuditInfo> report(List<Long> contestCVRIds) {
     final Session s = Persistence.currentSession();
     final Query q =
-      s.createQuery("select cvr from CastVoteRecord cvr "
-                    + " where cvr.my_id in (select cai.my_acvr from CVRAuditInfo cai "
-                    + "                where cai.my_cvr.my_id in (:cvrIds))"
+      // s.createQuery("select cvr from CastVoteRecord cvr "
+      //               + " where cvr.my_id in (select cai.my_acvr from CVRAuditInfo cai "
+      //               + "                where cai.my_cvr.my_id in (:cvrIds))"
+      //               + " order by cvr.my_timestamp asc");
+
+      s.createQuery("select cai from CVRAuditInfo cai "
+                    + " where cai.my_cvr.my_id in (:cvrIds))"
                     + " order by cvr.my_timestamp asc");
 
     q.setParameter("cvrIds", contestCVRIds);
