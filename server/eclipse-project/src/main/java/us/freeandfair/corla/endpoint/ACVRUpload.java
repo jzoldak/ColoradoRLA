@@ -166,13 +166,16 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
                              "ballot submission with no remaining ballots in round");
         }
 
-        if (cdb.ballotsRemainingInCurrentRound() == 0) {
-          // TODO this has to happen before we can say RISK_LIMIT_ACHIEVED!
-          LOGGER.debug("The round is over and set ROUND_COMPLETE_EVENT");
-          my_event.set(ROUND_COMPLETE_EVENT);
-        } else {
-          LOGGER.debug("Some ballots remaining according to the CDB: REPORT_MARKING_EVENT");
-          my_event.set(REPORT_MARKINGS_EVENT);
+        // don't advance state machine if reaudit
+        if (!submission.isReaudit()) {
+          if (cdb.ballotsRemainingInCurrentRound() == 0) {
+            // TODO this has to happen before we can say RISK_LIMIT_ACHIEVED!
+            LOGGER.debug("The round is over and set ROUND_COMPLETE_EVENT");
+            my_event.set(ROUND_COMPLETE_EVENT);
+          } else {
+            LOGGER.debug("Some ballots remaining according to the CDB: REPORT_MARKING_EVENT");
+            my_event.set(REPORT_MARKINGS_EVENT);
+          }
         }
       } // extract-fn: handleACVR will have returned some value or thrown
     } catch (final JsonParseException e) {
