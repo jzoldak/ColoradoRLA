@@ -33,18 +33,21 @@ public class AuditReport {
     }};
 
     // should be an acvr
-    public static List<String> toCSV(CastVoteRecord cvr) {
+  public static List<String> toCSV(ComparisonAudit audit, CVRAuditInfo cai) {
+      CastVoteRecord acvr = cai.acvr();
+      // TODO optimize this
+      CVRContestInfo info = acvr.contestInfoForContestResult(audit.contestResult());
       return new ArrayList() {{
-        add(cvr.id()); // add("dbID");
-        add(cvr.recordType()); // add("recordType");
-        add(cvr.countyID());// add("county"); // TODO get county name
-        add(cvr.imprintedID());// add("imprintedID");
-        add(cvr.getAuditBoardIndex());// add("auditBoard");
-        // add(cvr.)// add("discrepancy");
-        // add("consensus");
-        // add("comment");
-        // add("revision");
-        // add("re-audit ballot comment");
+        add(acvr.id()); // add("dbID");
+        add(acvr.recordType()); // add("recordType");
+        add(acvr.countyID());// add("county"); // TODO get county name
+        add(acvr.imprintedID());// add("imprintedID");
+        add(acvr.getAuditBoardIndex());// add("auditBoard");
+        add(audit.getDiscrepancy(cai));// add("discrepancy");
+        add(info.consensus());// add("consensus");
+        add(info.comment());// add("comment");
+        add(acvr.getRevision());// add("revision");
+        add(acvr.getComment());// add("re-audit ballot comment");
       }};
     }
 
@@ -56,7 +59,7 @@ public class AuditReport {
     List<List<String>> rows = new ArrayList();
     rows.add(HEADERS);
     cais.stream()
-      .map(cai -> rows.add(toCSV(cai.acvr())))
+      .map(cai -> rows.add(toCSV(audit, cai)))
       .collect(Collectors.toList());
     return rows;
   }
