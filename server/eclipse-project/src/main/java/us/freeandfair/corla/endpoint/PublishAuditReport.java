@@ -10,12 +10,21 @@
  */
 
 package us.freeandfair.corla.endpoint;
-import static us.freeandfair.corla.asm.ASMEvent.DoSDashboardEvent.PUBLISH_AUDIT_REPORT_EVENT;
 
 import spark.Request;
 import spark.Response;
 
+import java.util.List;
+
+import java.io.IOException;
+import java.io.OutputStream;
+
+import org.apache.cxf.attachment.Rfc5987Util;
+
 import us.freeandfair.corla.asm.ASMEvent;
+import us.freeandfair.corla.controller.AuditReport;
+import us.freeandfair.corla.csv.CSVWriter;
+import us.freeandfair.corla.util.SparkHelper;
 
 /**
  * Download all of the data relevant to public auditing of a RLA.
@@ -49,20 +58,33 @@ public class PublishAuditReport extends AbstractDoSDashboardEndpoint {
   }
 
   /**
-   * {@inheritDoc}
-   */
-  @Override
-  protected ASMEvent endpointEvent() {
-    return PUBLISH_AUDIT_REPORT_EVENT;
-  }
-  
-  /**
    * Download all of the data relevant to public auditing of a RLA.
    */
   @Override
-  public String endpointBody(final Request the_request,
-                         final Response the_response) {
-    ok(the_response, "Publish the audit report for the entire state-wide RLA.");
+  public String endpointBody(final Request request,
+                        final Response response)  {
+    final String contestName = request.queryParams("contestName");
+
+    try {
+
+      final OutputStream os = SparkHelper.getRaw(response).getOutputStream();
+      final String fileName = Rfc5987Util.encode(contestName.replace(" ", "+"), "UTF-8") + "-audit-report.csv";
+      final List<List<String>> rows = AuditReport.getRowsFor(contestName);
+
+      // these need to come before the OutputStream is written or they will be ignored
+      response.header("Content-Type", "text/csv");
+      response.header("Content-Disposition", "attachment; filename=\"" + fileName + "\""  );
+      ok(response);
+
+      CSVWriter.write(os, rows);
+      os.flush();
+      // this is effectively the end of the response processing, so it needs to come last
+      os.close();
+
+    } catch (final IOException e) {
+      serverError(response, "Unable to stream response");
+    }
+
     return my_endpoint_result.get();
   }
 }

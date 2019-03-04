@@ -31,5 +31,7 @@ public class CSVWriter {
     for (List<String> row: rows) {
       csvPrinter.printRecord(row);
     }
+    writer.flush();
+    writer.close();
   }
 }

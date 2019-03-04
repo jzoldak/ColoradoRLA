@@ -626,7 +626,9 @@ public final class CastVoteRecordQueries {
       //               + " order by cvr.my_timestamp asc");
 
       s.createQuery("select cai from CVRAuditInfo cai "
-                    + " where cai.my_cvr.my_id in (:cvrIds))"
+                    + " join CastVoteRecord cvr "
+                    + "  on cai.my_cvr = cvr "
+                    + " where cvr.my_id in (:cvrIds))"
                     + " order by cvr.my_timestamp asc");
 
     q.setParameter("cvrIds", contestCVRIds);
