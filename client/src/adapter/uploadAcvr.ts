@@ -20,6 +20,7 @@ export const format = (
     comment: string,
 ): JSON.ACVR => {
     const payload: JSON.ACVR = {
+        auditBoardIndex,
         audit_cvr: {
             ballot_type: cvr.ballotType,
             batch_id: cvr.batchId,
@@ -34,7 +35,6 @@ export const format = (
             timestamp: new Date(),
         },
         cvr_id: cvr.id,
-        auditBoardIndex: auditBoardIndex,
     };
 
     if (reAudit) {

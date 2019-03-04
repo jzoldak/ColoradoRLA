@@ -4,6 +4,7 @@ import createSubmitAction from 'corla/action/createSubmitAction';
 
 
 interface Payload {
+    auditBoardIndex: number;
     comment?: string;
     id: number;
     reaudit?: boolean;
@@ -13,6 +14,7 @@ const url = endpoint('ballot-not-found');
 
 const ballotNotFound = (
     id: number,
+    auditBoardIndex: number,
     reAudit = false,
     comment = '',
 ) => {
@@ -24,7 +26,10 @@ const ballotNotFound = (
         url,
     });
 
-    const payload: Payload = { id };
+    const payload: Payload = {
+        auditBoardIndex,
+        id,
+    };
 
     if (reAudit) {
         payload.comment = comment;

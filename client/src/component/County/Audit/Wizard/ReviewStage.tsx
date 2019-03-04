@@ -154,6 +154,7 @@ const BallotReview = (props: BallotReviewProps) => {
 };
 
 interface ReviewStageProps {
+    auditBoardIndex: number;
     comment?: string;
     countyState: County.AppState;
     currentBallot: County.CurrentBallot;
@@ -168,6 +169,7 @@ interface ReviewStageProps {
 
 const ReviewStage = (props: ReviewStageProps) => {
     const {
+        auditBoardIndex,
         comment,
         countyState,
         currentBallot,
@@ -181,13 +183,10 @@ const ReviewStage = (props: ReviewStageProps) => {
     } = props;
 
     const onClick = () => {
-        const m = countyState!.acvrs![currentBallot.id];
-        const auditBoardIndex = countyState!.auditBoardIndex;
-
         if (isReAuditing) {
-            uploadAcvr(m, currentBallot, auditBoardIndex, true, comment);
+            uploadAcvr(marks, currentBallot, auditBoardIndex, true, comment);
         } else {
-            uploadAcvr(m, currentBallot, auditBoardIndex);
+            uploadAcvr(marks, currentBallot, auditBoardIndex);
         }
 
         nextStage();

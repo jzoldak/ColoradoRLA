@@ -292,9 +292,9 @@ const BallotAuditStage = (props: StageProps) => {
 
     const notFound = () => {
         if (isReAuditing) {
-            ballotNotFound(currentBallot.id, true, comment);
+            ballotNotFound(currentBallot.id, auditBoardIndex, true, comment);
         } else {
-            ballotNotFound(currentBallot.id);
+            ballotNotFound(currentBallot.id, auditBoardIndex);
         }
     };
 

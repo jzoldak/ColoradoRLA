@@ -8,73 +8,73 @@ import uploadAcvr from 'corla/action/county/uploadAcvr';
 import currentBallotNumber from 'corla/selector/county/currentBallotNumber';
 import totalBallotsForBoard from 'corla/selector/county/totalBallotsForBoard';
 
-
-interface ContainerProps {
+interface StateProps {
+    auditBoardIndex: number;
     comment?: string;
-    countyState: County.AppState;
     currentBallot?: County.CurrentBallot;
-    currentBallotNumber?: number;
     isReAuditing?: boolean;
     marks?: County.ACVR;
+}
+
+interface OwnProps {
+    countyState: County.AppState;
+    currentBallotNumber?: number;
+    reviewingBallotId?: number;
+    totalBallotsForBoard?: number;
     nextStage: OnClick;
     prevStage: OnClick;
-    totalBallotsForBoard?: number;
 }
 
-class ReviewStageContainer extends React.Component<ContainerProps> {
-    public render() {
-        const {
-            comment,
-            countyState,
-            currentBallot,
-            currentBallotNumber,
-            isReAuditing,
-            marks,
-            nextStage,
-            prevStage,
-            totalBallotsForBoard,
-        } = this.props;
+type Props = StateProps & OwnProps;
 
-        if (!currentBallot) {
-            return null;
-        }
-
-        if (!marks) {
-            return null;
-        }
-
-        return <ReviewStage comment={ comment }
-                            countyState={ countyState }
-                            currentBallot={ currentBallot }
-                            currentBallotNumber={ currentBallotNumber }
-                            isReAuditing={ isReAuditing }
-                            marks={ marks }
-                            nextStage={ nextStage }
-                            prevStage={ prevStage }
-                            totalBallotsForBoard={ totalBallotsForBoard }
-                            uploadAcvr={ uploadAcvr } />;
-    }
-}
-
-function select(countyState: County.AppState) {
-    const { currentBallot } = countyState;
-
-    const comment = countyState.finalReview.comment;
-
-    if (!currentBallot) {
-        return { countyState };
-    }
-
-    const marks = countyState.acvrs[currentBallot.id];
-
-    return {
+const ReviewStageContainer = (props: Props) => {
+    const {
+        auditBoardIndex,
         comment,
         countyState,
         currentBallot,
-        currentBallotNumber: currentBallotNumber(countyState),
+        currentBallotNumber,
+        isReAuditing,
+        marks,
+        nextStage,
+        prevStage,
+        totalBallotsForBoard,
+    } = props;
+
+    if (!currentBallot) {
+        return null;
+    }
+
+    if (!marks) {
+        return null;
+    }
+
+    return <ReviewStage auditBoardIndex={ auditBoardIndex }
+                        comment={ comment }
+                        countyState={ countyState }
+                        currentBallot={ currentBallot }
+                        currentBallotNumber={ currentBallotNumber }
+                        isReAuditing={ isReAuditing }
+                        marks={ marks }
+                        nextStage={ nextStage }
+                        prevStage={ prevStage }
+                        totalBallotsForBoard={ totalBallotsForBoard }
+                        uploadAcvr={ uploadAcvr } />;
+};
+
+function select(countyState: County.AppState): StateProps {
+    const { currentBallot } = countyState;
+
+    const auditBoardIndex = countyState.auditBoardIndex || 0;
+    const comment = countyState.finalReview.comment;
+    const marks = currentBallot ? countyState.acvrs[currentBallot.id] : undefined;
+
+    return {
+        auditBoardIndex,
+        comment,
+        currentBallot,
         isReAuditing: !!comment,
         marks,
-        totalBallotsForBoard: totalBallotsForBoard(countyState),
     };
 }
 
