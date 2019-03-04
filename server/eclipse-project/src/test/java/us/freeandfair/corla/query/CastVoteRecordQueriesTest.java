@@ -145,16 +145,18 @@ public class CastVoteRecordQueriesTest {
                                              cvr.ballotType(), cvr.contestInfo());
     acvr.setComment("testing");
     acvr.setAuditBoardIndex(14);
+    acvr.setCvrId(cvr.id());
     CVRAuditInfo cai = new CVRAuditInfo(cvr);
     cai.setACVR(acvr);
 
     Persistence.save(acvr);
     Persistence.save(cai);
 
-    List<CastVoteRecord> cais = new ArrayList(){{ add(cai); }};
+    List<CastVoteRecord> acvrs = new ArrayList(){{ add(acvr); }};
     List<Long> contestCVRIds = new ArrayList(){{ add(cvr.id()); }};
-    List<CVRAuditInfo> result = CastVoteRecordQueries.report(contestCVRIds);
-    assertEquals(cais, result);
+    // List<CVRAuditInfo> result = CastVoteRecordQueries.report(contestCVRIds);
+    List<CastVoteRecord> result = CastVoteRecordQueries.report(contestCVRIds);
+    assertEquals(acvrs, result);
   }
 
 }

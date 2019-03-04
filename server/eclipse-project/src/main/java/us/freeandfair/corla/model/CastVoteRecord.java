@@ -34,6 +34,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Index;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.OrderColumn;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
@@ -207,6 +208,14 @@ final public class CastVoteRecord implements Comparable<CastVoteRecord>,
    * object.
    */
   private transient boolean my_audit_flag;
+
+
+  /**
+   * The CVR to audit, for ACVRs only
+   */
+  private Long cvrId;
+
+
 
   /**
    * both a performance optimization and work around for a feature lacking from
@@ -456,6 +465,19 @@ final public class CastVoteRecord implements Comparable<CastVoteRecord>,
                          scannerID(),
                          batchID());
   }
+
+  /**
+   * keep a record of what this ACVR was submitted to audit, which is lost when
+   * reauditing because the CVRAuditInfo join is broke when reauditing
+   **/
+  public void setCvrId(Long cvrId) {
+    this.cvrId = cvrId;
+  }
+
+  public Long getCvrId() {
+    return this.cvrId;
+  }
+
 
   /**
    * @return the choices made in this cast vote record.

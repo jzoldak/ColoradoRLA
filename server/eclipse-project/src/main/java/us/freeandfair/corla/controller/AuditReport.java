@@ -3,6 +3,7 @@ package us.freeandfair.corla.controller;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.stream.Collectors;
 
 import us.freeandfair.corla.csv.CSVWriter;
@@ -10,6 +11,7 @@ import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.CVRAuditInfo;
 import us.freeandfair.corla.model.CVRContestInfo;
 import us.freeandfair.corla.model.ComparisonAudit;
+import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.CastVoteRecordQueries;
 import us.freeandfair.corla.query.ComparisonAuditQueries;
 
@@ -35,11 +37,28 @@ public class AuditReport {
     }};
 
     // should be an acvr
-  public static List<String> toCSV(ComparisonAudit audit, CVRAuditInfo cai) {
-    CastVoteRecord acvr = cai.acvr();
+  // public static List<String> toCSV(ComparisonAudit audit, CVRAuditInfo cai) {
+  public static List<String> toCSV(ComparisonAudit audit, CastVoteRecord acvr) {
+    // CastVoteRecord acvr = cai.acvr();
     if (null != acvr && null != acvr.contestInfo()) {
       // TODO optimize this
       Optional<CVRContestInfo> infoMaybe = acvr.contestInfoForContestResult(audit.contestResult());
+      CastVoteRecord cvr = Persistence.getByID(acvr.getCvrId(), CastVoteRecord.class);
+      CVRAuditInfo cai = Persistence.getByID(acvr.getCvrId(), CVRAuditInfo.class);
+      Integer discrepancy;
+      if (null != cai && null == acvr.getRevision() ) {
+        // faster probably
+        discrepancy = audit.getDiscrepancy(cai);
+      } else {
+        // slower probably, but we unaudited this one, so we have to recompute
+        OptionalInt d = audit.computeDiscrepancy(cvr, acvr);
+        if (d.isPresent()) {
+          discrepancy = d.getAsInt();
+        } else {
+          discrepancy = 0;
+        }
+      }
+
       if (infoMaybe.isPresent()) {
         CVRContestInfo info = infoMaybe.get();
         return new ArrayList() {{
@@ -48,17 +67,18 @@ public class AuditReport {
           add(acvr.countyID());// add("county"); // TODO get county name
           add(acvr.imprintedID());// add("imprintedID");
           add(acvr.getAuditBoardIndex());// add("auditBoard");
-          add(audit.getDiscrepancy(cai));// add("discrepancy");
+          add(discrepancy);// add("discrepancy");
           add(info.consensus());// add("consensus");
           add(info.comment());// add("comment");
           add(acvr.getRevision());// add("revision");
           add(acvr.getComment());// add("re-audit ballot comment");
         }};
       } else {
-        return new ArrayList() {{ add(cai.cvr().id());add("Not yet audited."); }};
+        return new ArrayList() {{ add(acvr.id());add("Not yet audited."); }};
       }
     } else {
-      return new ArrayList() {{ add(cai.cvr().id());add("Not yet audited."); }};
+      // fix id() here is wrong or inconsistent
+      return new ArrayList() {{ add(acvr.id());add("Not yet audited."); }};
     }
   }
 
@@ -77,10 +97,12 @@ public class AuditReport {
     }
 
     List<Long> contestCVRIds = audit.getContestCVRIds();
-    List<CVRAuditInfo> cais = CastVoteRecordQueries.report(contestCVRIds);
+    // List<CVRAuditInfo> cais = CastVoteRecordQueries.report(contestCVRIds);
+    List<CastVoteRecord> acvrs = CastVoteRecordQueries.report(contestCVRIds);
 
     rows.add(HEADERS);
-    cais.forEach(cai -> rows.add(toCSV(audit, cai)));
+    // cais.forEach(cai -> rows.add(toCSV(audit, cai)));
+    acvrs.forEach(acvr -> rows.add(toCSV(audit, acvr)));
 
     return rows;
   }

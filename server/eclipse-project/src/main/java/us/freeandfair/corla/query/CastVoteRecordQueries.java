@@ -617,7 +617,7 @@ public final class CastVoteRecordQueries {
   }
 
   /** reporting **/
-  public static List<CVRAuditInfo> report(List<Long> contestCVRIds) {
+  public static List<CastVoteRecord> report(List<Long> contestCVRIds) {
     final Session s = Persistence.currentSession();
     final Query q =
       // s.createQuery("select cvr from CastVoteRecord cvr "
@@ -625,11 +625,19 @@ public final class CastVoteRecordQueries {
       //               + "                where cai.my_cvr.my_id in (:cvrIds))"
       //               + " order by cvr.my_timestamp asc");
 
-      s.createQuery("select cai from CVRAuditInfo cai "
-                    + " join CastVoteRecord cvr "
-                    + "  on cai.my_cvr = cvr "
-                    + " where cvr.my_id in (:cvrIds))"
-                    + " order by cvr.my_timestamp asc");
+      // s.createQuery("select cai from CVRAuditInfo cai "
+      //               + " join CastVoteRecord cvr "
+      //               + "  on cai.my_cvr = cvr "
+      //               + " where cvr.my_id in (:cvrIds))"
+      //               + " order by cvr.my_timestamp asc");
+
+      s.createQuery("select acvr from CastVoteRecord acvr "
+                    // + " join CVRAuditInfo cai "
+                    // + "  on cai.my_cvr = cvr "
+                    // + " join CastVoteRecord cvr "
+                    // + "  on cai.my_acvr = cvr "
+                    + " where acvr.cvrId in (:cvrIds))"
+                    + " order by acvr.my_timestamp asc");
 
     q.setParameter("cvrIds", contestCVRIds);
 
