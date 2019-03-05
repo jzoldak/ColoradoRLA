@@ -1,17 +1,16 @@
 import * as React from 'react';
 
-import { connect } from 'react-redux';
+import { connect, MapStateToProps } from 'react-redux';
 
 import action from 'corla/action';
 
-
-function withSync<P, SelectP, BindP, BindS>(
+function withSync<P, SelectP, TOwnProps, BindP, BindS>(
     Wrapped: React.ComponentType<P>,
     didMount: string,
-    select: Select<SelectP>,
+    select: MapStateToProps<SelectP, TOwnProps>,
     bind?: Bind<BindP, BindS>,
 ) {
-    type Props = P & SelectP & BindP;
+    type Props = P & SelectP & TOwnProps & BindP;
 
     class Wrapper extends React.Component<Props> {
         public componentDidMount() {
@@ -29,6 +28,5 @@ function withSync<P, SelectP, BindP, BindS>(
         return connect(select)(Wrapper);
     }
 }
-
 
 export default withSync;
