@@ -184,7 +184,8 @@ public class DoSDashboardRefreshResponse {
           int estimated = 0;
           audited_contests.put(cta.contest().id(), cta.reason());
 
-          for (final ComparisonAudit ca : ComparisonAuditQueries.matching(cta.contest().name())) {
+          final ComparisonAudit ca = ComparisonAuditQueries.matching(cta.contest().name());
+          if (null != ca) {
             optimistic = ca.optimisticRemaining();
             estimated = ca.estimatedRemaining();
 

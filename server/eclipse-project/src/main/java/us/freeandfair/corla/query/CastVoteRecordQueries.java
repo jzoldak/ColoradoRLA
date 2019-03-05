@@ -620,22 +620,7 @@ public final class CastVoteRecordQueries {
   public static List<CastVoteRecord> report(List<Long> contestCVRIds) {
     final Session s = Persistence.currentSession();
     final Query q =
-      // s.createQuery("select cvr from CastVoteRecord cvr "
-      //               + " where cvr.my_id in (select cai.my_acvr from CVRAuditInfo cai "
-      //               + "                where cai.my_cvr.my_id in (:cvrIds))"
-      //               + " order by cvr.my_timestamp asc");
-
-      // s.createQuery("select cai from CVRAuditInfo cai "
-      //               + " join CastVoteRecord cvr "
-      //               + "  on cai.my_cvr = cvr "
-      //               + " where cvr.my_id in (:cvrIds))"
-      //               + " order by cvr.my_timestamp asc");
-
-      s.createQuery("select acvr from CastVoteRecord acvr "
-                    // + " join CVRAuditInfo cai "
-                    // + "  on cai.my_cvr = cvr "
-                    // + " join CastVoteRecord cvr "
-                    // + "  on cai.my_acvr = cvr "
+        s.createQuery("select acvr from CastVoteRecord acvr "
                     + " where acvr.cvrId in (:cvrIds))"
                     + " order by acvr.my_timestamp asc");
 

@@ -576,6 +576,7 @@ final public class CastVoteRecord implements Comparable<CastVoteRecord>,
       result &= nullableEquals(other_cvr.recordType(), recordType());
       result &= nullableEquals(other_cvr.getRevision(), getRevision());
       result &= nullableEquals(other_cvr.getUri(), getUri());
+      result &= nullableEquals(other_cvr.getAuditBoardIndex(), getAuditBoardIndex());
     } else {
       result = false;
     }

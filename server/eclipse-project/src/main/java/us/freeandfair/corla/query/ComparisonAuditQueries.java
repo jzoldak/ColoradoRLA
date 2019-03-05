@@ -47,34 +47,22 @@ public final class ComparisonAuditQueries {
   }
 
   /**
-   * Obtain all ComparisonAudit objects for the specified ContestResult.
+   * Obtain the ComparisonAudit object for the specified contest name.
    *
    * @param contestName The contest name
-   * @return the matched objects.
+   * @return the matched object
    */
-  public static List<ComparisonAudit> matching(final String contestName) {
-    List<ComparisonAudit> result = null;
-    final ContestResult contestResult = ContestResultQueries.findOrCreate(contestName);
+  public static ComparisonAudit matching(final String contestName) {
+    final Session s = Persistence.currentSession();
+    final Query q =
+      s.createQuery("select ca from ComparisonAudit ca "
+                    + " join ContestResult cr "
+                    + "   or ca.my_contest_result = cr "
+                    + " where cr.contestName = :contestName");
 
-    try {
-      final Session s = Persistence.currentSession();
-      final CriteriaBuilder cb = s.getCriteriaBuilder();
-      final CriteriaQuery<ComparisonAudit> cq = cb.createQuery(ComparisonAudit.class);
-      final Root<ComparisonAudit> root = cq.from(ComparisonAudit.class);
+    q.setParameter("contestName", contestName);
 
-      cq.select(root).where(cb.equal(root.get("my_contest_result"), contestResult));
-
-      final TypedQuery<ComparisonAudit> query = s.createQuery(cq);
-      result = query.getResultList();
-    } catch (final PersistenceException e) {
-      LOGGER.error("could not query database for comparison audits");
-    }
-    if (result == null) {
-      LOGGER.debug("found no comparison audits matching + " + contestResult);
-    } else {
-      LOGGER.debug("found comparison audits " + result);
-    }
-    return result;
+    return (ComparisonAudit)q.getSingleResult();
   }
 
 
@@ -90,8 +78,8 @@ public final class ComparisonAuditQueries {
 
   /** setAuditStatus on matching contestName **/
   public static void updateStatus(final String contestName, final AuditStatus auditStatus) {
-    final List<ComparisonAudit> cas = matching(contestName);
-    for (final ComparisonAudit ca: cas) { //there will only be one
+    final ComparisonAudit ca = matching(contestName);
+    if (null != ca) {
       ca.setAuditStatus(auditStatus);
     }
   }

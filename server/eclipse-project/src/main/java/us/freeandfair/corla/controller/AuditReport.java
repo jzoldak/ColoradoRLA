@@ -1,13 +1,18 @@
 package us.freeandfair.corla.controller;
 
+
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.stream.Collectors;
 
 import us.freeandfair.corla.csv.CSVWriter;
 import us.freeandfair.corla.model.CastVoteRecord;
+import us.freeandfair.corla.model.County;
 import us.freeandfair.corla.model.CVRAuditInfo;
 import us.freeandfair.corla.model.CVRContestInfo;
 import us.freeandfair.corla.model.ComparisonAudit;
@@ -15,99 +20,125 @@ import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.CastVoteRecordQueries;
 import us.freeandfair.corla.query.ComparisonAuditQueries;
 
-
+/**
+ * Find the data for a report and format it to be rendered into a presentation
+ * format elsewhere
+ **/
 public class AuditReport {
 
 
   // no instantiation
   private AuditReport () {};
 
-  // class TypeOne {
-    public static final List<String> HEADERS = new ArrayList() {{
-      add("dbID");
-      add("recordType");
-      add("county");
-      add("imprintedID");
-      add("auditBoard");
-      add("discrepancy");
-      add("consensus");
-      add("comment");
-      add("revision");
-      add("re-audit ballot comment");
-    }};
 
-    // should be an acvr
-  // public static List<String> toCSV(ComparisonAudit audit, CVRAuditInfo cai) {
-  public static List<String> toCSV(ComparisonAudit audit, CastVoteRecord acvr) {
-    // CastVoteRecord acvr = cai.acvr();
-    if (null != acvr && null != acvr.contestInfo()) {
-      // TODO optimize this
-      Optional<CVRContestInfo> infoMaybe = acvr.contestInfoForContestResult(audit.contestResult());
-      CastVoteRecord cvr = Persistence.getByID(acvr.getCvrId(), CastVoteRecord.class);
-      CVRAuditInfo cai = Persistence.getByID(acvr.getCvrId(), CVRAuditInfo.class);
-      Integer discrepancy;
-      if (null != cai && null == acvr.getRevision() ) {
-        // faster probably
-        discrepancy = audit.getDiscrepancy(cai);
-      } else {
-        // slower probably, but we unaudited this one, so we have to recompute
-        OptionalInt d = audit.computeDiscrepancy(cvr, acvr);
-        if (d.isPresent()) {
-          discrepancy = d.getAsInt();
-        } else {
-          discrepancy = 0;
-        }
-      }
+  /**
+   * One array to be part of an array of arrays, ie: a table or csv or xlsx.
+   * It keeps the headers and fields in order.
+   **/
+  public static class Row {
 
-      if (infoMaybe.isPresent()) {
-        CVRContestInfo info = infoMaybe.get();
-        return new ArrayList() {{
-          add(acvr.id()); // add("dbID");
-          add(acvr.recordType()); // add("recordType");
-          add(acvr.countyID());// add("county"); // TODO get county name
-          add(acvr.imprintedID());// add("imprintedID");
-          add(acvr.getAuditBoardIndex());// add("auditBoard");
-          add(discrepancy);// add("discrepancy");
-          add(info.consensus());// add("consensus");
-          add(info.comment());// add("comment");
-          add(acvr.getRevision());// add("revision");
-          add(acvr.getComment());// add("re-audit ballot comment");
-        }};
-      } else {
-        return new ArrayList() {{ add(acvr.id());add("Not yet audited."); }};
+    // composition rather than inheritance
+    private final Map<String, String> map = new HashMap<String, String>();
+
+    private final String[] headers;
+
+    public Row(String[] headers) {
+      this.headers = headers;
+    }
+
+    public String get(String key) {
+      return this.map.get(key);
+    }
+
+    public void put(String key, String value) {
+      this.map.put(key, value);
+    }
+
+    public List<String> toArray() {
+      List<String> a = new ArrayList<String>();
+      for (String h: this.headers) {
+        a.add(this.get(h));
       }
-    } else {
-      // fix id() here is wrong or inconsistent
-      return new ArrayList() {{ add(acvr.id());add("Not yet audited."); }};
+      return a;
     }
   }
 
-  // }
+  public static final String[] HEADERS = {
+    "dbID",
+    "recordType",
+    "county",
+    "imprintedID",
+    "auditBoard",
+    "discrepancy",
+    "consensus",
+    "comment",
+    "revision",
+    "re-audit ballot comment"
+  };
+
+  public static Integer findDiscrepancy(ComparisonAudit audit, CastVoteRecord acvr) {
+    if (null != acvr.getRevision()) {
+      // this is a reaudited acvr, so we need to recompute the discrepancy
+      CastVoteRecord cvr = Persistence.getByID(acvr.getCvrId(), CastVoteRecord.class);
+      return audit.computeDiscrepancy(cvr, acvr).getAsInt();
+    } else {
+      CVRAuditInfo cai = Persistence.getByID(acvr.getCvrId(), CVRAuditInfo.class);
+      return audit.getDiscrepancy(cai);
+    }
+  }
+
+  public static String findCountyName(Long countyId) {
+    County c = Persistence.getByID(countyId, County.class);
+    if (null != c) {
+      return c.name();
+    } else {
+      return null;
+    }
+  }
+
+  // should be an acvr
+  public static List<String> toCSV(ComparisonAudit audit, CastVoteRecord acvr) {
+    Row row = new Row(HEADERS);
+
+    Integer discrepancy = findDiscrepancy(audit, acvr);
+    Optional<CVRContestInfo> infoMaybe = acvr.contestInfoForContestResult(audit.contestResult());
+
+    if (infoMaybe.isPresent()) {
+      CVRContestInfo info = infoMaybe.get();
+      row.put("consensus", info.consensus().toString());
+      row.put("comment", info.comment());
+    }
+
+    if (0 != discrepancy) {
+      row.put("discrepancy", discrepancy.toString());
+    } else {
+      row.put("discrepancy", null);
+    }
+    row.put("dbID", acvr.getCvrId().toString());
+    row.put("recordType", acvr.recordType().toString());
+    row.put("countyName", findCountyName(acvr.countyID()));
+    row.put("imprintedID", acvr.imprintedID());
+    row.put("auditBoard", acvr.getAuditBoardIndex().toString());
+    row.put("revision", acvr.getRevision().toString());
+    row.put("re-audit ballot comment", acvr.getComment());
+    return row.toArray();
+  }
 
   public static List<List<String>> getRowsFor(String contestName) {
-    ComparisonAudit audit;
     List<List<String>> rows = new ArrayList();
 
-    List<ComparisonAudit> audits = ComparisonAuditQueries.matching(contestName);
-    if (0 == audits.size()) {
-      rows.add(new ArrayList() {{ add("audit has not started");}});
+    ComparisonAudit audit = ComparisonAuditQueries.matching(contestName);
+    if (null == audit) {
+      rows.add(new ArrayList() {{ add("audit has not started or contest name not found");}});
       return rows;
-    } else {
-      audit = audits.get(0); // fixme: there is only ever one
     }
 
     List<Long> contestCVRIds = audit.getContestCVRIds();
-    // List<CVRAuditInfo> cais = CastVoteRecordQueries.report(contestCVRIds);
     List<CastVoteRecord> acvrs = CastVoteRecordQueries.report(contestCVRIds);
 
-    rows.add(HEADERS);
-    // cais.forEach(cai -> rows.add(toCSV(audit, cai)));
+    rows.add(Arrays.asList(HEADERS));
     acvrs.forEach(acvr -> rows.add(toCSV(audit, acvr)));
 
     return rows;
   }
-
-
-
-
 }

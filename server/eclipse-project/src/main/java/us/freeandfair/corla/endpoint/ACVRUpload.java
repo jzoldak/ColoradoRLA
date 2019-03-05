@@ -116,6 +116,7 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
                                s.ballotType(), s.contestInfo());
           newAcvr.setComment(submission.getComment());
           newAcvr.setAuditBoardIndex(submission.getAuditBoardIndex());
+          System.out.println("newAcvr.getAuditBoardIndex() = " + newAcvr.getAuditBoardIndex().toString());
           newAcvr.setCvrId(submission.cvrID());
 
           if (ComparisonAuditController.reaudit(cdb,cvr,newAcvr)) {
