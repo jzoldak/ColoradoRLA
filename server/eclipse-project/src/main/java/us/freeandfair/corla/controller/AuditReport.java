@@ -3,6 +3,7 @@ package us.freeandfair.corla.controller;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -158,6 +159,7 @@ public class AuditReport {
     List<CastVoteRecord> acvrs = CastVoteRecordQueries.report(contestCVRIds);
 
     rows.add(Arrays.asList(HEADERS));
+    acvrs.sort(Comparator.comparing(CastVoteRecord::timestamp));
     acvrs.forEach(acvr -> rows.add(toCSV(audit, acvr)));
 
     return rows;
