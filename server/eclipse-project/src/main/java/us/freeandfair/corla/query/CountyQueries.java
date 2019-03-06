@@ -15,6 +15,7 @@ import java.util.List;
 
 import javax.persistence.PersistenceException;
 import javax.persistence.TypedQuery;
+import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
@@ -84,5 +85,20 @@ public final class CountyQueries {
     }
 
     return result;
+  }
+
+
+  public static String getName(Long countyId) {
+    final Session s = Persistence.currentSession();
+    final Query q =
+      s.createQuery("select c.my_name from County c "
+                    + " where c.my_id = :countyId");
+    q.setParameter("countyId", countyId);
+
+    try {
+      return (String) q.getSingleResult();
+    } catch (javax.persistence.NoResultException e ) {
+      return null;
+    }
   }
 }

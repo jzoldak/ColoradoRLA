@@ -19,6 +19,7 @@ import us.freeandfair.corla.model.ComparisonAudit;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.CastVoteRecordQueries;
 import us.freeandfair.corla.query.ComparisonAuditQueries;
+import us.freeandfair.corla.query.CountyQueries;
 
 /**
  * Find the data for a report and format it to be rendered into a presentation
@@ -73,7 +74,8 @@ public class AuditReport {
     "consensus",
     "comment",
     "revision",
-    "re-audit ballot comment"
+    "re-audit ballot comment",
+    "timestamp"
   };
 
   public static Integer findDiscrepancy(ComparisonAudit audit, CastVoteRecord acvr) {
@@ -87,13 +89,31 @@ public class AuditReport {
     }
   }
 
+  public static Map<Long,String> countyNames = new HashMap();
+
   public static String findCountyName(Long countyId) {
-    County c = Persistence.getByID(countyId, County.class);
-    if (null != c) {
-      return c.name();
+    String name = countyNames.get(countyId);
+    if (null != name) {
+      return name;
+    } else {
+      name = CountyQueries.getName(countyId);
+      countyNames.put(countyId, name);
+      return name;
+    }
+  }
+
+  public static String toString(Object o) {
+    if (null != o) {
+      return o.toString();
     } else {
       return null;
     }
+  }
+
+  public static String renderAuditBoard(Integer auditBoardIndex) {
+    Integer i = Integer.valueOf(auditBoardIndex);
+    i++; // present 1-based rather than 0-based
+    return i.toString();
   }
 
   // should be an acvr
@@ -109,18 +129,19 @@ public class AuditReport {
       row.put("comment", info.comment());
     }
 
-    if (0 != discrepancy) {
+    if (null != discrepancy && 0 != discrepancy) {
       row.put("discrepancy", discrepancy.toString());
     } else {
       row.put("discrepancy", null);
     }
     row.put("dbID", acvr.getCvrId().toString());
     row.put("recordType", acvr.recordType().toString());
-    row.put("countyName", findCountyName(acvr.countyID()));
+    row.put("county", findCountyName(acvr.countyID()));
     row.put("imprintedID", acvr.imprintedID());
-    row.put("auditBoard", acvr.getAuditBoardIndex().toString());
-    row.put("revision", acvr.getRevision().toString());
+    row.put("auditBoard", renderAuditBoard(acvr.getAuditBoardIndex()));
+    row.put("revision", toString(acvr.getRevision()));
     row.put("re-audit ballot comment", acvr.getComment());
+    row.put("timestamp", acvr.timestamp().toString());
     return row.toArray();
   }
 

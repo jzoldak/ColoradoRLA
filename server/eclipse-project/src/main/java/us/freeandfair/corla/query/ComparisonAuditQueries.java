@@ -57,12 +57,16 @@ public final class ComparisonAuditQueries {
     final Query q =
       s.createQuery("select ca from ComparisonAudit ca "
                     + " join ContestResult cr "
-                    + "   or ca.my_contest_result = cr "
+                    + "   on ca.my_contest_result = cr "
                     + " where cr.contestName = :contestName");
 
     q.setParameter("contestName", contestName);
 
-    return (ComparisonAudit)q.getSingleResult();
+    try {
+      return (ComparisonAudit) q.getSingleResult();
+    } catch (javax.persistence.NoResultException e ) {
+      return null;
+    }
   }
 
 
