@@ -28,7 +28,7 @@ import us.freeandfair.corla.util.SparkHelper;
 
 /**
  * Download all of the data relevant to public auditing of a RLA.
- * 
+ *
  * @author Joseph R. Kiniry <kiniry@freeandfair.us>
  * @version 1.0.0
  */
@@ -41,7 +41,7 @@ public class PublishAuditReport extends AbstractDoSDashboardEndpoint {
   public EndpointType endpointType() {
     return EndpointType.GET;
   }
-  
+
   /**
    * {@inheritDoc}
    */
@@ -62,26 +62,24 @@ public class PublishAuditReport extends AbstractDoSDashboardEndpoint {
    */
   @Override
   public String endpointBody(final Request request,
-                        final Response response)  {
+                             final Response response)  {
     final String contestName = request.queryParams("contestName");
 
     try {
+      final us.freeandfair.corla.report.AuditReport ar =
+          new us.freeandfair.corla.report.AuditReport();
+      final List<List<String>> rows = AuditReport.getResultsReport(contestName);
+      final byte[] reportBytes = ar.generate(rows);
+      final String fileName = Rfc5987Util.encode(contestName + " Audit Report.xlsx", "UTF-8");
+
+      response.header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      response.header("Content-Disposition", "attachment; filename*=UTF-8''" + fileName);
 
       final OutputStream os = SparkHelper.getRaw(response).getOutputStream();
-      final String fileName = Rfc5987Util.encode(contestName.replace(" ", "+"), "UTF-8") + "-audit-report.csv";
-      // final List<List<String>> rows = AuditReport.getRowsFor(contestName);
-      final List<List<String>> rows = AuditReport.getResultsReport(contestName);
-
-      // these need to come before the OutputStream is written or they will be ignored
-      response.header("Content-Type", "text/csv");
-      response.header("Content-Disposition", "attachment; filename=\"" + fileName + "\""  );
-      ok(response);
-
-      CSVWriter.write(os, rows);
-      os.flush();
-      // this is effectively the end of the response processing, so it needs to come last
+      os.write(reportBytes);
       os.close();
 
+      ok(response);
     } catch (final IOException e) {
       serverError(response, "Unable to stream response");
     }

@@ -1,85 +1,101 @@
+/*
+ * Colorado RLA System
+ */
+
 package us.freeandfair.corla.report;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+/**
+ * Generate a POI Excel workbook containing audit report sheets.
+ *
+ * Sheets include:
+ *
+ * - Summary
+ */
 public class AuditReport {
-  private List<List<String>> rows;
+  /**
+   * Font size to use for all cells.
+   */
+  private static final Short FONT_SIZE = 12;
 
-  public AuditReport(List<List<String>> rows) {
-    this.rows = rows;
+  /**
+   * Internal output stream required for writing out the workbook.
+   */
+  private final ByteArrayOutputStream baos;
+
+  /**
+   * Initializes the AuditReport
+   */
+  public AuditReport() {
+    this.baos = new ByteArrayOutputStream();
   }
 
-  private Row addRow(final Sheet sheet) {
-    int nextRowNum;
-    if (sheet.getLastRowNum() == 0 && sheet.getPhysicalNumberOfRows() == 0) {
-      nextRowNum = 0; // first row
-    } else {
-      nextRowNum = sheet.getLastRowNum() + 1;
-    }
-
-    return sheet.createRow(nextRowNum);
-  }
-
-  private Row addValue(final Row row, final String value) {
-    // getLastCellNum starts at -1, just to be fun
-    int nextCellNum = row.getLastCellNum();
-    if (row.getLastCellNum() == -1) {
-      nextCellNum = 0; // first row
-    } else {
-      nextCellNum = row.getLastCellNum();
-    }
-
-    Cell cell = row.createCell(nextCellNum);
-    cell.setCellValue(value);
-
-    return row;
-  }
-
-  private Row addValues(final Row row, final List<String> values) {
-    values.stream()
-      .forEach(value -> this.addValue(row, value));
-
-    return row;
-  }
-
-  public Sheet addRows(Sheet sheet, final List<List<String>> rows) {
-    rows.stream()
-      .forEach(row -> this.addValues(this.addRow(sheet), row));
-
-    return sheet;
-  }
-
-  public Workbook generateExcelWorkbook() {
+  /**
+   * Given some raw data, generate the actual POI workbook.
+   *
+   * @param rows the raw data
+   * @return the POI workbook ready for output
+   */
+  private Workbook generateWorkbook(final List<List<String>> rows) {
     final Workbook workbook = new XSSFWorkbook();
     final Sheet summary = workbook.createSheet("Summary");
-    this.addRows(summary, this.rows);
+
+    final Font boldFont = workbook.createFont();
+    final Font regFont = workbook.createFont();
+
+    final CellStyle boldStyle = workbook.createCellStyle();
+    final CellStyle regStyle = workbook.createCellStyle();
+
+    regFont.setFontHeightInPoints(FONT_SIZE);
+    regStyle.setFont(regFont);
+
+    boldFont.setFontHeightInPoints(FONT_SIZE);
+    boldFont.setBold(true);
+    boldStyle.setFont(boldFont);
+
+    for (int i = 0; i < rows.size(); i++) {
+      final Row poiRow = summary.createRow(i);
+      final List<String> dataRow = rows.get(i);
+
+      for (int j = 0; j < dataRow.size(); j++) {
+        final Cell cell = poiRow.createCell(j);
+        cell.setCellValue(dataRow.get(j));
+        // Embolden header rows
+        if (i == 0) {
+          cell.setCellStyle(boldStyle);
+        } else {
+          cell.setCellStyle(regStyle);
+        }
+      }
+    }
 
     return workbook;
   }
 
   /**
-   * @return the Excel representation of this report, as a byte array.
+   * Generate the byte-array representation of this POI workbook.
+   *
+   * @return the Excel representation of this report
    * @exception IOException if the report cannot be generated.
    */
-  public byte[] generateExcel() throws IOException {
-    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    final Workbook workbook = generateExcelWorkbook();
-    workbook.write(baos);
-    baos.flush();
-    baos.close();
+  public byte[] generate(final List<List<String>> rows) throws IOException {
+    final Workbook workbook = this.generateWorkbook(rows);
+    workbook.write(this.baos);
     workbook.close();
 
-    return baos.toByteArray();
+    return this.baos.toByteArray();
   }
 }

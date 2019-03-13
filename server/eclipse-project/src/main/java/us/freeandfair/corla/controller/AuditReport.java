@@ -198,7 +198,7 @@ public class AuditReport {
     return row;
   }
 
-  public static List<List<String>> getRowsFor(String contestName) {
+  public static List<List<String>> getContestActivity(String contestName) {
     List<List<String>> rows = new ArrayList();
 
     ComparisonAudit audit = ComparisonAuditQueries.matching(contestName);

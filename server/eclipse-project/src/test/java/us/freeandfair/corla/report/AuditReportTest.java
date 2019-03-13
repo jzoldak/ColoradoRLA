@@ -6,7 +6,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+
+import org.apache.poi.ss.usermodel.Workbook;
+
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import us.freeandfair.corla.report.AuditReport;
 
@@ -40,14 +45,21 @@ public class AuditReportTest {
     List<List<String>> rows = Stream.of(headers, row1, row2)
       .collect(Collectors.toList());
 
-    AuditReport ar = new AuditReport(rows);
+    final byte[] report = (new AuditReport()).generate(rows);
+
+    final Workbook wb = new XSSFWorkbook(new ByteArrayInputStream(report));
+
+    assertEquals(wb.getNumberOfSheets(), 1);
     assertEquals(
-        ar.generateExcelWorkbook()
-          .getSheet("Summary")
+        wb.getSheet("Summary")
           .getRow(0)
           .getCell(0)
           .getStringCellValue(),
         "dbID"
     );
+    assertEquals(wb.getSheet("Summary").getLastRowNum(), 2);
+    assertEquals(wb.getSheet("Summary").getRow(0).getLastCellNum(), 9);
+    assertEquals(wb.getSheet("Summary").getRow(1).getLastCellNum(), 2);
+    assertEquals(wb.getSheet("Summary").getRow(2).getLastCellNum(), 2);
   }
 }
