@@ -69,7 +69,8 @@ public class PublishAuditReport extends AbstractDoSDashboardEndpoint {
 
       final OutputStream os = SparkHelper.getRaw(response).getOutputStream();
       final String fileName = Rfc5987Util.encode(contestName.replace(" ", "+"), "UTF-8") + "-audit-report.csv";
-      final List<List<String>> rows = AuditReport.getRowsFor(contestName);
+      // final List<List<String>> rows = AuditReport.getRowsFor(contestName);
+      final List<List<String>> rows = AuditReport.getResultsReport(contestName);
 
       // these need to come before the OutputStream is written or they will be ignored
       response.header("Content-Type", "text/csv");

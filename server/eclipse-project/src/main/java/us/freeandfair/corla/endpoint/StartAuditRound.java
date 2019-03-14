@@ -285,6 +285,9 @@ public class StartAuditRound extends AbstractDoSDashboardEndpoint {
           BallotSelection.randomSelection(contestResult, seed,
                                           startIndex, endIndex);
 
+        // maybe store the tributes like this(?)
+        // selection.segments.values().stream().flatMap(s -> s.tributes).map(Persistence::persist)
+
         LOGGER.debug(String.format("[makeSelections for ContestResult: contestName=%s, "
                                    + "contestResult.contestCVRIds=%s, selection=%s, "
                                    + "selection.contestCVRIds=%s, startIndex=%d, endIndex=%d]",

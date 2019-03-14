@@ -24,6 +24,7 @@ import us.freeandfair.corla.model.BallotManifestInfo;
 import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.ContestResult;
 import us.freeandfair.corla.model.CVRAuditInfo;
+import us.freeandfair.corla.model.Tribute;
 import us.freeandfair.corla.persistence.Persistence;
 import us.freeandfair.corla.query.BallotManifestInfoQueries;
 import us.freeandfair.corla.query.CastVoteRecordQueries;
@@ -45,38 +46,43 @@ public final class BallotSelection {
   private BallotSelection() {
   }
 
-  /**
-   * An ADT to wrap up some fiddly bits
-   **/
-  public static class Tribute {
-    /**
-     * A county id
-     */
-    public Long countyId;
+  // /**
+  //  * An ADT to wrap up some fiddly bits
+  //  **/
+  // public static class Tribute {
+  //   /**
+  //    * A county id
+  //    */
+  //   public Long countyId;
 
-    /**
-     * A scanner id
-     */
-    public Integer scannerId;
+  //   /**
+  //    * A scanner id
+  //    */
+  //   public Integer scannerId;
 
-    /**
-     * A batch id
-     */
-    public String batchId;
+  //   /**
+  //    * A batch id
+  //    */
+  //   public String batchId;
 
-    /**
-     * A ballot's position as an offest
-     */
-    public Integer ballotPosition;
+  //   /**
+  //    * A ballot's position as an offest
+  //    */
+  //   public Integer ballotPosition;
 
-    /**
-     * combine attributes to form a uri for fast selection
-     */
-    public String uri() {
-      // cvrs only, not acvrs
-      return String.format("%s:%s:%s-%s-%s", "cvr", countyId, scannerId, batchId, ballotPosition);
-    }
-  }
+  //   /**
+  //    * The generated random number that selects/resolves to this Tribute
+  //    */
+  //   public Integer rand;
+
+  //   /**
+  //    * combine attributes to form a uri for fast selection
+  //    */
+  //   public String uri() {
+  //     // cvrs only, not acvrs
+  //     return String.format("%s:%s:%s-%s-%s", "cvr", countyId, scannerId, batchId, ballotPosition);
+  //   }
+  // }
 
   /**
    * A Segment is the unit of work for a single contest during one round
@@ -105,12 +111,20 @@ public final class BallotSelection {
      * @param bmi the manifest entry containing the sample
      * @param ballotPosition the position within a batch to sample
      */
-    public void addTribute(final BallotManifestInfo bmi, final Integer ballotPosition) {
+    public void addTribute(final BallotManifestInfo bmi,
+                           final Integer ballotPosition,
+                           final Integer rand,
+                           final Integer randSequencePosition,
+                           final String contestName) {
       final Tribute t = new Tribute();
       t.countyId = bmi.countyID();
       t.scannerId = bmi.scannerID();
       t.batchId = bmi.batchID();
       t.ballotPosition = ballotPosition;
+      t.rand = rand;
+      t.randSequencePosition = randSequencePosition;
+      t.contestName = contestName;
+      t.setUri();
       tributes.add(t);
     }
 
@@ -222,8 +236,16 @@ public final class BallotSelection {
     /**
      * record ballot position metadata
      */
-    public void addBallotPosition(final BallotManifestInfo bmi, final Integer ballotPosition) {
-      this.forCounty(bmi.countyID()).addTribute(bmi, ballotPosition);
+    public void addBallotPosition(final BallotManifestInfo bmi,
+                                  final Integer ballotPosition,
+                                  final Integer rand,
+                                  final Integer randSequencePosition,
+                                  final String ContestName) {
+      this.forCounty(bmi.countyID()).addTribute(bmi,
+                                                ballotPosition,
+                                                rand,
+                                                randSequencePosition,
+                                                contestName);
     }
 
     /**
@@ -283,13 +305,14 @@ public final class BallotSelection {
 
     final List<Integer> generatedNumbers = gen.getRandomNumbers(minIndex, maxIndex);
 
-    // make the theoretical selections (avoiding cvrs)
-    final Selection selection = select(generatedNumbers, contestResult.countyIDs());
-
+    Selection selection = new Selection();
     selection.contestResult = contestResult;
     selection.contestName = contestResult.getContestName();//posterity
     selection.domainSize = domainSize; //posterity
     selection.generatedNumbers = generatedNumbers; //posterity
+
+    // make the theoretical selections (avoiding cvrs)
+    selectTributes(selection, contestResult.countyIDs());
 
     LOGGER.info(String.format("[randomSelection] selected %s samples for %s ",
                               selection.generatedNumbers.size(),
@@ -303,38 +326,42 @@ public final class BallotSelection {
   /**
    * Divide a list of random numbers into segments by county
    **/
-  public static Selection select(final List<Integer> generatedNumbers,
-                                 final Set<Long> countyIds) {
-    return select(generatedNumbers, countyIds, BallotManifestInfoQueries::getMatching);
+  public static void selectTributes(final Selection selection,
+                                    final Set<Long> countyIds) {
+    selectTributes(selection, countyIds, BallotManifestInfoQueries::getMatching);
   }
 
   /**
    * Divide a list of random numbers into segments
    * transitional refactor step (3 arities is too many)
    **/
-  public static Selection select(final List<Integer> generatedNumbers,
-                                 final Set<Long> countyIds,
-                                 final MATCHINGQ queryMatching) {
+  public static void selectTributes(final Selection selection,
+                                    final Set<Long> countyIds,
+                                    final MATCHINGQ queryMatching) {
 
     final Set<BallotManifestInfo> contestBmis = queryMatching.apply(countyIds);
-    return select(generatedNumbers, countyIds, contestBmis);
+    selectTributes(selection, countyIds, contestBmis);
   }
 
   /**
    * Divide a list of random numbers into segments by county
    **/
-  public static Selection select(final List<Integer> generatedNumbers,
-                                 final Set<Long> countyIds,
-                                 final Set<BallotManifestInfo> contestBmis) {
-    final Selection selection = new Selection();
+  public static void selectTributes(final Selection selection,
+                                    final Set<Long> countyIds,
+                                    final Set<BallotManifestInfo> contestBmis) {
     countyIds.forEach(id -> selection.initCounty(id));
-    generatedNumbers.forEach(rand -> {
-        final BallotManifestInfo bmi = selectCountyId(Long.valueOf(rand), contestBmis);
-        selection.addBallotPosition(bmi,
-                                    // translate rand from Contest scope to bmi/batch scope
-                                    bmi.translateRand(rand));
-    });
-    return selection;
+    int i = 0;
+    for (Integer rand: selection.generatedNumbers) {
+      final BallotManifestInfo bmi = selectCountyId(Long.valueOf(rand), contestBmis);
+      selection.addBallotPosition(bmi,
+                                  // translate rand from Contest scope to bmi/batch scope
+                                  bmi.translateRand(rand),
+                                  // keep rand around to store on cvr for reporting
+                                  rand,
+                                  // preserve the order of random selections, 0-based
+                                  ++i,
+                                  selection.contestName);
+    }
   }
 
   /**

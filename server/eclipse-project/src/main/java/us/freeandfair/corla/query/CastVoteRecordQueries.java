@@ -41,7 +41,8 @@ import us.freeandfair.corla.model.CastVoteRecord;
 import us.freeandfair.corla.model.CVRAuditInfo;
 import us.freeandfair.corla.model.CastVoteRecord.RecordType;
 import us.freeandfair.corla.persistence.Persistence;
-import us.freeandfair.corla.controller.BallotSelection.Tribute;
+// import us.freeandfair.corla.controller.BallotSelection.Tribute;
+import us.freeandfair.corla.model.Tribute;
 
 /**
  * Queries having to do with CastVoteRecord entities.
@@ -455,7 +456,8 @@ public final class CastVoteRecordQueries {
     }
 
     final List<String> uris = tributes.stream()
-      .map(t -> t.uri())
+      .map(Persistence::persist)
+      .map(t -> t.getUri())
       .collect(Collectors.toList());
 
     final Session s = Persistence.currentSession();
@@ -472,9 +474,9 @@ public final class CastVoteRecordQueries {
       .collect(Collectors.toSet());
 
     final Set<CastVoteRecord> phantomRecords = tributes.stream()
-      .filter(distinctByKey((Tribute t) -> {return t.uri();}))
+      .filter(distinctByKey((Tribute t) -> {return t.getUri();}))
       // is it faster to let the db do this with an except query?
-      .filter(t -> !foundUris.contains(t.uri()))
+      .filter(t -> !foundUris.contains(t.getUri()))
       .map(t -> phantomRecord(t))
       .map(Persistence::persist)
       .collect(Collectors.toSet());
@@ -616,8 +618,9 @@ public final class CastVoteRecordQueries {
     return Long.valueOf(result);
   }
 
-  /** reporting **/
-  public static List<CastVoteRecord> report(List<Long> contestCVRIds) {
+  /** select every acvr which has been submitted for the the given cvr ids,
+   * including revisions(reaudits) **/
+  public static List<CastVoteRecord> activityReport(List<Long> contestCVRIds) {
     final Session s = Persistence.currentSession();
     final Query q =
         s.createQuery("select acvr from CastVoteRecord acvr "
@@ -629,6 +632,19 @@ public final class CastVoteRecordQueries {
     return q.getResultList();
   }
 
+  /** select every acvr which has been submitted for the the given cvr ids,
+   * excluding revisions(reaudits) **/
+  public static List<CastVoteRecord> resultsReport(List<Long> contestCVRIds) {
+    final Session s = Persistence.currentSession();
+    final Query q =
+      s.createQuery("select acvr from CastVoteRecord acvr "
+                    + " where acvr.cvrId in (:cvrIds))"
+                    + " and acvr.revision is null");
+
+    q.setParameter("cvrIds", contestCVRIds);
+
+    return q.getResultList();
+  }
 
   /** Utility function **/
   public static <T> java.util.function.Predicate <T> distinctByKey(final Function<? super T, Object> keyExtractor)

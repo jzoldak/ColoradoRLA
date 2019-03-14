@@ -116,8 +116,9 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
                                s.ballotType(), s.contestInfo());
           newAcvr.setComment(submission.getComment());
           newAcvr.setAuditBoardIndex(submission.getAuditBoardIndex());
-          System.out.println("newAcvr.getAuditBoardIndex() = " + newAcvr.getAuditBoardIndex().toString());
           newAcvr.setCvrId(submission.cvrID());
+          newAcvr.setRoundNumber(cdb.currentRound().number());
+          newAcvr.setRand(cvr.getRand());
 
           if (ComparisonAuditController.reaudit(cdb,cvr,newAcvr)) {
             ok(the_response, "ACVR reaudited");
@@ -126,6 +127,11 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
           }
 
         } else if (cdb.ballotsRemainingInCurrentRound() > 0) {
+
+          // Now we have a thing we can give our controller, maybe.
+          final CastVoteRecord cvr = Persistence.getByID(submission.cvrID(),
+                                                         CastVoteRecord.class);
+
           // FIXME extract-fn: setupACVR
           final CastVoteRecord acvr = submission.auditCVR();
           acvr.setID(null);
@@ -137,15 +143,13 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
                                  acvr.ballotType(), acvr.contestInfo());
           real_acvr.setAuditBoardIndex(submission.getAuditBoardIndex());
           real_acvr.setCvrId(submission.cvrID());
-
+          real_acvr.setRoundNumber(cdb.currentRound().number());
+          real_acvr.setRand(cvr.getRand());
 
           Persistence.saveOrUpdate(real_acvr);
           LOGGER.info("Audit CVR for CVR id " + submission.cvrID() +
                            " parsed and stored as id " + real_acvr.id());
-          // FIXME extract-fn: setupACVR
-          // Now we have a thing we can give our controller, maybe.
-          final CastVoteRecord cvr = Persistence.getByID(submission.cvrID(),
-                                                         CastVoteRecord.class);
+
           if (cvr == null) {
             LOGGER.error("could not find original CVR");
             // FIXME throw and push HTTP response up.

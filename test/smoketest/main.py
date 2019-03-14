@@ -442,9 +442,8 @@ def upload_file(ac, s, import_path, filename, sha256):
 def download_file(ac, s, file_id, filename):
     "Download the previously-uploaded file with the given file_id to the given filename"
 
-    with open(filename, 'wb') as f:
-        path = "/download-file"
-        r = s.get(ac.base + path, params={'file_info': json.dumps({'file_id': "%d" % file_id})})
+    path = "/download-file"
+    r = s.get(ac.base + path, params={'file_info': json.dumps({'file_id': "%d" % file_id})})
 
     if r.status_code != 200:
         logging.error("%s %s %s" % (r, path, r.text))
@@ -455,6 +454,10 @@ def download_file(ac, s, file_id, filename):
         f.write(r.content)
         logging.info("file_id %d saved as %s" % (file_id, filename))
 
+def download_audit_report(ac, s):
+
+
+        r = test_endpoint_get(ac, ac.state_s, "/dos-dashboard")
 def upload_cvrs(ac, s, filename, sha256):
     "Upload cvrs"
 
@@ -849,7 +852,9 @@ def county_audit(ac, county_id):
         else:
             logging.info("Submitting aCVR: %s" % json.dumps(acvr))
             test_endpoint_json(ac, county_s, "/upload-audit-cvr",
-                               {'cvr_id': selected[i]['db_id'], 'audit_cvr': acvr}, show=False)
+                               {'cvr_id': selected[i]['db_id'],
+                                'audit_cvr': acvr,
+                                'auditBoardIndex': 1}, show=False)
 
         county_dashboard = get_county_dashboard(ac, county_s, county_id, i, acvr)
         if county_dashboard['asm_state'] == "COUNTY_AUDIT_COMPLETE":

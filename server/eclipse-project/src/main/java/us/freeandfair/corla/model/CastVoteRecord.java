@@ -215,7 +215,15 @@ final public class CastVoteRecord implements Comparable<CastVoteRecord>,
    */
   private Long cvrId;
 
+  /**
+   * The round that the submission happened in, for ACVRs only
+   **/
+  private Integer roundNumber;
 
+  /**
+   * The generated random number that selected/resolves to this cvr
+   **/
+  private Integer rand;
 
   /**
    * both a performance optimization and work around for a feature lacking from
@@ -426,8 +434,27 @@ final public class CastVoteRecord implements Comparable<CastVoteRecord>,
     return my_ballot_type;
   }
 
+  /** get the round that this acvr is audited in **/
+  public Integer getRoundNumber () {
+     return this.roundNumber;
+  }
 
-  /** get the uri for fast selection **/
+  /** set the round that this acvr is audited in **/
+  public void setRoundNumber (Integer roundNumber) {
+    this.roundNumber = roundNumber ;
+  }
+
+  /** get the random number **/
+  public Integer getRand () {
+    return this.rand;
+  }
+
+  /** set the random number **/
+  public void setRand (Integer rand) {
+    this.rand = rand;
+  }
+
+ /** get the uri for fast selection **/
   public String getUri() {
     return this.uri;
   }
@@ -577,6 +604,8 @@ final public class CastVoteRecord implements Comparable<CastVoteRecord>,
       result &= nullableEquals(other_cvr.getRevision(), getRevision());
       result &= nullableEquals(other_cvr.getUri(), getUri());
       result &= nullableEquals(other_cvr.getAuditBoardIndex(), getAuditBoardIndex());
+      result &= nullableEquals(other_cvr.getRoundNumber(), getRoundNumber());
+      result &= nullableEquals(other_cvr.getRand(), getRand());
     } else {
       result = false;
     }
