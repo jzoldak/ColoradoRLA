@@ -11,6 +11,8 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -72,28 +74,40 @@ public class AuditReport {
     }
   }
 
-  public static final String[] HEADERS = {
-    "dbID",
-    "recordType",
+  public static final String[] ALL_HEADERS = {
+    "db id",
+    "record type",
     "county",
     "round",
-    "imprintedID",
-    "auditBoard",
+    "imprinted id",
+    "scanner id",
+    "batch id",
+    "record id",
+    "audit board",
     "discrepancy",
     "consensus",
     "comment",
+    "random number",
+    "random number sequence position",
     "revision",
-    "rand",
-    "randSequencePosition",
     "re-audit ballot comment",
-    "timestamp"
+    "time of submission"
   };
+
+
+  public static final String[] ACTIVITY_HEADERS =
+    ArrayUtils.removeElements(ArrayUtils.clone(ALL_HEADERS), "randSequencePosition", "rand");
 
   public static Integer findDiscrepancy(ComparisonAudit audit, CastVoteRecord acvr) {
     if (null != acvr.getRevision()) {
       // this is a reaudited acvr, so we need to recompute the discrepancy
       CastVoteRecord cvr = Persistence.getByID(acvr.getCvrId(), CastVoteRecord.class);
-      return audit.computeDiscrepancy(cvr, acvr).getAsInt();
+      OptionalInt disc = audit.computeDiscrepancy(cvr, acvr);
+      if (disc.isPresent()) {
+        return disc.getAsInt();
+      } else {
+        return null;
+      }
     } else {
       CVRAuditInfo cai = Persistence.getByID(acvr.getCvrId(), CVRAuditInfo.class);
       return audit.getDiscrepancy(cai);
@@ -153,24 +167,13 @@ public class AuditReport {
                                       TimeZone.getDefault().toZoneId()));
   }
 
-  public static String maybeToString(Object o) {
-    if (null != o) {
-      return o.toString();
-    } else {
-      return null;
-    }
-  }
-
-  // should be an acvr
-  public static Row toRow(ComparisonAudit audit, CastVoteRecord acvr) {
-    Row row = new Row(HEADERS);
-
+  public static Row addBaseFields(Row row, ComparisonAudit audit, CastVoteRecord acvr) {
     Integer discrepancy = findDiscrepancy(audit, acvr);
     Optional<CVRContestInfo> infoMaybe = acvr.contestInfoForContestResult(audit.contestResult());
 
     if (infoMaybe.isPresent()) {
       CVRContestInfo info = infoMaybe.get();
-      row.put("consensus", maybeToString(info.consensus()));
+      row.put("consensus", toString(info.consensus()));
       row.put("comment", info.comment());
     }
 
@@ -179,23 +182,48 @@ public class AuditReport {
     } else {
       row.put("discrepancy", null);
     }
-    row.put("dbID", acvr.getCvrId().toString());
-    row.put("recordType", acvr.recordType().toString());
+    row.put("db id", acvr.getCvrId().toString());
+    row.put("record type", acvr.recordType().toString());
     row.put("county", findCountyName(acvr.countyID()));
-    row.put("imprintedID", acvr.imprintedID());
-    row.put("auditBoard", renderAuditBoard(acvr.getAuditBoardIndex()));
-    row.put("round", maybeToString(acvr.getRoundNumber()));
-    row.put("revision", toString(acvr.getRevision()));
-    row.put("re-audit ballot comment", acvr.getComment());
-    row.put("timestamp", renderTimestamp(acvr.timestamp()));
+    row.put("audit board", renderAuditBoard(acvr.getAuditBoardIndex()));
+    row.put("round", toString(acvr.getRoundNumber()));
+    row.put("imprinted id", acvr.imprintedID());
+    row.put("scanner id", toString(acvr.scannerID()));
+    row.put("batch id", acvr.batchID());
+    row.put("record id", toString(acvr.recordID()));
+    row.put("time of submission", renderTimestamp(acvr.timestamp()));
     return row;
   }
 
-  public static Row toRow(ComparisonAudit audit, CastVoteRecord acvr, Tribute tribute) {
-    Row row = toRow(audit, acvr);
-    row.put("rand", tribute.rand.toString());
-    row.put("randSequencePosition", tribute.randSequencePosition.toString());
+  public static Row addActivityFields(Row row, CastVoteRecord acvr) {
+    row.put("revision", toString(acvr.getRevision()));
+    row.put("re-audit ballot comment", acvr.getComment());
     return row;
+  }
+
+  public static Row addResultsFields(Row row, Tribute tribute) {
+    row.put("random number", toString(tribute.rand));
+    row.put("random number sequence position", toString(tribute.randSequencePosition));
+    return row;
+  }
+
+
+  public static class ActivityReport {
+    public static final String[] HEADERS =
+      ArrayUtils.removeElements(ArrayUtils.clone(ALL_HEADERS), "random number sequence position", "random number");
+
+    public static final Row newRow() {
+      return new Row(HEADERS);
+    }
+  }
+
+  public static class ResultsReport {
+    public static final String[] HEADERS =
+      ArrayUtils.removeElements(ArrayUtils.clone(ALL_HEADERS), "revision", "re-audit ballot comment");
+
+    public static final Row newRow() {
+      return new Row(HEADERS);
+    }
   }
 
   public static List<List<String>> getContestActivity(String contestName) {
@@ -211,15 +239,17 @@ public class AuditReport {
     List<CastVoteRecord> acvrs = CastVoteRecordQueries.activityReport(contestCVRIds);
     acvrs.sort(Comparator.comparing(CastVoteRecord::timestamp));
 
-    rows.add(Arrays.asList(HEADERS));
-    acvrs.forEach(acvr -> rows.add(toRow(audit, acvr).toArray()));
+    rows.add(Arrays.asList(ActivityReport.HEADERS));
+    acvrs.forEach(acvr -> {
+        Row row = ActivityReport.newRow();
+        rows.add(addActivityFields(addBaseFields(row, audit, acvr), acvr).toArray());
+      });
 
     return rows;
   }
 
   public static List<List<String>> getResultsReport(String contestName) {
     List<List<String>> rows = new ArrayList();
-    rows.add(Arrays.asList(HEADERS));
 
     List<Tribute> tributes = TributeQueries.forContest(contestName);
     tributes.sort(Comparator.comparing(t -> t.randSequencePosition));
@@ -233,16 +263,20 @@ public class AuditReport {
     List<Long> contestCVRIds = audit.getContestCVRIds();
     List<CastVoteRecord> acvrs = CastVoteRecordQueries.resultsReport(contestCVRIds);
 
+    rows.add(Arrays.asList(ResultsReport.HEADERS));
     for (final Tribute tribute: tributes) {
       final String uri = tribute.getUri();
       final String aUri = uri.replaceFirst("^cvr", "acvr");
       final Optional<CastVoteRecord> acvr = acvrs.stream()
         .filter(c -> c.getUri().equals(aUri))
         .findFirst();
+
+      Row row = ResultsReport.newRow();
       if (acvr.isPresent()) {
-        rows.add(toRow(audit, acvr.get(), tribute).toArray());
+        rows.add(addResultsFields(addBaseFields(row, audit, acvr.get()), tribute).toArray());
       } else {
-        rows.add(new ArrayList() {{ add("error could not find matching acvr for random number " + tribute.rand.toString() );}});
+        // not yet audited
+        rows.add(addResultsFields(row, tribute).toArray());
       }
     }
 

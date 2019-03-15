@@ -25,7 +25,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  *
  * - Summary
  */
-public class AuditReport {
+public class WorkbookWriter {
   /**
    * Font size to use for all cells.
    */
@@ -36,11 +36,38 @@ public class AuditReport {
    */
   private final ByteArrayOutputStream baos;
 
+
+  /**
+   * one workbook to hold multiple sheets, another way to say Excel file, xlsx
+   **/
+  private final Workbook workbook;
+
+  private final CellStyle regStyle;
+
+  private final CellStyle boldStyle;
+
   /**
    * Initializes the AuditReport
    */
-  public AuditReport() {
+  public WorkbookWriter() {
     this.baos = new ByteArrayOutputStream();
+    this.workbook = new XSSFWorkbook();
+    this.boldStyle = this.workbook.createCellStyle();
+    this.regStyle = this.workbook.createCellStyle();
+
+    setStyles();
+  }
+
+  private void setStyles() {
+    final Font boldFont = workbook.createFont();
+    final Font regFont = workbook.createFont();
+
+    regFont.setFontHeightInPoints(FONT_SIZE);
+    this.regStyle.setFont(regFont);
+
+    boldFont.setFontHeightInPoints(FONT_SIZE);
+    boldFont.setBold(true);
+    this.boldStyle.setFont(boldFont);
   }
 
   /**
@@ -49,25 +76,11 @@ public class AuditReport {
    * @param rows the raw data
    * @return the POI workbook ready for output
    */
-  private Workbook generateWorkbook(final List<List<String>> rows) {
-    final Workbook workbook = new XSSFWorkbook();
-    final Sheet summary = workbook.createSheet("Summary");
-
-    final Font boldFont = workbook.createFont();
-    final Font regFont = workbook.createFont();
-
-    final CellStyle boldStyle = workbook.createCellStyle();
-    final CellStyle regStyle = workbook.createCellStyle();
-
-    regFont.setFontHeightInPoints(FONT_SIZE);
-    regStyle.setFont(regFont);
-
-    boldFont.setFontHeightInPoints(FONT_SIZE);
-    boldFont.setBold(true);
-    boldStyle.setFont(boldFont);
+  public void addSheet(final String sheetname, final List<List<String>> rows) {
+    final Sheet sheet = workbook.createSheet(sheetname);
 
     for (int i = 0; i < rows.size(); i++) {
-      final Row poiRow = summary.createRow(i);
+      final Row poiRow = sheet.createRow(i);
       final List<String> dataRow = rows.get(i);
 
       for (int j = 0; j < dataRow.size(); j++) {
@@ -81,8 +94,6 @@ public class AuditReport {
         }
       }
     }
-
-    return workbook;
   }
 
   /**
@@ -91,10 +102,9 @@ public class AuditReport {
    * @return the Excel representation of this report
    * @exception IOException if the report cannot be generated.
    */
-  public byte[] generate(final List<List<String>> rows) throws IOException {
-    final Workbook workbook = this.generateWorkbook(rows);
-    workbook.write(this.baos);
-    workbook.close();
+  public byte[] write() throws IOException {
+    this.workbook.write(this.baos);
+    this.workbook.close();
 
     return this.baos.toByteArray();
   }

@@ -24,6 +24,7 @@ import org.apache.cxf.attachment.Rfc5987Util;
 import us.freeandfair.corla.asm.ASMEvent;
 import us.freeandfair.corla.controller.AuditReport;
 import us.freeandfair.corla.csv.CSVWriter;
+import us.freeandfair.corla.report.WorkbookWriter;
 import us.freeandfair.corla.util.SparkHelper;
 
 /**
@@ -64,13 +65,26 @@ public class PublishAuditReport extends AbstractDoSDashboardEndpoint {
   public String endpointBody(final Request request,
                              final Response response)  {
     final String contestName = request.queryParams("contestName");
+    final String reportType = request.queryParams("reportType");
 
     try {
-      final us.freeandfair.corla.report.AuditReport ar =
-          new us.freeandfair.corla.report.AuditReport();
-      final List<List<String>> rows = AuditReport.getResultsReport(contestName);
-      final byte[] reportBytes = ar.generate(rows);
-      final String fileName = Rfc5987Util.encode(contestName + " Audit Report.xlsx", "UTF-8");
+      final WorkbookWriter workbookWriter = new WorkbookWriter();
+
+      switch(reportType) {
+        case "activity":
+          final List<List<String>> rows = AuditReport.getContestActivity(contestName);
+          workbookWriter.addSheet(contestName, rows);
+        // case "results":
+        default :
+          final List<List<String>> rows = AuditReport.getResultsReport(contestName);
+          workbookWriter.addSheet(contestName, rows);
+      }
+
+
+
+
+      final byte[] reportBytes = workbookWriter.write();
+      final String fileName = Rfc5987Util.encode("Audit_Report.xlsx", "UTF-8");
 
       response.header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
       response.header("Content-Disposition", "attachment; filename*=UTF-8''" + fileName);

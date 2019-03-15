@@ -114,13 +114,12 @@ public class ACVRUpload extends AbstractAuditBoardDashboardEndpoint {
                                s.countyID(), s.cvrNumber(), null, s.scannerID(),
                                s.batchID(), s.recordID(), s.imprintedID(),
                                s.ballotType(), s.contestInfo());
-          newAcvr.setComment(submission.getComment());
           newAcvr.setAuditBoardIndex(submission.getAuditBoardIndex());
           newAcvr.setCvrId(submission.cvrID());
           newAcvr.setRoundNumber(cdb.currentRound().number());
           newAcvr.setRand(cvr.getRand());
 
-          if (ComparisonAuditController.reaudit(cdb,cvr,newAcvr)) {
+          if (ComparisonAuditController.reaudit(cdb,cvr,newAcvr, submission.getComment())) {
             ok(the_response, "ACVR reaudited");
           } else {
             invariantViolation(the_response, "CVR has not previously been audited");

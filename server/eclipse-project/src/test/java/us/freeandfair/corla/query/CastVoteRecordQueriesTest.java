@@ -137,7 +137,7 @@ public class CastVoteRecordQueriesTest {
 
 
   @Test()
-  public void reportTest() {
+  public void activityReportTest() {
     CastVoteRecord cvr = noisyCVRSetup(4);
     CastVoteRecord acvr = new CastVoteRecord(CastVoteRecord.RecordType.AUDITOR_ENTERED, Instant.now(),
                                              cvr.countyID(), cvr.cvrNumber(), null, cvr.scannerID(),
@@ -154,8 +154,7 @@ public class CastVoteRecordQueriesTest {
 
     List<CastVoteRecord> acvrs = new ArrayList(){{ add(acvr); }};
     List<Long> contestCVRIds = new ArrayList(){{ add(cvr.id()); }};
-    // List<CVRAuditInfo> result = CastVoteRecordQueries.report(contestCVRIds);
-    List<CastVoteRecord> result = CastVoteRecordQueries.report(contestCVRIds);
+    List<CastVoteRecord> result = CastVoteRecordQueries.activityReport(contestCVRIds);
     assertEquals(acvrs, result);
   }
 

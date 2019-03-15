@@ -334,9 +334,10 @@ final public class CastVoteRecord implements Comparable<CastVoteRecord>,
   }
 
   /** set the record type to EDITED and the uri to rcvr:... **/
-  public void setToReaudited(final Long revision) {
+  public void setToReaudited(final Long revision, final String comment) {
     setRecordType(RecordType.REAUDITED);
     setRevision(revision);
+    setComment(comment);
 
     setUri();
   }

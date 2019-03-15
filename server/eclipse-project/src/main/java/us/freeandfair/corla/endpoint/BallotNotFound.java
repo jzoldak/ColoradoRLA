@@ -142,9 +142,7 @@ public class BallotNotFound extends AbstractAuditBoardDashboardEndpoint {
                              contest_info);
       boolean result;
       if (sbnf.isReaudit()) {
-        acvr.setComment(sbnf.getComment());
-
-        result = ComparisonAuditController.reaudit(cdb,cvr,acvr);
+        result = ComparisonAuditController.reaudit(cdb,cvr,acvr,sbnf.getComment());
       } else {
         Persistence.saveOrUpdate(acvr);
         result = ComparisonAuditController.submitAuditCVR(cdb, cvr, acvr);
