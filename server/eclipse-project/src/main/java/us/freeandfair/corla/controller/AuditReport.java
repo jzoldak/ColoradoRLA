@@ -89,6 +89,7 @@ public class AuditReport {
     "comment",
     "random number",
     "random number sequence position",
+    "multiplicity",
     "revision",
     "re-audit ballot comment",
     "time of submission"
@@ -201,6 +202,10 @@ public class AuditReport {
     return row;
   }
 
+  public static Row addResultsFields(Row row, Tribute tribute, Integer multiplicity) {
+    row.put("multiplicity", multiplicity);
+    return addResultsFields(row, tribute);
+  }
   public static Row addResultsFields(Row row, Tribute tribute) {
     row.put("random number", toString(tribute.rand));
     row.put("random number sequence position", toString(tribute.randSequencePosition));
@@ -210,7 +215,7 @@ public class AuditReport {
 
   public static class ActivityReport {
     public static final String[] HEADERS =
-      ArrayUtils.removeElements(ArrayUtils.clone(ALL_HEADERS), "random number sequence position", "random number");
+      ArrayUtils.removeElements(ArrayUtils.clone(ALL_HEADERS), "random number sequence position", "random number", "multiplicity");
 
     public static final Row newRow() {
       return new Row(HEADERS);
@@ -273,7 +278,8 @@ public class AuditReport {
 
       Row row = ResultsReport.newRow();
       if (acvr.isPresent()) {
-        rows.add(addResultsFields(addBaseFields(row, audit, acvr.get()), tribute).toArray());
+        Integer multiplicity = audit.multiplicity(acvr.getCvrId());
+        rows.add(addResultsFields(addBaseFields(row, audit, acvr.get()), tribute, multiplicity).toArray());
       } else {
         // not yet audited
         rows.add(addResultsFields(row, tribute).toArray());
